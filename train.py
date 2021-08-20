@@ -278,7 +278,7 @@ if __name__ == '__main__':
     parser.add_argument('--modes', dest='num_modes', type=int, default=4, 
                         help='Number of modes in setrans')
 
-    parser.add_argument('--radius', dest='corr_radius', type=int, default=-1)    
+    parser.add_argument('--radius', dest='corr_radius', type=int, default=4)    
     parser.add_argument('--rafter', dest='rafter', action='store_true', 
                         help='use rafter (Recurrent All-Pairs Field Transformer)')
     # In inter-frame attention, having QK biases performs slightly better.
@@ -295,4 +295,5 @@ if __name__ == '__main__':
     if not os.path.isdir(args.output):
         os.makedirs(args.output)
 
+    print(args)
     main(args)
