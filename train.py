@@ -2,6 +2,7 @@ from __future__ import print_function, division
 import sys
 sys.path.append('core')
 
+from datetime import datetime
 import argparse
 import os
 import cv2
@@ -295,5 +296,7 @@ if __name__ == '__main__':
     if not os.path.isdir(args.output):
         os.makedirs(args.output)
 
-    print(args)
+    timestamp = datetime.now().strftime("%m%d%H%M")
+    print(timestamp)
+    print("Args:\n{}".format(args))
     main(args)
