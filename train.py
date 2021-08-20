@@ -297,6 +297,6 @@ if __name__ == '__main__':
         os.makedirs(args.output)
 
     timestamp = datetime.now().strftime("%m%d%H%M")
-    print(timestamp)
+    print("Time: {}".format(timestamp))
     print("Args:\n{}".format(args))
     main(args)
