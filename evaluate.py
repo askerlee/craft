@@ -8,7 +8,7 @@ import numpy as np
 import torch
 import imageio
 
-from network import RAFTGMA
+from network import RAFTER
 
 import datasets
 from utils import flow_viz
@@ -425,7 +425,7 @@ if __name__ == '__main__':
         separate_inout_sintel_occ()
         sys.exit()
 
-    model = torch.nn.DataParallel(RAFTGMA(args))
+    model = torch.nn.DataParallel(RAFTER(args))
     model.load_state_dict(torch.load(args.model))
 
     model.cuda()

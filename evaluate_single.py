@@ -12,7 +12,7 @@ from PIL import Image
 import imageio
 import matplotlib.pyplot as plt
 
-from network import RAFTGMA
+from network import RAFTER
 from utils import flow_viz
 from utils.utils import InputPadder
 import os
@@ -43,7 +43,7 @@ def normalize(x):
 
 
 def demo(args):
-    model = torch.nn.DataParallel(RAFTGMA(args))
+    model = torch.nn.DataParallel(RAFTER(args))
     model.load_state_dict(torch.load(args.model))
     print(f"Loaded checkpoint at {args.model}")
 

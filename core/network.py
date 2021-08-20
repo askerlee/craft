@@ -25,7 +25,7 @@ except:
             pass
 
 
-class RAFTGMA(nn.Module):
+class RAFTER(nn.Module):
     def __init__(self, args):
         super().__init__()
         self.args = args
@@ -37,11 +37,12 @@ class RAFTGMA(nn.Module):
         if 'dropout' not in self.args:
             self.args.dropout = 0
 
+        # default RAFTER corr_radius: 6
+        if args.corr_radius == -1:
+            args.corr_radius = 4
+        print("Lookup radius: %d" %args.corr_radius)
+
         if args.rafter:
-            # default RAFTER corr_radius: 6
-            if args.corr_radius == -1:
-                args.corr_radius = 6
-                
             self.inter_trans_config = SETransConfig()
             self.inter_trans_config.update_config(args)
             self.inter_trans_config.in_feat_dim = 256
@@ -54,12 +55,6 @@ class RAFTGMA(nn.Module):
             print("inter-frame trans config:\n{}".format(self.inter_trans_config.__dict__))
             
             self.corr_fn = TransCorrBlock(self.inter_trans_config, radius=self.args.corr_radius)
-
-        # default GMA corr_radius: 4
-        elif args.corr_radius == -1:
-            args.corr_radius = 4
-
-        print("Lookup radius: %d" %args.corr_radius)
 
         # feature network, context network, and update block
         self.fnet = BasicEncoder(output_dim=256, norm_fn='instance', dropout=args.dropout)

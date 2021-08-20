@@ -15,7 +15,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from network import RAFTGMA
+from network import RAFTER
 
 from utils import flow_viz
 import datasets
@@ -123,7 +123,7 @@ class Logger:
 
 def main(args):
 
-    model = nn.DataParallel(RAFTGMA(args), device_ids=args.gpus)
+    model = nn.DataParallel(RAFTER(args), device_ids=args.gpus)
 
     print(f"Parameter Count: {count_parameters(model)}")
 
