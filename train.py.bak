@@ -142,6 +142,7 @@ def main(args):
     if args.freeze_bn and args.stage != 'chairs':
         model.module.freeze_bn()
 
+
     train_loader = datasets.fetch_dataloader(args)
     optimizer, scheduler = fetch_optimizer(args, model)
 
@@ -221,10 +222,9 @@ def validate(model, args, logger):
         logger.val_results_dict[key].append(results[key])
 
     logger.val_steps_list.append(logger.total_steps)
-    
     model.train()
-    if args.freeze_bn and args.stage != 'chairs':
-        model.module.freeze_bn()
+                if args.freeze_bn and args.stage != 'chairs':
+                    model.module.freeze_bn()
 
 def plot_val(logger, args):
     for key in logger.val_results_dict.keys():

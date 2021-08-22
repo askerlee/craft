@@ -111,7 +111,7 @@ class TransCorrBlock(CorrBlock, nn.Module):
         self.num_levels = num_levels
         self.radius = radius
         self.config = config
-        self.setrans = CrossAttFeatTrans(self.config, "inter-frame attention")
+        self.setrans = CrossAttFeatTrans(self.config, "inter-frame correlation block")
         self.vispos_encoder = SETransInputFeatEncoder(self.config)
         self.coords2 = None
         

@@ -73,7 +73,7 @@ class SETransConfig(object):
 
         # Randomness settings
         self.hidden_dropout_prob = 0.1
-        self.attention_probs_dropout_prob = 0.2
+        self.attention_probs_dropout_prob = 0.1
         self.ablate_pos_embed_type  = False
         self.ablate_multihead       = False
         self.out_attn_probs_only    = False
@@ -82,7 +82,7 @@ class SETransConfig(object):
     def set_backbone_type(self, args):
         if self.try_assign(args, 'backbone_type'):
             self.bb_stage_dims  = bb2_stage_dims[self.backbone_type]
-            self.in_feat_dim    = self.bb_stage_dims[self.bb_stage_idx]
+            self.in_feat_dim    = self.bb_stage_dims[-1]
     
     # return True if any parameter is successfully set, and False if none is set.
     def try_assign(self, args, *keys):

@@ -157,11 +157,13 @@ class RAFTER(nn.Module):
             coords1 = coords1 + flow_init
 
         if self.args.rafter:
+            # transformer correlation volume is pre-computed in update().
             self.corr_fn.update(fmap1, fmap2, coords1)
             
         flow_predictions = []
         for itr in range(iters):
             coords1 = coords1.detach()
+            # __call__() only queries the pre-computed correlation volume. No computation here.
             corr = self.corr_fn(coords1)  # index correlation volume
 
             flow = coords1 - coords0

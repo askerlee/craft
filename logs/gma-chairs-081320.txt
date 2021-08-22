@@ -1,3 +1,5 @@
+Validation Chairs EPE: 0.813795
+
 python train.py --name gma-chairs --stage chairs --validation chairs --output results/chairs/gma --num_steps 120000 --lr 0.00025 --image_size 368 496 --wdecay 0.0001 --gpus 0 1 --batch_size 8 --val_freq 10000 --print_freq 100 --mixed_precision
 
 Parameter Count: 5879873
