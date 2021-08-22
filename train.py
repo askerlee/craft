@@ -71,7 +71,7 @@ def fetch_optimizer(args, model):
     optimizer = optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.wdecay, eps=args.epsilon)
 
     if args.rafter:
-        pct_start = 0.01
+        pct_start = 0.05
     else:
         pct_start = 0.05
         
@@ -102,10 +102,10 @@ class Logger:
         # Compute time left
         time_left_sec = (self.args.num_steps - (self.total_steps+1)) * metrics_data[-1]
         time_left_sec = time_left_sec.astype(int)
-        time_left_hms = "{:02d}h{:02d}m{:02d}s".format(time_left_sec // 3600, time_left_sec % 3600 // 60, time_left_sec % 3600 % 60)
-        time_left_hms = f"{time_left_hms:>12}"
+        time_left_hm = "{:02d}h{:02d}m".format(time_left_sec // 3600, time_left_sec % 3600 // 60)
+        time_left_hm = f"{time_left_hm:>9}"
         # print the training status
-        print(training_str + metrics_str + time_left_hms)
+        print(training_str + metrics_str + time_left_hm)
 
         # logging running loss to total loss
         self.train_epe_list.append(np.mean(self.running_loss_dict['epe']))
@@ -275,6 +275,7 @@ if __name__ == '__main__':
     parser.add_argument('--gamma', type=float, default=0.8, help='exponential weighting')
     parser.add_argument('--add_noise', action='store_true')
     parser.add_argument('--freeze_bn', action='store_true')
+    parser.add_argument('--corrln', dest='do_corr_layernorm', action='store_true')
     
     parser.add_argument('--iters', type=int, default=12)
     parser.add_argument('--val_freq', type=int, default=10000,

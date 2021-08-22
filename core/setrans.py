@@ -53,31 +53,30 @@ class SETransConfig(object):
         self.tie_qk_scheme = 'shared'           # shared, loose, or none.
         self.mid_type      = 'shared'           # shared, private, or none.
         self.trans_output_type  = 'private'     # shared or private.
-        self.act_fun = F.gelu
-        
-        self.attn_clip = 100
-        self.attn_diag_cycles = 800
-        self.base_initializer_range = 0.02
         
         self.qk_have_bias = False
         # Without the bias term, V projection often performs better.
         self.v_has_bias = False
+        self.out_attn_probs_only    = False
+        self.out_attn_scores_only   = False
+        
+        # Pooling settings
+        self.pool_modes_feat  = 'softmax'   # softmax, max, mean, or none. With [] means keepdim=True.
+        self.act_fun = F.gelu        
+        self.attn_clip = 100
+        self.attn_diag_cycles = 1000
+        self.base_initializer_range = 0.02
         # Add an identity matrix (*0.02*query_idbias_scale) to query/key weights
         # to make a bias towards identity mapping.
         # Set to 0 to disable the identity bias.
         self.query_idbias_scale = 10
         self.feattrans_lin1_idbias_scale = 10
 
-        # Pooling settings
-        self.pool_modes_feat  = 'softmax'   # softmax, max, mean, or none. With [] means keepdim=True.
-
         # Randomness settings
         self.hidden_dropout_prob = 0.1
-        self.attention_probs_dropout_prob = 0.1
+        self.attention_probs_dropout_prob = 0.2
         self.ablate_pos_embed_type  = False
         self.ablate_multihead       = False
-        self.out_attn_probs_only    = False
-        self.out_attn_scores_only   = False
         
     def set_backbone_type(self, args):
         if self.try_assign(args, 'backbone_type'):

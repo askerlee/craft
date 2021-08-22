@@ -37,10 +37,12 @@ class RAFTER(nn.Module):
         if 'dropout' not in self.args:
             self.args.dropout = 0
 
-        # default RAFTER corr_radius: 6
+        # default RAFTER corr_radius: 4
         if args.corr_radius == -1:
             args.corr_radius = 4
         print("Lookup radius: %d" %args.corr_radius)
+        neighborhood_size = (2 * args.corr_radius + 1) ** 2 * 4
+        self.corr_layernorm = nn.LayerNorm(neighborhood_size, elementwise_affine=False)
 
         if args.rafter:
             self.inter_trans_config = SETransConfig()
@@ -55,7 +57,7 @@ class RAFTER(nn.Module):
             print("inter-frame trans config:\n{}".format(self.inter_trans_config.__dict__))
             
             self.corr_fn = TransCorrBlock(self.inter_trans_config, radius=self.args.corr_radius)
-
+            
         # feature network, context network, and update block
         self.fnet = BasicEncoder(output_dim=256, norm_fn='instance', dropout=args.dropout)
         self.cnet = BasicEncoder(output_dim=hdim + cdim, norm_fn='batch', dropout=args.dropout)
@@ -131,6 +133,7 @@ class RAFTER(nn.Module):
             fmap1, fmap2 = self.fnet([image1, image2])
 
         # fmap1, fmap2: [1, 256, 55, 128]. 1/8 size of the original image.
+        # correlation matrix: 7040*7040 (55*128=7040).
         fmap1 = fmap1.float()
         fmap2 = fmap2.float()
         if not self.args.rafter:
@@ -157,15 +160,20 @@ class RAFTER(nn.Module):
             coords1 = coords1 + flow_init
 
         if self.args.rafter:
-            # transformer correlation volume is pre-computed in update().
             self.corr_fn.update(fmap1, fmap2, coords1)
             
         flow_predictions = []
         for itr in range(iters):
             coords1 = coords1.detach()
-            # __call__() only queries the pre-computed correlation volume. No computation here.
+            # corr: [6, 324, 50, 90]. 324: neighbors. 
+            # radius = 4 -> neighbor points = (4*2+1)^2 = 81. Upsize x4 -> 324.
             corr = self.corr_fn(coords1)  # index correlation volume
-
+            if self.args.rafter or self.args.do_corr_layernorm:
+                B, NB, H, W = corr.shape
+                corr_1d = corr.view(B, NB, H*W).permute(0, 2, 1)
+                corr_normed = self.corr_layernorm(corr_1d)
+                corr = corr_normed.permute(0, 2, 1).view(B, NB, H, W)
+            
             flow = coords1 - coords0
             with autocast(enabled=self.args.mixed_precision):
                 # net_feat: hidden features of ConvGRU. 

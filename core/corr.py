@@ -51,6 +51,7 @@ class CorrBlock:
             out_pyramid.append(corr)
 
         out = torch.cat(out_pyramid, dim=-1)
+        # [batch, neighbors, h1, w1]
         return out.permute(0, 3, 1, 2).contiguous().float()
 
     @staticmethod
