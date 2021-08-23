@@ -275,7 +275,8 @@ if __name__ == '__main__':
     parser.add_argument('--gamma', type=float, default=0.8, help='exponential weighting')
     parser.add_argument('--add_noise', action='store_true')
     parser.add_argument('--freeze_bn', action='store_true')
-    parser.add_argument('--corrln', dest='do_corr_layernorm', action='store_true')
+    parser.add_argument('--corrnorm', dest='corr_norm_type', type=str, 
+                        choices=['none', 'local', 'global'], default='none')
     
     parser.add_argument('--iters', type=int, default=12)
     parser.add_argument('--val_freq', type=int, default=10000,

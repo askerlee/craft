@@ -1,6 +1,5 @@
 Validation (clean) EPE: 1.381620, 1px: 0.901351, 3px: 0.957147, 5px: 0.969312
 Validation (final) EPE: 2.793372, 1px: 0.849568, 3px: 0.917388, 5px: 0.936895
-
 Validation (frames_cleanpass) EPE: 3.180660, 1px: 0.825001, 3px: 0.905576, 5px: 0.927428
 Validation (frames_finalpass) EPE: 2.923150, 1px: 0.822814, 3px: 0.905356, 5px: 0.927899
 
