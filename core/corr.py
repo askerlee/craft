@@ -14,15 +14,20 @@ except:
 
 
 class CorrBlock:
-    def __init__(self, fmap1, fmap2, num_levels=4, radius=4):
+    def __init__(self, fmap1, fmap2, num_levels=4, radius=4, do_corr_global_norm=False):
         self.num_levels = num_levels
         self.radius = radius
         self.corr_pyramid = []
-
+        self.do_corr_global_norm = do_corr_global_norm
         # all pairs correlation
         corr = CorrBlock.corr(fmap1, fmap2)
 
         batch, h1, w1, dim, h2, w2 = corr.shape
+        if self.do_corr_global_norm:
+            corr_3d = corr.permute(0, 3, 1, 2, 4, 5).view(B, dim, -1)
+            corr_normed = F.layer_norm( corr_3d, (corr_3d.shape[2],), eps=1e-12 )
+            corr = corr_normed.view(batch, dim, h1, w1, h2, w2).permute(0, 2, 3, 1, 4, 5)
+
         corr = corr.reshape(batch * h1 * w1, dim, h2, w2)
 
         self.corr_pyramid.append(corr)
@@ -66,15 +71,22 @@ class CorrBlock:
 
 
 class CorrBlockSingleScale(nn.Module):
-    def __init__(self, fmap1, fmap2, num_levels=4, radius=4):
+    def __init__(self, fmap1, fmap2, num_levels=4, radius=4, do_corr_global_norm=False):
         super().__init__()
         self.radius = radius
-
+        self.do_corr_global_norm = do_corr_global_norm
+        
         # all pairs correlation
         corr = CorrBlock.corr(fmap1, fmap2)
         batch, h1, w1, dim, h2, w2 = corr.shape
+        if self.do_corr_global_norm:
+            corr_3d = corr.permute(0, 3, 1, 2, 4, 5).view(B, dim, -1)
+            corr_normed = F.layer_norm( corr_3d, (corr_3d.shape[2],), eps=1e-12 )
+            corr = corr_normed.view(batch, dim, h1, w1, h2, w2).permute(0, 2, 3, 1, 4, 5)
+            
         self.corr = corr.reshape(batch * h1 * w1, dim, h2, w2)
-
+        self.do_corr_global_norm = do_corr_global_norm
+        
     def __call__(self, coords):
         r = self.radius
         coords = coords.permute(0, 2, 3, 1)
@@ -107,7 +119,7 @@ class CorrBlockSingleScale(nn.Module):
 # TransCorrBlock instance is created and destroyed in each call of raft.forward().
 # It is only for a particular pair of image features fmap1, fmap2
 class TransCorrBlock(CorrBlock, nn.Module):
-    def __init__(self, config, num_levels=4, radius=4, do_corr_norm=False):
+    def __init__(self, config, num_levels=4, radius=4, do_corr_global_norm=False):
         nn.Module.__init__(self)
         self.num_levels = num_levels
         self.radius = radius
@@ -115,7 +127,7 @@ class TransCorrBlock(CorrBlock, nn.Module):
         self.setrans = CrossAttFeatTrans(self.config, "inter-frame correlation block")
         self.vispos_encoder = SETransInputFeatEncoder(self.config)
         self.coords2 = None
-        self.do_corr_norm = do_corr_norm
+        self.do_corr_global_norm = do_corr_global_norm
             
     def update(self, fmap1, fmap2, coords1, coords2=None):
         self.corr_pyramid = []
@@ -151,7 +163,7 @@ class TransCorrBlock(CorrBlock, nn.Module):
         #             frame1 frame2
         # corr: [1, 1, 7040, 7040]
         corr = self.setrans(vispos1, vispos2)
-        if self.do_corr_norm:
+        if self.do_corr_global_norm:
             B, C, H, W = corr.shape
             corr_3d = corr.view(B, C, H*W)
             corr_normed = F.layer_norm( corr_3d, (corr_3d.shape[2],), eps=1e-12 )

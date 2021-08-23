@@ -42,9 +42,12 @@ class RAFTER(nn.Module):
             args.corr_radius = 4
         print("Lookup radius: %d" %args.corr_radius)
         
-        if args.corr_norm_type == 'local':
+        self.do_corr_global_norm = (args.corr_norm_type == 'global')
+        self.do_corr_local_norm  = (args.corr_norm_type == 'local')
+        
+        if self.do_corr_local_norm:
             neighborhood_size = (2 * args.corr_radius + 1) ** 2 * 4
-            self.corr_layernorm = nn.LayerNorm(neighborhood_size, elementwise_affine=False)
+            self.corr_localnorm = nn.LayerNorm(neighborhood_size, elementwise_affine=False)
             
         if args.rafter:
             self.inter_trans_config = SETransConfig()
@@ -59,7 +62,7 @@ class RAFTER(nn.Module):
             print("inter-frame trans config:\n{}".format(self.inter_trans_config.__dict__))
             
             self.corr_fn = TransCorrBlock(self.inter_trans_config, radius=self.args.corr_radius,
-                                          do_corr_norm=(args.corr_norm_type == 'global'))
+                                          do_corr_global_norm=self.do_corr_global_norm)
             
         # feature network, context network, and update block
         self.fnet = BasicEncoder(output_dim=256, norm_fn='instance', dropout=args.dropout)
@@ -171,10 +174,10 @@ class RAFTER(nn.Module):
             # corr: [6, 324, 50, 90]. 324: neighbors. 
             # radius = 4 -> neighbor points = (4*2+1)^2 = 81. Upsize x4 -> 324.
             corr = self.corr_fn(coords1)  # index correlation volume
-            if self.args.corr_norm_type == 'local':
+            if self.do_corr_local_norm:
                 B, NB, H, W = corr.shape
                 corr_3d = corr.view(B, NB, H*W).permute(0, 2, 1)
-                corr_normed = self.corr_layernorm(corr_3d)
+                corr_normed = self.corr_localnorm(corr_3d)
                 corr = corr_normed.permute(0, 2, 1).view(B, NB, H, W)
             
             flow = coords1 - coords0
