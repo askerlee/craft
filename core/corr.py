@@ -152,7 +152,10 @@ class TransCorrBlock(CorrBlock, nn.Module):
         # corr: [1, 1, 7040, 7040]
         corr = self.setrans(vispos1, vispos2)
         if self.do_corr_norm:
-            corr = F.layer_norm(corr, (corr.shape[2:].numel(),), eps=1e-12)
+            B, C, H, W = corr.shape
+            corr_3d = corr.view(B, C, H*W)
+            corr_normed = F.layer_norm( corr_3d, (corr_3d.shape[2],), eps=1e-12 )
+            corr = corr_normed.view(B, C, H, W)
                 
         corr = corr.view(batch, ht, wd, 1, ht, wd)
         return corr

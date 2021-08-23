@@ -173,8 +173,8 @@ class RAFTER(nn.Module):
             corr = self.corr_fn(coords1)  # index correlation volume
             if self.args.corr_norm_type == 'local':
                 B, NB, H, W = corr.shape
-                corr_1d = corr.view(B, NB, H*W).permute(0, 2, 1)
-                corr_normed = self.corr_layernorm(corr_1d)
+                corr_3d = corr.view(B, NB, H*W).permute(0, 2, 1)
+                corr_normed = self.corr_layernorm(corr_3d)
                 corr = corr_normed.permute(0, 2, 1).view(B, NB, H, W)
             
             flow = coords1 - coords0
