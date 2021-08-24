@@ -191,11 +191,12 @@ def train(model, train_loader, optimizer, scheduler, logger, scaler, args):
 
         # Validate
         if logger.total_steps % args.val_freq == args.val_freq - 1:
+            PATH = args.output + f'/{logger.total_steps+1}_{args.name}.pth'
+            torch.save(model.state_dict(), PATH)
+
             validate(model, args, logger)
             plot_train(logger, args)
             plot_val(logger, args)
-            PATH = args.output + f'/{logger.total_steps+1}_{args.name}.pth'
-            torch.save(model.state_dict(), PATH)
 
         if logger.total_steps >= args.num_steps:
             break
