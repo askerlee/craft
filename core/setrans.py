@@ -53,30 +53,31 @@ class SETransConfig(object):
         self.tie_qk_scheme = 'shared'           # shared, loose, or none.
         self.mid_type      = 'shared'           # shared, private, or none.
         self.trans_output_type  = 'private'     # shared or private.
+        self.act_fun = F.gelu
+        
+        self.attn_clip = 100
+        self.attn_diag_cycles = 800
+        self.base_initializer_range = 0.02
         
         self.qk_have_bias = False
         # Without the bias term, V projection often performs better.
         self.v_has_bias = False
-        self.out_attn_probs_only    = False
-        self.out_attn_scores_only   = False
-        
-        # Pooling settings
-        self.pool_modes_feat  = 'softmax'   # softmax, max, mean, or none. With [] means keepdim=True.
-        self.act_fun = F.gelu        
-        self.attn_clip = 100
-        self.attn_diag_cycles = 1000
-        self.base_initializer_range = 0.02
         # Add an identity matrix (*0.02*query_idbias_scale) to query/key weights
         # to make a bias towards identity mapping.
         # Set to 0 to disable the identity bias.
         self.query_idbias_scale = 10
         self.feattrans_lin1_idbias_scale = 10
 
+        # Pooling settings
+        self.pool_modes_feat  = 'softmax'   # softmax, max, mean, or none. With [] means keepdim=True.
+
         # Randomness settings
         self.hidden_dropout_prob = 0.1
         self.attention_probs_dropout_prob = 0.2
         self.ablate_pos_embed_type  = False
         self.ablate_multihead       = False
+        self.out_attn_probs_only    = False
+        self.out_attn_scores_only   = False
         
     def set_backbone_type(self, args):
         if self.try_assign(args, 'backbone_type'):
@@ -556,20 +557,25 @@ class CrossAttVisPosTrans(nn.Module):
         self.config = config
         self.setrans = CrossAttFeatTrans(self.config, name)
         self.vispos_encoder = SETransInputFeatEncoder(self.config)
-
+        self.out_attn_only = config.out_attn_scores_only or config.out_attn_probs_only
+        
     def forward(self, x):
         coords = gen_all_indices(x.shape[2:], device=x.device)
         coords = coords.unsqueeze(0).repeat(x.shape[0], 1, 1, 1)
         
         x_vispos = self.vispos_encoder(x, coords)
-        # if out_attn_scores_only/out_attn_probs_only, output attention matrix is in the shape of (query unit number, key unit number)
+        # if out_attn_scores_only/out_attn_probs_only, 
+        # x_trans is an attention matrix in the shape of (query unit number, key unit number)
         # otherwise, output features are in the same shape as the query features.
         # key features are recombined to get new query features by matmul(attention_probs, V(key features))
         #             frame1 frame2
         # corr: [1, 1, 7040, 7040]
-        
-        corr = self.setrans(x_vispos)
-        return corr
+        # x_vispos: [B0, num_voxels, 256]
+        x_trans = self.setrans(x_vispos)
+        if not self.out_attn_only:
+            x_trans = x_trans.permute(0, 2, 1).reshape(x.shape)
+            
+        return x_trans
 
 # =================================== SETrans BackBone Components ==============================#
 
@@ -614,6 +620,7 @@ class SETransInputFeatEncoder(nn.Module):
         elif config.ablate_pos_embed_type == 'zero':
             self.pos_embedder = ZeroEmbedder(self.pos_embed_dim)
 
+    # return: [B0, num_voxels, 256]
     def forward(self, vis_feat, voxels_pos):
         # vis_feat:  [8, 256, 46, 62]
         # voxels_pos: [8, 46, 62, 2]

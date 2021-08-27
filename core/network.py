@@ -53,10 +53,11 @@ class RAFTER(nn.Module):
             self.inter_trans_config = SETransConfig()
             self.inter_trans_config.update_config(args)
             self.inter_trans_config.in_feat_dim = 256
-            self.inter_trans_config.feat_dim  = 256
+            self.inter_trans_config.feat_dim    = 256
             self.inter_trans_config.out_attn_scores_only    = True
             self.inter_trans_config.attn_diag_cycles = 1000
-            self.inter_trans_config.qk_have_bias = args.inter_qk_have_bias
+            self.inter_trans_config.num_modes        = args.inter_num_modes
+            self.inter_trans_config.qk_have_bias     = args.inter_qk_have_bias
             self.inter_trans_config.pos_embed_weight = args.inter_pos_embed_weight
             self.args.inter_trans_config = self.inter_trans_config
             print("inter-frame trans config:\n{}".format(self.inter_trans_config.__dict__))
@@ -66,7 +67,10 @@ class RAFTER(nn.Module):
             
         # feature network, context network, and update block
         self.fnet = BasicEncoder(output_dim=256, norm_fn='instance', dropout=args.dropout)
-        self.cnet = BasicEncoder(output_dim=hdim + cdim, norm_fn='batch', dropout=args.dropout)
+        
+        self.use_cnet = args.use_cnet
+        if self.use_cnet:
+            self.cnet = BasicEncoder(output_dim=hdim + cdim, norm_fn='batch', dropout=args.dropout)
        
         if args.setrans:
             self.intra_trans_config = SETransConfig()
@@ -82,6 +86,7 @@ class RAFTER(nn.Module):
             self.intra_trans_config.qk_have_bias  = False
             self.intra_trans_config.out_attn_probs_only    = True
             self.intra_trans_config.attn_diag_cycles = 1000
+            self.intra_trans_config.num_modes        = args.intra_num_modes
             self.intra_trans_config.pos_embed_weight = args.intra_pos_embed_weight
             self.att = CrossAttVisPosTrans(self.intra_trans_config, "intra-frame attention")
             self.args.intra_trans_config = self.intra_trans_config
@@ -145,14 +150,18 @@ class RAFTER(nn.Module):
         if not self.args.rafter:
             self.corr_fn = CorrBlock(fmap1, fmap2, radius=self.args.corr_radius)
 
-        # run the context network
         with autocast(enabled=self.args.mixed_precision):
-            # cnet: context network to extract features from image1 only.
-            # cnet arch is the same as fnet. 
-            # fnet extracts features specifically for correlation computation.
-            # cnet_feat: extracted features focus on semantics of image1? 
-            # (semantics of each pixel, used to guess its motion?)
-            cnet_feat = self.cnet(image1)
+            if self.use_cnet:
+                # run the context network
+                # cnet: context network to extract features from image1 only.
+                # cnet arch is the same as fnet. 
+                # fnet extracts features specifically for correlation computation.
+                # cnet_feat: extracted features focus on semantics of image1? 
+                # (semantics of each pixel, used to guess its motion?)
+                cnet_feat = self.cnet(image1)
+            else:
+                cnet_feat = fmap1
+                
             # net_feat, inp_feat: [1, 128, 55, 128]
             net_feat, inp_feat = torch.split(cnet_feat, [hdim, cdim], dim=1)
             net_feat = torch.tanh(net_feat)
@@ -166,7 +175,8 @@ class RAFTER(nn.Module):
             coords1 = coords1 + flow_init
 
         if self.args.rafter:
-            self.corr_fn.update(fmap1, fmap2, coords1)
+            with autocast(enabled=self.args.mixed_precision):
+                self.corr_fn.update(fmap1, fmap2, coords1)
             
         flow_predictions = []
         for itr in range(iters):
@@ -185,7 +195,7 @@ class RAFTER(nn.Module):
                 # net_feat: hidden features of ConvGRU. 
                 # inp_feat: input  features to ConvGRU.
                 # up_mask is scaled to 0.25 of original values.
-                # update_block: BasicUpdateBlock
+                # update_block: GMAUpdateBlock
                 # In the first few iterations, delta_flow.abs().max() could be 1.3 or 0.8. Later it becomes 0.2~0.3.
                 net_feat, up_mask, delta_flow = self.update_block(net_feat, inp_feat, corr, flow, attention)
 

@@ -293,11 +293,17 @@ if __name__ == '__main__':
                         help='use position and content-wise attention')
     parser.add_argument('--num_heads', default=1, type=int,
                         help='number of heads in attention and aggregation')
+
+                        
+    parser.add_argument('--nocnet', dest='use_cnet', action='store_false', 
+                        help='Do not use cnet. Use fnet features only to save computation')
                         
     parser.add_argument('--setrans', dest='setrans', action='store_true', 
-                        help='use setrans (Squeeze-Expansion Transformer)')
-    parser.add_argument('--modes', dest='num_modes', type=int, default=4, 
-                        help='Number of modes in setrans')
+                        help='use setrans (Squeeze-Expansion Transformer) as the intra-frame attention')
+    parser.add_argument('--intermodes', dest='inter_num_modes', type=int, default=1, 
+                        help='Number of modes in inter-frame attention')
+    parser.add_argument('--intramodes', dest='intra_num_modes', type=int, default=4, 
+                        help='Number of modes in intra-frame attention')
     parser.add_argument('--rafter', dest='rafter', action='store_true', 
                         help='use rafter (Recurrent Flow Transformer)')
     # In inter-frame attention, having QK biases performs slightly better.

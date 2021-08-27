@@ -132,6 +132,7 @@ class GMAUpdateBlock(nn.Module):
             self.aggregator = Aggregate(args=self.args, dim=128, dim_head=128, heads=self.args.num_heads)
 
     def forward(self, net, inp, corr, flow, attention):
+        # encoder: BasicMotionEncoder
         # corr: [3, 676, 50, 90]
         motion_features = self.encoder(flow, corr)
         # motion_features: 128-dim

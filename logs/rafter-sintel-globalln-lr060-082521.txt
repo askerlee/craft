@@ -1,0 +1,67 @@
+python train.py --name setrans-sintel --stage sintel --validation sintel --output results/sintel/setrans --restore_ckpt results/things/setrans/setrans-things.pth --num_steps 120000 --lr 0.00006 --image_size 368 768 --wdecay 0.00001 --gamma 0.85 --gpus 0 1 --batch_size 6 --val_freq 10000 --print_freq 100 --mixed_precision --setrans --rafter --corrnorm global
+
+Time: 08252148
+Args:
+Namespace(add_noise=False, batch_size=6, clip=1.0, corr_norm_type='global', corr_radius=4, dropout=0.0, epsilon=1e-08, freeze_bn=False, gamma=0.85, gpus=[0, 1], image_size=[368, 768], inter_pos_embed_weight=0.5, inter_qk_have_bias=True, intra_pos_embed_weight=1.0, iters=12, lr=6e-05, mixed_precision=True, model_name='', name='setrans-sintel', num_heads=1, num_modes=4, num_steps=120000, output='results/sintel/setrans', position_and_content=False, position_only=False, print_freq=100, rafter=True, restore_ckpt='results/things/setrans/setrans-things.pth', setrans=True, small=False, stage='sintel', upsample_learn=False, val_freq=10000, validation=['sintel'], wdecay=1e-05)
+Lookup radius: 4
+inter-frame trans config:
+{'feat_dim': 256, 'in_feat_dim': 256, 'pos_dim': 2, 'pos_embed_weight': 0.5, 'num_modes': 4, 'tie_qk_scheme': 'shared', 'mid_type': 'shared', 'trans_output_type': 'private', 'qk_have_bias': True, 'v_has_bias': False, 'out_attn_probs_only': False, 'out_attn_scores_only': True, 'pool_modes_feat': 'softmax', 'act_fun': <function gelu at 0x7fc58423d940>, 'attn_clip': 100, 'attn_diag_cycles': 1000, 'base_initializer_range': 0.02, 'query_idbias_scale': 10, 'feattrans_lin1_idbias_scale': 10, 'hidden_dropout_prob': 0.1, 'attention_probs_dropout_prob': 0.2, 'ablate_pos_embed_type': False, 'ablate_multihead': False}
+inter-frame correlation block: in_feat_dim: 256, feat_dim: 256, modes: 4, qk_have_bias: True
+Learnable Sinusoidal positional encoding
+intra-frame attention: in_feat_dim: 128, feat_dim: 128, modes: 4, qk_have_bias: False
+Learnable Sinusoidal positional encoding
+intra-frame trans config:
+{'feat_dim': 128, 'in_feat_dim': 128, 'pos_dim': 2, 'pos_embed_weight': 1.0, 'num_modes': 4, 'tie_qk_scheme': None, 'mid_type': 'shared', 'trans_output_type': 'private', 'qk_have_bias': False, 'v_has_bias': False, 'out_attn_probs_only': True, 'out_attn_scores_only': False, 'pool_modes_feat': 'softmax', 'act_fun': <function gelu at 0x7fc58423d940>, 'attn_clip': 100, 'attn_diag_cycles': 1000, 'base_initializer_range': 0.02, 'query_idbias_scale': 10, 'feattrans_lin1_idbias_scale': 10, 'hidden_dropout_prob': 0.1, 'attention_probs_dropout_prob': 0.2, 'ablate_pos_embed_type': False, 'ablate_multihead': False, 'has_FFN': False, 'has_input_skip': True}
+Motion Aggregator: v_has_bias: False, has_FFN: False, has_input_skip: True
+Parameter Count: 5914438
+Training with 288502 image pairs
+train.py:181: FutureWarning: Non-finite norm encountered in torch.nn.utils.clip_grad_norm_; continuing anyway. Note that the default behavior will change in a future release to error out if a non-finite total norm is encountered. At that point, setting error_if_nonfinite=false will be required to retain the old behavior.
+  torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip)
+/home/li_shaohua/venv/lib/python3.8/site-packages/torch/optim/lr_scheduler.py:129: UserWarning: Detected call of `lr_scheduler.step()` before `optimizer.step()`. In PyTorch 1.1.0 and later, you should call them in the opposite order: `optimizer.step()` before `lr_scheduler.step()`.  Failure to do this will result in PyTorch skipping the first value of the learning rate schedule. See more details at https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
+  warnings.warn("Detected call of `lr_scheduler.step()` before `optimizer.step()`. "
+/home/li_shaohua/venv/lib/python3.8/site-packages/torch/optim/lr_scheduler.py:1289: UserWarning: To get the last learning rate computed by the scheduler, please use `get_last_lr()`.
+  warnings.warn("To get the last learning rate computed by the scheduler, "
+[   100,  0.0000033]     0.8221,     0.9070,     0.9291,     3.4725,    21h41m
+[   200,  0.0000043]     0.8270,     0.9104,     0.9324,     3.0420,    20h23m
+[   300,  0.0000053]     0.8283,     0.9129,     0.9355,     2.7222,    20h21m
+[   400,  0.0000062]     0.8209,     0.9051,     0.9270,     3.5897,    20h24m
+[   500,  0.0000072]     0.8328,     0.9191,     0.9406,     2.8445,    20h22m
+[   600,  0.0000081]     0.8159,     0.9025,     0.9254,     3.6138,    20h21m
+[   700,  0.0000091]     0.8179,     0.9046,     0.9275,     3.2101,    20h19m
+[   800,  0.0000101]     0.8106,     0.9019,     0.9250,     4.3091,    20h22m
+[   900,  0.0000110]     0.8097,     0.8990,     0.9230,     3.9704,    20h20m
+[  1000,  0.0000120]     0.8199,     0.9069,     0.9303,     3.0600,    20h21m
+[  1100,  0.0000129]     0.8342,     0.9163,     0.9375,     3.3658,    20h19m
+[  1200,  0.0000139]     0.8245,     0.9108,     0.9330,     3.3313,    20h18m
+[  1300,  0.0000149]     0.8200,     0.9057,     0.9287,     4.0172,    20h19m
+[  1400,  0.0000158]     0.8099,     0.9054,     0.9304,     3.1039,    20h15m
+[  1500,  0.0000168]     0.8148,     0.9005,     0.9239,     3.7562,    20h16m
+[  1600,  0.0000177]     0.8195,     0.9059,     0.9292,     3.1647,    20h16m
+[  1700,  0.0000187]     0.8265,     0.9077,     0.9304,     3.3554,    20h14m
+[  1800,  0.0000197]     0.8314,     0.9118,     0.9326,     3.3420,    20h12m
+[  1900,  0.0000206]     0.8315,     0.9130,     0.9336,     3.1731,    20h12m
+[  2000,  0.0000216]     0.8155,     0.9019,     0.9260,     3.4264,    20h11m
+[  2100,  0.0000225]     0.8268,     0.9100,     0.9320,     3.1213,    20h13m
+[  2200,  0.0000235]     0.8134,     0.9018,     0.9254,     3.4100,    20h10m
+[  2300,  0.0000245]     0.8302,     0.9125,     0.9344,     3.2334,    20h09m
+[  2400,  0.0000254]     0.8229,     0.9128,     0.9349,     2.7221,    20h07m
+[  2500,  0.0000264]     0.8290,     0.9133,     0.9347,     3.1837,    20h08m
+[  2600,  0.0000273]     0.8324,     0.9180,     0.9393,     2.5543,    20h07m
+[  2700,  0.0000283]     0.8268,     0.9117,     0.9332,     3.1981,    20h05m
+[  2800,  0.0000293]     0.8285,     0.9130,     0.9352,     2.7789,    20h01m
+[  2900,  0.0000302]     0.8386,     0.9185,     0.9393,     2.8353,    19h58m
+[  3000,  0.0000312]     0.8398,     0.9174,     0.9377,     2.7543,    19h59m
+[  3100,  0.0000321]     0.8200,     0.9071,     0.9306,     3.2491,    19h57m
+[  3200,  0.0000331]     0.8352,     0.9139,     0.9333,     3.5669,    19h55m
+[  3300,  0.0000340]     0.8289,     0.9076,     0.9294,     3.2896,    19h57m
+[  3400,  0.0000350]     0.8108,     0.9024,     0.9272,     3.8724,    19h55m
+[  3500,  0.0000360]     0.8202,     0.9033,     0.9247,     4.0232,    19h56m
+[  3600,  0.0000369]     0.8162,     0.9029,     0.9246,     3.6532,    19h53m
+[  3700,  0.0000379]     0.8147,     0.9046,     0.9298,     2.7364,    42h07m
+[  3800,  0.0000388]     0.8240,     0.9103,     0.9322,     3.2968,    46h33m
+[  3900,  0.0000398]     0.8162,     0.9031,     0.9269,     3.7084,    46h26m
+[  4000,  0.0000408]     0.8355,     0.9173,     0.9385,     2.9127,    46h23m
+[  4100,  0.0000417]     0.8176,     0.9062,     0.9296,     3.8929,    46h21m
+[  4200,  0.0000427]     0.8161,     0.9004,     0.9231,     4.1666,    46h15m
+[  4300,  0.0000436]     0.8365,     0.9207,     0.9427,     2.9284,    46h11m
+[  4400,  0.0000446]     0.8267,     0.9055,     0.9270,     3.5054,    46h00m
