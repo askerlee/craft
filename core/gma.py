@@ -2,7 +2,7 @@ import torch
 from torch import nn, einsum
 from einops import rearrange
 
-
+# max_pos_size = 160
 class RelPosEmb(nn.Module):
     def __init__(
             self,
@@ -11,23 +11,42 @@ class RelPosEmb(nn.Module):
     ):
         super().__init__()
         self.rel_height = nn.Embedding(2 * max_pos_size - 1, dim_head)
-        self.rel_width = nn.Embedding(2 * max_pos_size - 1, dim_head)
+        self.rel_width  = nn.Embedding(2 * max_pos_size - 1, dim_head)
 
         deltas = torch.arange(max_pos_size).view(1, -1) - torch.arange(max_pos_size).view(-1, 1)
+        # rel_ind[i, j] = j - i + 159.
         rel_ind = deltas + max_pos_size - 1
         self.register_buffer('rel_ind', rel_ind)
 
     def forward(self, q):
+        # q: [8, 1, 46, 62, 128]
         batch, heads, h, w, c = q.shape
+        # self.rel_ind[:h, :h]: [46, 46]
+        # self.rel_ind[:w, :w]: [62, 62]
+        # rel_ind[i,j] = j - i + 159, precomputed distance between i, j. 
+        # This assumes the input x (from which q is derived) is precisely on the grid.
+        # This is fine when we do self-attention on x.
+        # However, it will be somewhat limiting if we use RelPosEmb on cross-attention between two frames, 
+        # particularly when we use flow_init != 0 (on sintel), 
+        # we better get the positional encodings of x according to flow_init, instead of the grid of x.
+        # However, an accurate computation of the relative distances between all input units is expensive.
+        # Since values in flow_init are usually small, this inaccuracy may be negligible.
         height_emb = self.rel_height(self.rel_ind[:h, :h].reshape(-1))
-        width_emb = self.rel_width(self.rel_ind[:w, :w].reshape(-1))
+        width_emb  = self.rel_width( self.rel_ind[:w, :w].reshape(-1))
 
+        # height_emb: [46*46, 128] => [46, 46, 1,  128]
+        # width_emb:  [62*62, 128] => [62, 1,  62, 128]
+        # height_emb[i, j]: the embedding of element at (i,j) as a function of the height difference (i-j).
+        # width_emb[i, j]:  the embedding of element at (i,j) as a function of the width  difference (i-j).
         height_emb = rearrange(height_emb, '(x u) d -> x u () d', x=h)
-        width_emb = rearrange(width_emb, '(y v) d -> y () v d', y=w)
-
+        width_emb  = rearrange(width_emb,  '(y v) d -> y () v d', y=w)
+        
+        # outer product? y, uv -> y u v              b  h  x   y   d        x  u   v   d
+        # height_score: [8, 1, 46, 62, 46, 1]    <= [8, 1, 46, 62, 128] * [46, 46, 1,  128]
+        # width_score:  [8, 1, 46, 62, 1,  62]
         height_score = einsum('b h x y d, x u v d -> b h x y u v', q, height_emb)
-        width_score = einsum('b h x y d, y u v d -> b h x y u v', q, width_emb)
-
+        width_score  = einsum('b h x y d, y u v d -> b h x y u v', q, width_emb)
+        # height_score + width_score: [8, 1, 46, 62, 46, 62], 65071232 elements.
         return height_score + width_score
 
 

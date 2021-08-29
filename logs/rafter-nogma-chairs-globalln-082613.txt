@@ -1,6 +1,7 @@
 Validation Chairs EPE: 0.835051
 
 (venv) li_shaohua@DGXA100 ~/raft (master)> python3 -u train.py --name trans-chairs --stage chairs --validation chairs --gpus 0 1 --num_steps 120000 --batch_size 8 --lr 0.00025 --image_size 368 496 --wdecay 0.0001 --mixed_precision --rafter --iters 12 --corrnorm global
+
 Time: 08261309
 Args:
 Namespace(add_noise=False, batch_size=8, clip=1.0, corr_norm_type='global', corr_radius=4, dropout=0.0, epsilon=1e-08, freeze_bn=False, gamma=0.8, gpus=[0, 1], image_size=[368, 496], inter_pos_embed_weight=0.5, inter_qk_have_bias=True, intra_pos_embed_weight=1.0, iters=12, lr=0.00025, mixed_precision=True, model_name='', name='trans-chairs', num_modes=4, num_steps=120000, output='checkpoints', print_freq=100, rafter=True, restore_ckpt=None, small=False, stage='chairs', upsample_learn=False, val_freq=10000, validation=['chairs'], wdecay=0.0001)

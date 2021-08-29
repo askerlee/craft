@@ -14,7 +14,7 @@ import os.path as osp
 from utils import frame_utils
 from utils.augmentor import FlowAugmentor, SparseFlowAugmentor
 
-
+# sparse is always False.
 class FlowDataset(data.Dataset):
     def __init__(self, aug_params=None, sparse=False):
         self.augmentor = None
@@ -265,8 +265,8 @@ class HD1K(FlowDataset):
 
             seq_ix += 1
 
-
-def fetch_dataloader(args, TRAIN_DS='C+T+K+S+H'):
+# 'crop_size' = args.image_size: no cropping.
+def fetch_dataloader(args, SINTEL_TRAIN_DS='C+T+K+S+H'):
     """ Create the data loader for the corresponding training set """
 
     if args.stage == 'chairs':
@@ -285,12 +285,12 @@ def fetch_dataloader(args, TRAIN_DS='C+T+K+S+H'):
         sintel_clean = MpiSintel(aug_params, split='training', dstype='clean')
         sintel_final = MpiSintel(aug_params, split='training', dstype='final')        
 
-        if TRAIN_DS == 'C+T+K+S+H':
+        if SINTEL_TRAIN_DS == 'C+T+K+S+H':
             kitti = KITTI({'crop_size': args.image_size, 'min_scale': -0.3, 'max_scale': 0.5, 'do_flip': True})
             hd1k = HD1K({'crop_size': args.image_size, 'min_scale': -0.5, 'max_scale': 0.2, 'do_flip': True})
             train_dataset = 100*sintel_clean + 100*sintel_final + 200*kitti + 5*hd1k + things
 
-        elif TRAIN_DS == 'C+T+K/S':
+        elif SINTEL_TRAIN_DS == 'C+T+K/S':
             train_dataset = 100*sintel_clean + 100*sintel_final + things
 
     elif args.stage == 'kitti':

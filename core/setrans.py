@@ -6,6 +6,8 @@ import torch
 import torch.nn as nn
 from torch.nn import Parameter
 import torch.nn.functional as F
+from torch import einsum
+from einops import rearrange
 from setrans_ablation import RandPosEmbedder, SinuPosEmbedder, ZeroEmbedder, MultiHeadFeatTrans
 torch.set_printoptions(sci_mode=False)
 
@@ -74,7 +76,7 @@ class SETransConfig(object):
         # Randomness settings
         self.hidden_dropout_prob = 0.1
         self.attention_probs_dropout_prob = 0.2
-        self.ablate_pos_embed_type  = False
+        self.pos_embed_type  = 'lsinu'
         self.ablate_multihead       = False
         self.out_attn_probs_only    = False
         self.out_attn_scores_only   = False
@@ -102,7 +104,7 @@ class SETransConfig(object):
         self.set_backbone_type(args)
         self.try_assign(args, 'use_pretrained', 'apply_attn_stage', 'num_modes', 
                               'trans_output_type', 'mid_type', 'base_initializer_range', 
-                              'ablate_pos_embed_type', 'ablate_multihead', 'attn_clip', 'attn_diag_cycles', 
+                              'pos_embed_type', 'ablate_multihead', 'attn_clip', 'attn_diag_cycles', 
                               'tie_qk_scheme', 'feattrans_lin1_idbias_scale', 'qk_have_bias', 'v_has_bias',
                               # out_attn_probs_only/out_attn_scores_only are only True for the optical flow correlation block.
                               'out_attn_probs_only', 'out_attn_scores_only',
@@ -559,11 +561,11 @@ class CrossAttVisPosTrans(nn.Module):
         self.vispos_encoder = SETransInputFeatEncoder(self.config)
         self.out_attn_only = config.out_attn_scores_only or config.out_attn_probs_only
         
-    def forward(self, x):
+    def forward(self, x, pos_embed_weights=None):
         coords = gen_all_indices(x.shape[2:], device=x.device)
         coords = coords.unsqueeze(0).repeat(x.shape[0], 1, 1, 1)
         
-        x_vispos = self.vispos_encoder(x, coords)
+        x_vispos = self.vispos_encoder(x, coords, pos_embed_weights)
         # if out_attn_scores_only/out_attn_probs_only, 
         # x_trans is an attention matrix in the shape of (query unit number, key unit number)
         # otherwise, output features are in the same shape as the query features.
@@ -611,17 +613,17 @@ class SETransInputFeatEncoder(nn.Module):
         
         # Box position encoding. no affine, but could have bias.
         # 2 channels => 1792 channels
-        if not config.ablate_pos_embed_type:
+        if config.pos_embed_type == 'lsinu':
             self.pos_embedder = LearnSinuPosEmbedder(config.pos_dim, self.pos_embed_dim, omega=1, affine=False)
-        elif config.ablate_pos_embed_type == 'rand':
+        elif config.pos_embed_type == 'rand':
             self.pos_embedder = RandPosEmbedder(config.pos_dim, self.pos_embed_dim, shape=(36, 36), affine=False)
-        elif config.ablate_pos_embed_type == 'sinu':
+        elif config.pos_embed_type == 'sinu':
             self.pos_embedder = SinuPosEmbedder(config.pos_dim, self.pos_embed_dim, shape=(36, 36), affine=False)
-        elif config.ablate_pos_embed_type == 'zero':
+        elif config.pos_embed_type == 'zero':
             self.pos_embedder = ZeroEmbedder(self.pos_embed_dim)
 
     # return: [B0, num_voxels, 256]
-    def forward(self, vis_feat, voxels_pos):
+    def forward(self, vis_feat, voxels_pos, pos_embed_weights=None):
         # vis_feat:  [8, 256, 46, 62]
         # voxels_pos: [8, 46, 62, 2]
         voxels_pos_normed = voxels_pos / voxels_pos.max()
@@ -631,7 +633,12 @@ class SETransInputFeatEncoder(nn.Module):
         voxels_pos_normed   = voxels_pos_normed.view(batch, ht * wd, -1)
         pos_embed           = self.pos_embedder(voxels_pos_normed)
         vis_feat            = vis_feat.view(batch, dim, ht * wd).transpose(1, 2)
-        feat_comb           = vis_feat + self.pos_embed_weight * pos_embed
+        
+        if pos_embed_weights is None:
+            feat_comb           = vis_feat + self.pos_embed_weight  * pos_embed
+        else:
+            feat_comb           = vis_feat +      pos_embed_weights * pos_embed
+            
         feat_normed         = self.comb_norm_layer(feat_comb)
         feat_normed         = self.dropout(feat_normed)
                     

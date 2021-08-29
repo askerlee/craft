@@ -85,7 +85,7 @@ def coords_grid_y_first(batch, ht, wd):
     coords = torch.stack(coords, dim=0).int()
     return coords[None].expand(batch, -1, -1, -1)
 
-
+# soft_argmax is not used anywhere.
 def soft_argmax(corr_me, B, H1, W1):
     # Implement soft argmin
     coords, feats = corr_me.decomposed_coordinates_and_features

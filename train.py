@@ -277,7 +277,7 @@ if __name__ == '__main__':
     parser.add_argument('--add_noise', action='store_true')
     parser.add_argument('--freeze_bn', action='store_true')
     parser.add_argument('--corrnorm', dest='corr_norm_type', type=str, 
-                        choices=['none', 'local', 'global'], default='none')
+                        choices=['none', 'global'], default='none')
     
     parser.add_argument('--iters', type=int, default=12)
     parser.add_argument('--val_freq', type=int, default=10000,
@@ -294,9 +294,11 @@ if __name__ == '__main__':
     parser.add_argument('--num_heads', default=1, type=int,
                         help='number of heads in attention and aggregation')
 
+    parser.add_argument('--indposw', dest='indiv_pos_embed_weight', default=False, action='store_true',
+                        help='Element-wise weighting of positional embeddings')
                         
-    parser.add_argument('--nocnet', dest='use_cnet', action='store_false', 
-                        help='Do not use cnet. Use fnet features only to save computation')
+    parser.add_argument('--pos', dest='pos_embed_type', type=str, 
+                        choices=['lsinu', 'gma'], default='lsinu')
                         
     parser.add_argument('--setrans', dest='setrans', action='store_true', 
                         help='use setrans (Squeeze-Expansion Transformer) as the intra-frame attention')

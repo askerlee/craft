@@ -43,17 +43,13 @@ class RAFTER(nn.Module):
         print("Lookup radius: %d" %args.corr_radius)
         
         self.do_corr_global_norm = (args.corr_norm_type == 'global')
-        self.do_corr_local_norm  = (args.corr_norm_type == 'local')
         
-        if self.do_corr_local_norm:
-            neighborhood_size = (2 * args.corr_radius + 1) ** 2 * 4
-            self.corr_localnorm = nn.LayerNorm(neighborhood_size, elementwise_affine=False)
-            
         if args.rafter:
             self.inter_trans_config = SETransConfig()
             self.inter_trans_config.update_config(args)
             self.inter_trans_config.in_feat_dim = 256
             self.inter_trans_config.feat_dim    = 256
+            self.inter_trans_config.max_pos_size     = 160
             self.inter_trans_config.out_attn_scores_only    = True
             self.inter_trans_config.attn_diag_cycles = 1000
             self.inter_trans_config.num_modes        = args.inter_num_modes
@@ -64,13 +60,13 @@ class RAFTER(nn.Module):
             
             self.corr_fn = TransCorrBlock(self.inter_trans_config, radius=self.args.corr_radius,
                                           do_corr_global_norm=self.do_corr_global_norm)
-            
-        # feature network, context network, and update block
-        self.fnet = BasicEncoder(output_dim=256, norm_fn='instance', dropout=args.dropout)
         
-        self.use_cnet = args.use_cnet
-        if self.use_cnet:
-            self.cnet = BasicEncoder(output_dim=hdim + cdim, norm_fn='batch', dropout=args.dropout)
+        # feature network, context network, and update block
+        # If args.indiv_pos_embed_weight, output an extra channel of positional embedding weights.
+        self.fnet = BasicEncoder(output_dim=256 + args.indiv_pos_embed_weight, 
+                                 norm_fn='instance', dropout=args.dropout)
+        
+        self.cnet = BasicEncoder(output_dim=hdim + cdim, norm_fn='batch', dropout=args.dropout)
        
         if args.setrans:
             self.intra_trans_config = SETransConfig()
@@ -147,28 +143,44 @@ class RAFTER(nn.Module):
         # correlation matrix: 7040*7040 (55*128=7040).
         fmap1 = fmap1.float()
         fmap2 = fmap2.float()
+        
+        if self.args.indiv_pos_embed_weight:
+            fmap1, f1_pos_embed_weight_score = fmap1.split((256, 1), dim=1)
+            fmap2, f2_pos_embed_weight_score = fmap2.split((256, 1), dim=1)
+            f1_pos_embed_weight = f1_pos_embed_weight_score.sigmoid()
+            f2_pos_embed_weight = f2_pos_embed_weight_score.sigmoid()
+            batch, _, height, width = f1_pos_embed_weight_score.shape
+            f1_pos_embed_weight = f1_pos_embed_weight.view(batch, height*width, 1)
+            f2_pos_embed_weight = f2_pos_embed_weight.view(batch, height*width, 1)
+        else:
+            f1_pos_embed_weight = None
+            f2_pos_embed_weight = None
+            
         if not self.args.rafter:
             self.corr_fn = CorrBlock(fmap1, fmap2, radius=self.args.corr_radius)
 
         with autocast(enabled=self.args.mixed_precision):
-            if self.use_cnet:
-                # run the context network
-                # cnet: context network to extract features from image1 only.
-                # cnet arch is the same as fnet. 
-                # fnet extracts features specifically for correlation computation.
-                # cnet_feat: extracted features focus on semantics of image1? 
-                # (semantics of each pixel, used to guess its motion?)
-                cnet_feat = self.cnet(image1)
-            else:
-                cnet_feat = fmap1
-                
+            # run the context network
+            # cnet: context network to extract features from image1 only.
+            # cnet arch is the same as fnet. 
+            # fnet extracts features specifically for correlation computation.
+            # cnet_feat: extracted features focus on semantics of image1? 
+            # (semantics of each pixel, used to guess its motion?)
+            cnet_feat = self.cnet(image1)
+            
+            # Both fnet and cnet are BasicEncoder. output is from conv (no activation function yet).
             # net_feat, inp_feat: [1, 128, 55, 128]
             net_feat, inp_feat = torch.split(cnet_feat, [hdim, cdim], dim=1)
             net_feat = torch.tanh(net_feat)
             inp_feat = torch.relu(inp_feat)
             # attention, att_c, att_p = self.att(inp_feat)
-            attention = self.att(inp_feat)
-
+            if self.args.setrans:
+                attention = self.att(inp_feat, f1_pos_embed_weight)
+            else:
+                attention = self.att(inp_feat)
+                
+        # coords0 is always fixed as original coords.
+        # coords1 is iteratively updated as coords0 + current estimated flow.
         coords0, coords1 = self.initialize_flow(image1)
 
         if flow_init is not None:
@@ -176,7 +188,10 @@ class RAFTER(nn.Module):
 
         if self.args.rafter:
             with autocast(enabled=self.args.mixed_precision):
-                self.corr_fn.update(fmap1, fmap2, coords1)
+                # only update() once, instead of dynamically updating coords1.
+                self.corr_fn.update(fmap1, fmap2, coords1, coords2=None, 
+                                    f1_pos_embed_weight=f1_pos_embed_weight, 
+                                    f2_pos_embed_weight=f2_pos_embed_weight)
             
         flow_predictions = []
         for itr in range(iters):
@@ -184,11 +199,6 @@ class RAFTER(nn.Module):
             # corr: [6, 324, 50, 90]. 324: neighbors. 
             # radius = 4 -> neighbor points = (4*2+1)^2 = 81. Upsize x4 -> 324.
             corr = self.corr_fn(coords1)  # index correlation volume
-            if self.do_corr_local_norm:
-                B, NB, H, W = corr.shape
-                corr_3d = corr.view(B, NB, H*W).permute(0, 2, 1)
-                corr_normed = self.corr_localnorm(corr_3d)
-                corr = corr_normed.permute(0, 2, 1).view(B, NB, H, W)
             
             flow = coords1 - coords0
             with autocast(enabled=self.args.mixed_precision):

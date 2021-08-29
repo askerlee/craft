@@ -1,3 +1,5 @@
+Validation Chairs EPE: 0.847778
+
 python3.8 -u train.py --name rafter-chairs-nogma --stage chairs --validation chairs --gpus 0 1 --num_steps 120000 --batch_size 8 --lr 0.00025 --image_size 368 496 --wdecay 0.0001 --mixed_precision --rafter
 Time: 08220050
 Args:

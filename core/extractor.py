@@ -165,6 +165,7 @@ class BasicEncoder(nn.Module):
     def forward(self, x):
 
         # if input is list, combine batch dimension
+        # if input is list, x = [image1, image2].
         is_list = isinstance(x, tuple) or isinstance(x, list)
         if is_list:
             batch_dim = x[0].shape[0]
