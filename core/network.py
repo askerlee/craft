@@ -24,7 +24,12 @@ except:
         def __exit__(self, *args):
             pass
 
-
+def normalize_pos_embed_weights(pos_embed_weight_score):
+    batch, _, height, width = pos_embed_weight_score.shape
+    pos_embed_weight = pos_embed_weight_score.sigmoid()
+    pos_embed_weight = pos_embed_weight.view(batch, height*width, 1)
+    return pos_embed_weight
+            
 class RAFTER(nn.Module):
     def __init__(self, args):
         super().__init__()
@@ -63,7 +68,7 @@ class RAFTER(nn.Module):
         
         # feature network, context network, and update block
         # If args.indiv_pos_embed_weight, output an extra channel of positional embedding weights.
-        self.fnet = BasicEncoder(output_dim=256 + args.indiv_pos_embed_weight, 
+        self.fnet = BasicEncoder(output_dim=256 + args.indiv_pos_embed_weight * 2, 
                                  norm_fn='instance', dropout=args.dropout)
         
         self.cnet = BasicEncoder(output_dim=hdim + cdim, norm_fn='batch', dropout=args.dropout)
@@ -145,16 +150,18 @@ class RAFTER(nn.Module):
         fmap2 = fmap2.float()
         
         if self.args.indiv_pos_embed_weight:
-            fmap1, f1_pos_embed_weight_score = fmap1.split((256, 1), dim=1)
-            fmap2, f2_pos_embed_weight_score = fmap2.split((256, 1), dim=1)
-            f1_pos_embed_weight = f1_pos_embed_weight_score.sigmoid()
-            f2_pos_embed_weight = f2_pos_embed_weight_score.sigmoid()
-            batch, _, height, width = f1_pos_embed_weight_score.shape
-            f1_pos_embed_weight = f1_pos_embed_weight.view(batch, height*width, 1)
-            f2_pos_embed_weight = f2_pos_embed_weight.view(batch, height*width, 1)
+            fmap1, f1_inter_pew, f1_intra_pew = fmap1.split((256, 1, 1), dim=1)
+            fmap2, f2_inter_pew, f2_intra_pew = fmap2.split((256, 1, 1), dim=1)
+            f1_inter_pew = normalize_pos_embed_weights(f1_inter_pew)
+            f1_intra_pew = normalize_pos_embed_weights(f1_intra_pew)
+            f2_inter_pew = normalize_pos_embed_weights(f2_inter_pew)
+            # f2_intra_pew is not used later.
+            f2_intra_pew = normalize_pos_embed_weights(f2_intra_pew)    
         else:
-            f1_pos_embed_weight = None
-            f2_pos_embed_weight = None
+            f1_inter_pew = None
+            f1_intra_pew = None
+            f2_inter_pew = None
+            f2_intra_pew = None
             
         if not self.args.rafter:
             self.corr_fn = CorrBlock(fmap1, fmap2, radius=self.args.corr_radius)
@@ -175,7 +182,7 @@ class RAFTER(nn.Module):
             inp_feat = torch.relu(inp_feat)
             # attention, att_c, att_p = self.att(inp_feat)
             if self.args.setrans:
-                attention = self.att(inp_feat, f1_pos_embed_weight)
+                attention = self.att(inp_feat, f1_intra_pew)
             else:
                 attention = self.att(inp_feat)
                 
@@ -190,8 +197,8 @@ class RAFTER(nn.Module):
             with autocast(enabled=self.args.mixed_precision):
                 # only update() once, instead of dynamically updating coords1.
                 self.corr_fn.update(fmap1, fmap2, coords1, coords2=None, 
-                                    f1_pos_embed_weight=f1_pos_embed_weight, 
-                                    f2_pos_embed_weight=f2_pos_embed_weight)
+                                    f1_pos_embed_weight=f1_inter_pew, 
+                                    f2_pos_embed_weight=f2_inter_pew)
             
         flow_predictions = []
         for itr in range(iters):
