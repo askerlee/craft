@@ -614,7 +614,7 @@ class SETransInputFeatEncoder(nn.Module):
         self.comb_norm_layer  = nn.LayerNorm(self.feat_dim, eps=1e-12, elementwise_affine=False)
         self.pos_embed_weight = config.pos_embed_weight
         self.perturb_pew      = config.perturb_pew
-        self.perturb_pew_range  = self.pos_embed_weight * 0.3
+        self.perturb_pew_range  = self.pos_embed_weight * 0.2
         print("Positional embedding weight perturbation: {:.3}".format(self.perturb_pew_range))
         
         # Box position encoding. no affine, but could have bias.
