@@ -405,13 +405,17 @@ if __name__ == '__main__':
     parser.add_argument('--no_residual', default=False, action='store_true',
                         help='Remove residual connection. Do not add local features with the aggregated features.')
     parser.add_argument('--radius', dest='corr_radius', type=int, default=4)    
+
+    parser.add_argument('--pos', dest='pos_embed_type', type=str, 
+                        choices=['lsinu', 'hwadd'], default='lsinu')
     parser.add_argument('--corrnorm', dest='corr_norm_type', type=str, 
                         choices=['none', 'local', 'global'], default='none')
-    
     parser.add_argument('--setrans', dest='setrans', action='store_true', 
                         help='use setrans (Squeeze-Expansion Transformer)')
-    parser.add_argument('--modes', dest='num_modes', type=int, default=4, 
-                        help='Number of modes in setrans')
+    parser.add_argument('--intermodes', dest='inter_num_modes', type=int, default=1, 
+                        help='Number of modes in inter-frame attention')
+    parser.add_argument('--intramodes', dest='intra_num_modes', type=int, default=4, 
+                        help='Number of modes in intra-frame attention')
     parser.add_argument('--rafter', dest='rafter', action='store_true', 
                         help='use rafter (Recurrent All-Pairs Field Transformer)')
     # In inter-frame attention, having QK biases performs slightly better.

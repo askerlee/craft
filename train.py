@@ -276,8 +276,6 @@ if __name__ == '__main__':
     parser.add_argument('--gamma', type=float, default=0.8, help='exponential weighting')
     parser.add_argument('--add_noise', action='store_true')
     parser.add_argument('--freeze_bn', action='store_true')
-    parser.add_argument('--corrnorm', dest='corr_norm_type', type=str, 
-                        choices=['none', 'global'], default='none')
     
     parser.add_argument('--iters', type=int, default=12)
     parser.add_argument('--val_freq', type=int, default=10000,
@@ -294,12 +292,13 @@ if __name__ == '__main__':
     parser.add_argument('--num_heads', default=1, type=int,
                         help='number of heads in attention and aggregation')
 
-    parser.add_argument('--indposw', dest='indiv_pos_embed_weight', default=False, action='store_true',
-                        help='Element-wise weighting of positional embeddings')
+    parser.add_argument('--perturbpew', dest='perturb_pos_embed_weight', action='store_true', 
+                        help='Add random noise to pos_embed_weight during training')
                         
     parser.add_argument('--pos', dest='pos_embed_type', type=str, 
                         choices=['lsinu', 'gma'], default='lsinu')
-                        
+    parser.add_argument('--corrnorm', dest='corr_norm_type', type=str, 
+                        choices=['none', 'global'], default='none')
     parser.add_argument('--setrans', dest='setrans', action='store_true', 
                         help='use setrans (Squeeze-Expansion Transformer) as the intra-frame attention')
     parser.add_argument('--intermodes', dest='inter_num_modes', type=int, default=1, 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-python evaluate.py --model checkpoints/gma-chairs.pth --dataset chairs
-python evaluate.py --model checkpoints/gma-things.pth --dataset sintel
-python evaluate.py --model checkpoints/gma-sintel.pth --dataset sintel
-python evaluate.py --model checkpoints/gma-kitti.pth --dataset kitti
+python evaluate.py --dataset chairs --model checkpoints/gma-chairs.pth
+python evaluate.py --dataset sintel --model checkpoints/gma-things.pth
+python evaluate.py --dataset sintel --model checkpoints/gma-sintel.pth
+python evaluate.py --dataset kitti --model checkpoints/gma-kitti.pth

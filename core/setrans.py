@@ -1,6 +1,7 @@
 import math
 import numpy as np
 import copy
+import random
 
 import torch
 import torch.nn as nn
@@ -47,6 +48,8 @@ class SETransConfig(object):
 
         self.pos_dim            = 2
         self.pos_embed_weight   = 1
+        # Add random noise to pos_embed_weight during training.
+        self.perturb_pew        = False
         # Architecture settings
         # Number of modes in the expansion attention block.
         # When doing ablation study of multi-head, num_modes means num_heads, 
@@ -561,11 +564,11 @@ class CrossAttVisPosTrans(nn.Module):
         self.vispos_encoder = SETransInputFeatEncoder(self.config)
         self.out_attn_only = config.out_attn_scores_only or config.out_attn_probs_only
         
-    def forward(self, x, pos_embed_weights=None):
+    def forward(self, x):
         coords = gen_all_indices(x.shape[2:], device=x.device)
         coords = coords.unsqueeze(0).repeat(x.shape[0], 1, 1, 1)
         
-        x_vispos = self.vispos_encoder(x, coords, pos_embed_weights)
+        x_vispos = self.vispos_encoder(x, coords)
         # if out_attn_scores_only/out_attn_probs_only, 
         # x_trans is an attention matrix in the shape of (query unit number, key unit number)
         # otherwise, output features are in the same shape as the query features.
@@ -610,6 +613,8 @@ class SETransInputFeatEncoder(nn.Module):
         self.dropout          = nn.Dropout(config.hidden_dropout_prob)
         self.comb_norm_layer  = nn.LayerNorm(self.feat_dim, eps=1e-12, elementwise_affine=False)
         self.pos_embed_weight = config.pos_embed_weight
+        self.perturb_pew      = config.perturb_pew
+        self.perturb_pew_range  = self.pos_embed_weight * 0.3
         
         # Box position encoding. no affine, but could have bias.
         # 2 channels => 1792 channels
@@ -623,7 +628,7 @@ class SETransInputFeatEncoder(nn.Module):
             self.pos_embedder = ZeroEmbedder(self.pos_embed_dim)
 
     # return: [B0, num_voxels, 256]
-    def forward(self, vis_feat, voxels_pos, pos_embed_weights=None):
+    def forward(self, vis_feat, voxels_pos):
         # vis_feat:  [8, 256, 46, 62]
         # voxels_pos: [8, 46, 62, 2]
         voxels_pos_normed = voxels_pos / voxels_pos.max()
@@ -634,10 +639,11 @@ class SETransInputFeatEncoder(nn.Module):
         pos_embed           = self.pos_embedder(voxels_pos_normed)
         vis_feat            = vis_feat.view(batch, dim, ht * wd).transpose(1, 2)
         
-        if pos_embed_weights is None:
-            feat_comb           = vis_feat + self.pos_embed_weight  * pos_embed
+        if self.perturb_pew and self.training:
+            pew_noise = random.uniform(-self.perturb_pew_range, self.perturb_pew_range)
         else:
-            feat_comb           = vis_feat +      pos_embed_weights * pos_embed
+            pew_noise = 0
+        feat_comb           = vis_feat + (self.pos_embed_weight + pew_noise) * pos_embed
             
         feat_normed         = self.comb_norm_layer(feat_comb)
         feat_normed         = self.dropout(feat_normed)
