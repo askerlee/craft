@@ -69,7 +69,10 @@ class Attention(nn.Module):
         self.to_qk = nn.Conv2d(dim, inner_dim * 2, 1, bias=False)
 
         self.pos_emb = RelPosEmb(max_pos_size, dim_head)
-
+        self.perturb_pos_embed_weight       = args.perturb_pos_embed_weight
+        self.pos_embed_weight               = 1.0
+        self.perturb_pos_embed_weight_range = self.pos_embed_weight * 0.2
+        
     def forward(self, fmap):
         heads, b, c, h, w = self.heads, *fmap.shape
 
@@ -84,7 +87,14 @@ class Attention(nn.Module):
         elif self.args.position_and_content:
             sim_content = einsum('b h x y d, b h u v d -> b h x y u v', q, k)
             sim_pos = self.pos_emb(q)
-            sim = sim_content + sim_pos
+            
+            if self.perturb_pos_embed_weight and self.training:
+                pew_noise = random.uniform(-self.perturb_pos_embed_weight_range, 
+                                            self.perturb_pos_embed_weight_range)
+            else:
+                pew_noise = 0
+                
+            sim = sim_content + (self.pos_embed_weight + pew_noise) * sim_pos
 
         else:
             sim = einsum('b h x y d, b h u v d -> b h x y u v', q, k)

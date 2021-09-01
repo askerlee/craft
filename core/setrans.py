@@ -642,9 +642,11 @@ class SETransInputFeatEncoder(nn.Module):
         vis_feat            = vis_feat.view(batch, dim, ht * wd).transpose(1, 2)
         
         if self.perturb_pos_embed_weight and self.training:
-            pew_noise = random.uniform(-self.perturb_pos_embed_weight_range, self.perturb_pos_embed_weight_range)
+            pew_noise = random.uniform(-self.perturb_pos_embed_weight_range, 
+                                        self.perturb_pos_embed_weight_range)
         else:
             pew_noise = 0
+            
         feat_comb           = vis_feat + (self.pos_embed_weight + pew_noise) * pos_embed
             
         feat_normed         = self.comb_norm_layer(feat_comb)
