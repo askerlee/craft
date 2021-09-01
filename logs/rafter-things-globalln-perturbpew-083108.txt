@@ -1,6 +1,14 @@
 Validation (clean) EPE: 1.402257, 1px: 0.900650, 3px: 0.956539, 5px: 0.968892
 Validation (final) EPE: 2.686828, 1px: 0.849965, 3px: 0.917530, 5px: 0.936884
 
+Using evaluate.py:
+Validation (clean) EPE: 1.395549, 1px: 0.900644, 3px: 0.956567, 5px: 0.968893
+Validation (final) EPE: 2.680318, 1px: 0.850000, 3px: 0.917726, 5px: 0.937039
+
+Validation (frames_cleanpass) EPE: 3.026996, 1px: 0.823169, 3px: 0.904625, 5px: 0.926911
+Validation (frames_finalpass) EPE: 2.800991, 1px: 0.820804, 3px: 0.904253, 5px: 0.927572
+
+
 env CUDA_VISIBLE_DEVICES=2,3 python train.py --name setrans-things --stage things --validation sintel --output results/things/setrans --restore_ckpt results/chairs/setrans/setrans-chairs.pth --num_steps 120000 --lr 0.000125 --image_size 400 720 --wdecay 0.0001 --gpus 0 1 --batch_size 6 --val_freq 10000 --print_freq 100 --mixed_precision --setrans --rafter --corrnorm global --perturbpew
 
 Time: 08310836

@@ -426,6 +426,8 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
 
+    print("Args:\n{}".format(args))
+    
     if args.dataset == 'separate':
         separate_inout_sintel_occ()
         sys.exit()
