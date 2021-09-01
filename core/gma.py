@@ -72,6 +72,8 @@ class Attention(nn.Module):
         self.perturb_pos_embed_weight       = args.perturb_pos_embed_weight
         self.pos_embed_weight               = 1.0
         self.perturb_pos_embed_weight_range = self.pos_embed_weight * 0.2
+        if args.position_and_content and self.perturb_pos_embed_weight and self.training:
+            print("Positional embedding weight perturbation: {:.3}".format(self.perturb_pos_embed_weight_range))
         
     def forward(self, fmap):
         heads, b, c, h, w = self.heads, *fmap.shape
