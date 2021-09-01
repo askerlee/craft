@@ -87,7 +87,6 @@ class RAFTER(nn.Module):
             self.intra_trans_config.attn_diag_cycles = 1000
             self.intra_trans_config.num_modes        = args.intra_num_modes
             self.intra_trans_config.pos_embed_weight = args.intra_pos_embed_weight
-            self.intra_trans_config.perturb_pew      = args.perturb_pos_embed_weight
             self.att = CrossAttVisPosTrans(self.intra_trans_config, "intra-frame attention")
             self.args.intra_trans_config = self.intra_trans_config
             print("intra-frame trans config:\n{}".format(self.intra_trans_config.__dict__))
