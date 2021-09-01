@@ -49,7 +49,7 @@ class SETransConfig(object):
         self.pos_dim            = 2
         self.pos_embed_weight   = 1
         # Add random noise to pos_embed_weight during training.
-        self.perturb_pew        = False
+        self.perturb_pos_embed_weight   = 0
         # Architecture settings
         # Number of modes in the expansion attention block.
         # When doing ablation study of multi-head, num_modes means num_heads, 
@@ -82,6 +82,7 @@ class SETransConfig(object):
         self.pos_embed_type  = 'lsinu'
         self.ablate_multihead       = False
         self.out_attn_probs_only    = False
+        # When out_attn_scores_only, dropout is not applied to attention scores.
         self.out_attn_scores_only   = False
         
     def set_backbone_type(self, args):
@@ -111,7 +112,7 @@ class SETransConfig(object):
                               'tie_qk_scheme', 'feattrans_lin1_idbias_scale', 'qk_have_bias', 'v_has_bias',
                               # out_attn_probs_only/out_attn_scores_only are only True for the optical flow correlation block.
                               'out_attn_probs_only', 'out_attn_scores_only',
-                              'in_feat_dim')
+                              'in_feat_dim', 'perturb_pos_embed_weight')
         
         if self.try_assign(args, 'out_feat_dim'):
             self.feat_dim   = self.out_feat_dim
@@ -531,7 +532,6 @@ class CrossAttFeatTrans(SETransInitWeights):
         # Normalize the attention scores to probabilities.
         attention_probs = nn.functional.softmax(attention_scores, dim=-1)
 
-        # When out_attn_scores_only, att_dropout() is not applied (if applied, slightly hurt performance?)
         # lucidrains doesn't have this dropout but rwightman has. Will keep it.
         # This is actually dropping out entire tokens to attend to, which might
         # seem a bit unusual, but is taken from the original Transformer paper.
@@ -541,6 +541,7 @@ class CrossAttFeatTrans(SETransInitWeights):
             # [6, 4, 4500, 4500]
             return attention_probs
 
+        # When out_attn_scores_only, dropout is not applied to attention scores.
         elif self.out_attn_scores_only:
             if self.num_modes > 1:
                 if self.num_modes == 2:
@@ -613,9 +614,9 @@ class SETransInputFeatEncoder(nn.Module):
         self.dropout          = nn.Dropout(config.hidden_dropout_prob)
         self.comb_norm_layer  = nn.LayerNorm(self.feat_dim, eps=1e-12, elementwise_affine=False)
         self.pos_embed_weight = config.pos_embed_weight
-        self.perturb_pew      = config.perturb_pew
-        self.perturb_pew_range  = self.pos_embed_weight * 0.2
-        print("Positional embedding weight perturbation: {:.3}".format(self.perturb_pew_range))
+        self.perturb_pos_embed_weight        = config.perturb_pos_embed_weight
+        self.perturb_pos_embed_weight_range  = self.pos_embed_weight * 0.2
+        print("Positional embedding weight perturbation: {:.3}".format(self.perturb_pos_embed_weight_range))
         
         # Box position encoding. no affine, but could have bias.
         # 2 channels => 1792 channels
@@ -640,8 +641,8 @@ class SETransInputFeatEncoder(nn.Module):
         pos_embed           = self.pos_embedder(voxels_pos_normed)
         vis_feat            = vis_feat.view(batch, dim, ht * wd).transpose(1, 2)
         
-        if self.perturb_pew and self.training:
-            pew_noise = random.uniform(-self.perturb_pew_range, self.perturb_pew_range)
+        if self.perturb_pos_embed_weight and self.training:
+            pew_noise = random.uniform(-self.perturb_pos_embed_weight_range, self.perturb_pos_embed_weight_range)
         else:
             pew_noise = 0
         feat_comb           = vis_feat + (self.pos_embed_weight + pew_noise) * pos_embed

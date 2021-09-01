@@ -61,7 +61,6 @@ class RAFTER(nn.Module):
             self.inter_trans_config.num_modes        = args.inter_num_modes
             self.inter_trans_config.qk_have_bias     = args.inter_qk_have_bias
             self.inter_trans_config.pos_embed_weight = args.inter_pos_embed_weight
-            self.inter_trans_config.perturb_pew      = args.perturb_pos_embed_weight
             self.args.inter_trans_config = self.inter_trans_config
             print("inter-frame trans config:\n{}".format(self.inter_trans_config.__dict__))
             
