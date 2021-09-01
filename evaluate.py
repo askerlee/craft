@@ -394,7 +394,7 @@ if __name__ == '__main__':
                         help='only use position-wise attention')
     parser.add_argument('--position_and_content', default=False, action='store_true',
                         help='use position and content-wise attention')
-    parser.add_argument('--mixed_precision', default=True, help='use mixed precision')
+    parser.add_argument('--mixed_precision', type=bool, default=True, help='use mixed precision')
     parser.add_argument('--model_name')
 
     # Ablations
