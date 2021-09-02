@@ -46,10 +46,13 @@ class SETransConfig(object):
         # self.set_backbone_type(self.backbone_type)
         # self.use_pretrained = True        
 
+        # Positional encoding settings.
         self.pos_dim            = 2
         self.pos_embed_weight   = 1
-        # Add random noise to pos_embed_weight during training.
-        self.perturb_pos_embed_weight   = 0
+        # If perturb_pew_range > 0, add random noise to pos_embed_weight during training.
+        # perturb_pew_range: the scale of the added random noise (relative to pos_embed_weight)
+        self.perturb_pew_range  = 0
+        
         # Architecture settings
         # Number of modes in the expansion attention block.
         # When doing ablation study of multi-head, num_modes means num_heads, 
@@ -112,7 +115,7 @@ class SETransConfig(object):
                               'tie_qk_scheme', 'feattrans_lin1_idbias_scale', 'qk_have_bias', 'v_has_bias',
                               # out_attn_probs_only/out_attn_scores_only are only True for the optical flow correlation block.
                               'out_attn_probs_only', 'out_attn_scores_only',
-                              'in_feat_dim', 'perturb_pos_embed_weight')
+                              'in_feat_dim', 'perturb_pew_range')
         
         if self.try_assign(args, 'out_feat_dim'):
             self.feat_dim   = self.out_feat_dim
@@ -614,9 +617,8 @@ class SETransInputFeatEncoder(nn.Module):
         self.dropout          = nn.Dropout(config.hidden_dropout_prob)
         self.comb_norm_layer  = nn.LayerNorm(self.feat_dim, eps=1e-12, elementwise_affine=False)
         self.pos_embed_weight = config.pos_embed_weight
-        self.perturb_pos_embed_weight        = config.perturb_pos_embed_weight
-        self.perturb_pos_embed_weight_range  = self.pos_embed_weight * 0.2
-        print("Positional embedding weight perturbation: {:.3}".format(self.perturb_pos_embed_weight_range))
+        self.perturb_pew_range  = self.pos_embed_weight * 0.2
+        print("Positional embedding weight perturbation: {:.3}".format(self.perturb_pew_range))
         
         # Box position encoding. no affine, but could have bias.
         # 2 channels => 1792 channels
@@ -641,9 +643,9 @@ class SETransInputFeatEncoder(nn.Module):
         pos_embed           = self.pos_embedder(voxels_pos_normed)
         vis_feat            = vis_feat.view(batch, dim, ht * wd).transpose(1, 2)
         
-        if self.perturb_pos_embed_weight and self.training:
-            pew_noise = random.uniform(-self.perturb_pos_embed_weight_range, 
-                                        self.perturb_pos_embed_weight_range)
+        if self.perturb_pew_range > 0 and self.training:
+            pew_noise = random.uniform(-self.perturb_pew_range, 
+                                        self.perturb_pew_range)
         else:
             pew_noise = 0
             

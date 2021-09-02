@@ -1,449 +1,13 @@
-Welcome to fish, the friendly interactive shell
-Type [32mhelp[m for instructions on how to use fish
-[?2004h]0;fish /home/li_shaohua/rafter[30m[m(venv) [m[32mli_shaohua[m@[33mDGXA100[m [32m~/rafter[m (main)[m> [K[43Cenv [47CCUDA_VISIBLE_DEVICES=2,3 [72Cpython [79C train.py M
-[8C--name M
-[15Csetrans-sintel M
-[30C--stage M
-[38Csintel M
-[45C--validation M
-[58Csintel M
-[65C--output M
-[74Cresults/sintel/setrans MM
+Validation (clean) EPE: 0.609179, 1px: 0.928742, 3px: 0.971994, 5px: 0.981928
+Validation (final) EPE: 1.018651, 1px: 0.893977, 3px: 0.950924, 5px: 0.967316
 
-[17C--restore_ckpt MM
+using evaluate.py:
+Validation (clean) EPE: 0.607304, 1px: 0.928771, 3px: 0.972005, 5px: 0.981930
+Validation (final) EPE: 1.023312, 1px: 0.894003, 3px: 0.950896, 5px: 0.967323
 
-[32Cresults/things/setrans/setrans-things.pth MM
+env CUDA_VISIBLE_DEVICES=2,3 python train.py --name setrans-sintel --stage sintel --validation sintel --output results/sintel/setrans --restore_ckpt results/things/setrans/setrans-things.pth --num_steps 140000 --lr 0.000125 --image_size 368 768 --wdecay 0.00001 --gamma 0.85 --gpus 0 1 --batch_size 6 --val_freq 10000 --print_freq 100 --mixed_precision --setrans --rafter --corrnorm global --perturbpew
 
-[74C--num_steps MMM
-
-
-[6C120000 MMM
-
-
-[13C--lr MMM
-
-
-[18C0.000125 MMM
-
-
-[27C--image_size MMM
-
-
-[40C368 MMM
-
-
-[44C768 MMM
-
-
-[48C--wdecay MMM
-
-
-[57C0.MMM
-
-
-[59C[90m00001 --gamma 0.85 --gpus 0 1 --batch_size 6 --val_freq 10000 --print_freq 100 --mixed_precision --setrans --rafter --corrnorm globalMMMMM
-
-
-[59C[30m[mMMM[16D[36menv[30m[m [36mCUDA_VISIBLE_DEVICES=2,3[30m[m [36mpython[30m[m [36m[4mtrain.py[30m[m [36m--name[30m[m [36msetrans-sintel[30m[m [36m--stage[30m[m [36msintel[30m[m [36m--validation[30m[m [36msintel[30m[m [36m--output[30m[m [36m[4mresults/sintel/setrans[30m[m [36m--restore_ckpt[30m[m [36m[4mresults/things/setrans/setrans-things.pth[30m[m [36m--num_steps[30m[m [36m120000[30m[m [36m--lr[30m[m [36m0.000125[30m[m [36m--image_size[30m[m [36m368[30m[m [36m768[30m[m [36m--wdecay[30m[m [36m0.[90m00001 --gamma 0.85 --MMM
-
-
-[59C[30m[m[36m00001 [90m--gamma 0.85 --MMM
-
-
-[65C[30m[m[36m--gamma [90m0.85 --MMM
-
-
-[73C[30m[m[36m0.85 [90m--MMM
-
-
-[78C[30m[m[36m--gpus [90m0 1 --batch_size 6 --val_freq 10000 --print_freq 100 --mixed_precision --seMMMM
-
-
-
-[5C[30m[m[36m0 [90m1 --batch_size 6 --val_freq 10000 --print_freq 100 --mixed_precision --seMMMM
-
-
-
-[7C[30m[m[36m1 [90m--batch_size 6 --val_freq 10000 --print_freq 100 --mixed_precision --seMMMM
-
-
-
-[9C[30m[m[36m--batch_size [90m6 --val_freq 10000 --print_freq 100 --mixed_precision --seMMMM
-
-
-
-[22C[30m[m[36m6 [90m--val_freq 10000 --print_freq 100 --mixed_precision --seMMMM
-
-
-
-[24C[30m[m[36m--val_freq [90m10000 --print_freq 100 --mixed_precision --seMMMM
-
-
-
-[35C[30m[m[36m10000 [90m--print_freq 100 --mixed_precision --seMMMM
-
-
-
-[41C[30m[m[36m--print_freq [90m100 --mixed_precision --seMMMM
-
-
-
-[54C[30m[m[36m100 [90m--mixed_precision --seMMMM
-
-
-
-[58C[30m[m[36m--mixed_precision [90m--seMMMM
-
-
-
-[76C[30m[m[36m--setrans [90m--rafter --corrnorm globalMMMMM
-
-
-
-
-[6C[30m[m[36m--rafter [90m--corrnorm globalMMMMM
-
-
-
-
-[15C[30m[m[36m--corrnorm [90mglobalMMMMM
-
-
-
-
-[26C[30m[m[36mglobal MMMMM
-
-
-
-
-[33C[30m[m[36m--perturbpewMMMMM
-
-
-
-
-[45C[30m[mMM[19C [36m--gamma[30m[m [36m0.85[30m[m [36m--
-[4C[30m[m [36m0[30m[m [36m1[30m[m [36m--batch_size[30m[m [36m6[30m[m [36m--val_freq[30m[m [36m10000[30m[m [36m--print_freq[30m[m [36m100[30m[m [36m--mixed_precision[30m[m [36m--se
-[5C[30m[m [36m--rafter[30m[m [36m--corrnorm[30m[m [36mglobal[30m[m [36m--perturbpewMMMMM
-
-
-
-
-[45C[30m[m
-[30m[m[?2004l]0;env CUDA_VISIBLE_DEVICES=2,3 python train.py --name setrans-sintel --stage sintel --validation sintel --output results/sintel/setrans --restore_ckpt results/things/setrans/setrans-things.pth --num_steps 120000 --lr 0.000125 --image_size 368 768 --wdecay 0.00001 --gamma 0.85 --gpus 0 1 --batch_size 6 --val_freq 10000 --print_freq 100 --mixed_precision --setrans --rafter --corrnorm global --perturbpew /home/li_shaohua/rafter[30m[mTime: 09010627
-Args:
-Namespace(add_noise=False, batch_size=6, clip=1.0, corr_norm_type='global', corr_radius=4, dropout=0.0, epsilon=1e-08, freeze_bn=False, gamma=0.85, gpus=[0, 1], image_size=[368, 768], inter_num_modes=1, inter_pos_embed_weight=0.5, inter_qk_have_bias=True, intra_num_modes=4, intra_pos_embed_weight=1.0, iters=12, lr=0.000125, mixed_precision=True, model_name='', name='setrans-sintel', num_heads=1, num_steps=120000, output='results/sintel/setrans', perturb_pos_embed_weight=True, pos_embed_type='lsinu', position_and_content=False, position_only=False, print_freq=100, rafter=True, restore_ckpt='results/things/setrans/setrans-things.pth', setrans=True, small=False, stage='sintel', upsample_learn=False, val_freq=10000, validation=['sintel'], wdecay=1e-05)
-Lookup radius: 4
-inter-frame trans config:
-{'feat_dim': 256, 'in_feat_dim': 256, 'pos_dim': 2, 'pos_embed_weight': 0.5, 'perturb_pew': True, 'num_modes': 1, 'tie_qk_scheme': 'shared', 'mid_type': 'shared', 'trans_output_type': 'private', 'act_fun': <function gelu at 0x7fa88c39bb80>, 'attn_clip': 100, 'attn_diag_cycles': 1000, 'base_initializer_range': 0.02, 'qk_have_bias': True, 'v_has_bias': False, 'query_idbias_scale': 10, 'feattrans_lin1_idbias_scale': 10, 'pool_modes_feat': 'softmax', 'hidden_dropout_prob': 0.1, 'attention_probs_dropout_prob': 0.2, 'pos_embed_type': 'lsinu', 'ablate_multihead': False, 'out_attn_probs_only': False, 'out_attn_scores_only': True, 'max_pos_size': 160}
-inter-frame correlation block: in_feat_dim: 256, feat_dim: 256, modes: 1, qk_have_bias: True
-Positional embedding weight perturbation: 0.1
-Learnable Sinusoidal positional encoding
-intra-frame attention: in_feat_dim: 128, feat_dim: 128, modes: 4, qk_have_bias: False
-Positional embedding weight perturbation: 0.2
-Learnable Sinusoidal positional encoding
-intra-frame trans config:
-{'feat_dim': 128, 'in_feat_dim': 128, 'pos_dim': 2, 'pos_embed_weight': 1.0, 'perturb_pew': True, 'num_modes': 4, 'tie_qk_scheme': None, 'mid_type': 'shared', 'trans_output_type': 'private', 'act_fun': <function gelu at 0x7fa88c39bb80>, 'attn_clip': 100, 'attn_diag_cycles': 1000, 'base_initializer_range': 0.02, 'qk_have_bias': False, 'v_has_bias': False, 'query_idbias_scale': 10, 'feattrans_lin1_idbias_scale': 10, 'pool_modes_feat': 'softmax', 'hidden_dropout_prob': 0.1, 'attention_probs_dropout_prob': 0.2, 'pos_embed_type': 'lsinu', 'ablate_multihead': False, 'out_attn_probs_only': True, 'out_attn_scores_only': False, 'has_FFN': False, 'has_input_skip': True}
-Motion Aggregator: v_has_bias: False, has_FFN: False, has_input_skip: True
-Parameter Count: 5914436
-Training with 288502 image pairs
-^CTraceback (most recent call last):
-  File "train.py", line 327, in <module>
-    main(args)
-  File "train.py", line 152, in main
-    train(model, train_loader, optimizer, scheduler, logger, scaler, args)
-  File "train.py", line 175, in train
-    flow_pred = model(image1, image2, iters=args.iters)
-  File "/home/li_shaohua/venv/lib/python3.8/site-packages/torch/nn/modules/module.py", line 1051, in _call_impl
-    return forward_call(*input, **kwargs)
-  File "/home/li_shaohua/venv/lib/python3.8/site-packages/torch/nn/parallel/data_parallel.py", line 168, in forward
-    outputs = self.parallel_apply(replicas, inputs, kwargs)
-  File "/home/li_shaohua/venv/lib/python3.8/site-packages/torch/nn/parallel/data_parallel.py", line 178, in parallel_apply
-    return parallel_apply(replicas, inputs, kwargs, self.device_ids[:len(replicas)])
-  File "/home/li_shaohua/venv/lib/python3.8/site-packages/torch/nn/parallel/parallel_apply.py", line 78, in parallel_apply
-    thread.join()
-  File "/usr/lib/python3.8/threading.py", line 1011, in join
-    self._wait_for_tstate_lock()
-  File "/usr/lib/python3.8/threading.py", line 1027, in _wait_for_tstate_lock
-    elif lock.acquire(block, timeout):
-KeyboardInterrupt
-[2m⏎[m                                                                               ⏎ [K[?2004h]0;fish /home/li_shaohua/rafter[30m[m(venv) [m[32mli_shaohua[m@[33mDGXA100[m [32m~/rafter[m (main)[m [m[31m[[1m[31m0[31m|[1m[31mSIGINT[m[31m][m[m> [K[54Cenv CUDA_VISIBLE_DEVICES=2,3 python train.py --name setrans-sintel --stage sintel --validation sintel --output results/sintel/setrans --restore_ckpt results/things/setrans/setrans-things.pth --num_steps 120000 --lr 0.000125 --image_size 368 768 --wdecay 0.00001 --gamma 0.85 --gpus 0 1 --batch_size 6 --val_freq 10000 --print_freq 100 --mixed_precision --setrans --rafter --corrnorm global --perturbpewMMMMM
-
-
-
-
-[56CMMMMM[36menv[30m[m [36mCUDA_VISIBLE_DEVICES=2,3[30m[m [36mpython[30m[m [36m[4mtrain.py[30m[m [36m--name[30m[m [36msetrans-sintel[30m[m [36m--stage[30m[m [36msintel[30m[m [36m--validation[30m[m [36msintel[30m[m [36m--output[30m[m [36m[4mresults/sintel/setrans[30m[m [36m--restore_ckpt[30m[m [36m[4mresults/things/setrans/setrans-things.pth[30m[m [36m--num_steps[30m[m [36m120000[30m[m [36m--lr[30m[m [36m0.000125[30m[m [36m--image_size[30m[m [36m368[30m[m [36m768[30m[m [36m--wdecay[30m[m [36m0.00001[30m[m [36m--gamma[30m[m [36m0.85[30m[m [36m--gpus[30m[m [36m0[30m[m [36m1[30m[m [36m--batch_size[30m[m [36m6[30m[m [36m--val_freq[30m[m [36m10000[30m[m [36m--print_freq[30m[m [36m100[30m[m [36m--mixed_precision[30m[m [36m--setrans[30m[m [36m--rafter[30m[m [36m--corrnorm[30m[m [36mglobal[30m[m [36m--perturbpewMMMMM
-
-
-
-
-[56C[30m[mMMMMM
-
-
-
-
-[46CMMMMM
-
-
-
-
-[46CMMMMM
-
-
-
-
-[45CMMMMM
-
-
-
-
-[43CMMMMM
-
-
-
-
-[37CMMMMM
-
-
-
-
-[28CMMMMM
-
-
-
-
-[27CMMMMM
-
-
-
-
-[25CMMMMM
-
-
-
-
-[19CMMMMM
-
-
-
-
-[18CMMMMM
-
-
-
-
-[16CMMMMM
-
-
-
-
-[9CMMMMM
-
-
-
-
-[8CMMMMM
-
-
-
-
-[6CMMMMM
-
-
-
-[77CMMMM
-
-
-
-[71CMMMM
-
-
-
-[70CMMMM
-
-
-
-[68CMMMM
-
-
-
-[65CMMMM
-
-
-
-[60CMMMM
-
-
-
-[54CMMMM
-
-
-
-[53CMMMM
-
-
-
-[51CMMMM
-
-
-
-[46CMMMM
-
-
-
-[41CMMMM
-
-
-
-[37CMMMM
-
-
-
-[36CMMMM
-
-
-
-[34CMMMM
-
-
-
-[33CMMMM
-
-
-
-[28CMMMM
-
-
-
-[22CMMMM
-
-
-
-[21CMMMM
-
-
-
-[19CMMMM
-
-
-
-[18CMMMM
-
-
-
-[16CMMMM
-
-
-
-[11CMMMM
-
-
-
-[10CMMMM
-
-
-
-[8CMMMM
-
-
-
-[6CMMMM
-
-
-
-[4CMMMM
-
-
-[78CMMM
-
-
-[77CMMM
-
-
-[75CMMM
-
-
-[70CMMM
-
-
-[68CMMM
-
-
-[61CMMM
-
-
-[60CMMM
-
-
-[58CMMM
-
-
-[55CMMM
-
-
-[51CMMM
-
-
-[46CMMM
-
-
-[40CMMM
-
-
-[39CMMM
-
-
-[37CMMM
-
-
-[31CMMM
-
-
-[29CMMM
-
-
-[26CMMM
-
-
-[25CMMM
-
-
-[23CMMM
-
-
-[22CMMM
-
-
-[21CMMM
-
-
-[20CMMM
-
-
-[19C[36m0000 [30m[m-[36m-lr [30m[m0[36m.000125 [30m[m-[36m-image_size [30m[m3[36m68 [30m[m7[36m68 [30m[m-[36m-wdecay [30m[m0[36m.00001 [30m[m-[36m-gam
-[Ca [30m[m0[36m.85 [30m[m-[36m-gpus [30m[m0[36m [30m[m1[36m [30m[m-[36m-batch_size [30m[m6[36m [30m[m-[36m-val_freq [30m[m1[36m0000 [30m[m-[36m-print_freq [30m[m1[36m00 [30m[m-[36m-mixed_precision [30m[m-[36m-setrans [30m[m-[36m-rafter [30m[m-[36m-corrnorm [30m[mg[36mlobal [30m[m-[36m-perturbpew[30m[m[KMMMMM
-
-
-[18C[4C [36m--lr[30m[m [36m0.000125[30m[m [36m--image_size[30m[m [36m368[30m[m [36m768[30m[m [36m--wdecay[30m[m [36m0.00001[30m[m [36m--gam
-[C[C[30m[m [36m0.85[30m[m [36m--gpus[30m[m [36m0[30m[m [36m1[30m[m [36m--batch_size[30m[m [36m6[30m[m [36m--val_freq[30m[m [36m10000[30m[m [36m--print_freq[30m[m [36m100[30m[m [36m--mixed_prec
-[5C[30m[m [36m--setrans[30m[m [36m--rafter[30m[m [36m--corrnorm[30m[m [36mglobal[30m[m [36m--perturbpewMMMMM
-
-
-[18C[30m[m[36m4000[30m[m0[36m --l[30m[mr[36m 0.00012[30m[m5[36m --image_siz[30m[me[36m 36[30m[m8[36m 76[30m[m8[36m --wdeca[30m[my[36m 0.0000[30m[m1[36m --ga
-[Cm[30m[ma[36m 0.8[30m[m5[36m --gpu[30m[ms[36m [30m[m0[36m [30m[m1[36m --batch_siz[30m[me[36m [30m[m6[36m --val_fre[30m[mq[36m 1000[30m[m0[36m --print_fre[30m[mq[36m 10[30m[m0[36m --mixed_precisio[30m[mn[36m --setran[30m[ms[36m --rafte[30m[mr[36m --corrnor[30m[mm[36m globa[30m[ml[36m --perturbpewMMMMM
-
-
-[19C[30m[m[3C[36m0[30m[m [36m--lr[30m[m [36m0.000125[30m[m [36m--image_size[30m[m [36m368[30m[m [36m768[30m[m [36m--wdecay[30m[m [36m0.00001[30m[m [36m--ga
-[C[Ca[30m[m [36m0.85[30m[m [36m--gpus[30m[m [36m0[30m[m [36m1[30m[m [36m--batch_size[30m[m [36m6[30m[m [36m--val_freq[30m[m [36m10000[30m[m [36m--print_freq[30m[m [36m100[30m[m [36m--mixed_pre
-[5Cn[30m[m [36m--setrans[30m[m [36m--rafter[30m[m [36m--corrnorm[30m[m [36mglobal[30m[m [36m--perturbpewMMMMM
-
-
-[19C[30m[mMMM
-
-
-
-
-[56C
-[30m[m[?2004l]0;env CUDA_VISIBLE_DEVICES=2,3 python train.py --name setrans-sintel --stage sintel --validation sintel --output results/sintel/setrans --restore_ckpt results/things/setrans/setrans-things.pth --num_steps 140000 --lr 0.000125 --image_size 368 768 --wdecay 0.00001 --gamma 0.85 --gpus 0 1 --batch_size 6 --val_freq 10000 --print_freq 100 --mixed_precision --setrans --rafter --corrnorm global --perturbpew /home/li_shaohua/rafter[30m[mTime: 09010628
+Time: 09010628
 Args:
 Namespace(add_noise=False, batch_size=6, clip=1.0, corr_norm_type='global', corr_radius=4, dropout=0.0, epsilon=1e-08, freeze_bn=False, gamma=0.85, gpus=[0, 1], image_size=[368, 768], inter_num_modes=1, inter_pos_embed_weight=0.5, inter_qk_have_bias=True, intra_num_modes=4, intra_pos_embed_weight=1.0, iters=12, lr=0.000125, mixed_precision=True, model_name='', name='setrans-sintel', num_heads=1, num_steps=140000, output='results/sintel/setrans', perturb_pos_embed_weight=True, pos_embed_type='lsinu', position_and_content=False, position_only=False, print_freq=100, rafter=True, restore_ckpt='results/things/setrans/setrans-things.pth', setrans=True, small=False, stage='sintel', upsample_learn=False, val_freq=10000, validation=['sintel'], wdecay=1e-05)
 Lookup radius: 4
@@ -954,14 +518,6 @@ Validation (final) EPE: 1.502302, 1px: 0.880377, 3px: 0.941862, 5px: 0.959263
 [ 47800,  0.0000867]     0.8472,     0.9257,     0.9459,     2.3777,    12h13m
 [ 47900,  0.0000866]     0.8353,     0.9191,     0.9426,     2.0949,    12h12m
 [ 48000,  0.0000865]     0.8482,     0.9227,     0.9418,     2.7109,    12h11m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 48100,  0.0000864]     0.8516,     0.9301,     0.9499,     2.0423,    12h14m
 [ 48200,  0.0000863]     0.8444,     0.9232,     0.9436,     2.7917,    12h11m
 [ 48300,  0.0000862]     0.8456,     0.9198,     0.9412,     2.2268,    12h11m
@@ -1453,14 +1009,6 @@ Validation (final) EPE: 1.160205, 1px: 0.889496, 3px: 0.947846, 5px: 0.964408
 [ 95900,  0.0000415]     0.8600,     0.9293,     0.9484,     2.2517,    05h52m
 [ 96000,  0.0000414]     0.8627,     0.9338,     0.9526,     1.8150,    05h51m
 [ 96100,  0.0000413]     0.8588,     0.9301,     0.9494,     1.9004,    05h50m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 96200,  0.0000412]     0.8491,     0.9239,     0.9447,     2.1080,    05h50m
 [ 96300,  0.0000411]     0.8534,     0.9267,     0.9465,     1.9908,    05h47m
 [ 96400,  0.0000410]     0.8631,     0.9346,     0.9526,     2.2538,    05h46m
@@ -1910,4 +1458,3 @@ Validation (final) EPE: 1.049096, 1px: 0.893487, 3px: 0.950611, 5px: 0.966976
 [140000,  0.0000001]     0.8620,     0.9321,     0.9503,     2.6504,    00h00m
 Validation (clean) EPE: 0.609179, 1px: 0.928742, 3px: 0.971994, 5px: 0.981928
 Validation (final) EPE: 1.018651, 1px: 0.893977, 3px: 0.950924, 5px: 0.967316
-[2m⏎[m                                                                               ⏎ [K[?2004h]0;fish /home/li_shaohua/rafter[30m[m(venv) [m[32mli_shaohua[m@[33mDGXA100[m [32m~/rafter[m (main)[m> [K[43C
