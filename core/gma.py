@@ -73,7 +73,7 @@ class Attention(nn.Module):
         self.pos_embed_weight               = 1.0
         # args.perturb_pew_range is the relative ratio. Get the absolute range here.
         self.perturb_pew_range = self.pos_embed_weight * args.perturb_pew_range
-        if args.position_and_content and self.perturb_pos_embed_weight and self.training:
+        if args.position_and_content and self.perturb_pew_range > 0 and self.training:
             print("Positional embedding weight perturbation: {:.3}".format(self.perturb_pew_range))
         
     def forward(self, fmap):
@@ -91,7 +91,7 @@ class Attention(nn.Module):
             sim_content = einsum('b h x y d, b h u v d -> b h x y u v', q, k)
             sim_pos = self.pos_emb(q)
             
-            if self.perturb_pos_embed_weight and self.training:
+            if self.perturb_pew_range > 0 and self.training:
                 pew_noise = random.uniform(-self.perturb_pew_range, 
                                             self.perturb_pew_range)
             else:
