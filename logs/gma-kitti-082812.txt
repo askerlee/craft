@@ -1,4 +1,8 @@
-Validation KITTI: 0.575419, 1.331979
+10000 Validation KITTI: 0.828580, 2.354225
+20000 Validation KITTI: 0.689108, 1.712151
+30000 Validation KITTI: 0.644050, 1.576304
+40000 Validation KITTI: 0.591942, 1.371935
+50000 Validation KITTI: 0.575419, 1.331979
 
 python train.py --name gma-kitti --stage kitti --validation kitti --output results/kitti/gma --restore_ckpt results/sintel/gma/gma-sintel.pth --num_steps 50000 --lr 0.000125 --image_size 288 960 --wdecay 0.00001 --gamma 0.85 --gpus 0 1 --batch_size 6 --val_freq 10000 --print_freq 100 --mixed_precision
 

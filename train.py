@@ -70,10 +70,8 @@ def fetch_optimizer(args, model):
     """ Create the optimizer and learning rate scheduler """
     optimizer = optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.wdecay, eps=args.epsilon)
 
-    if args.rafter:
-        pct_start = 0.05
-    else:
-        pct_start = 0.05
+    # At most 6000 warmup steps.
+    pct_start = min(0.05, 6000./args.num_steps)
         
     scheduler = optim.lr_scheduler.OneCycleLR(optimizer=optimizer, max_lr=args.lr, total_steps=args.num_steps+100,
                                               pct_start=pct_start, cycle_momentum=False, anneal_strategy='linear')
@@ -286,11 +284,11 @@ if __name__ == '__main__':
     parser.add_argument('--model_name', default='', help='specify model name')
 
     parser.add_argument('--position_only', default=False, action='store_true',
-                        help='only use position-wise attention')
+                        help='(GMA) only use position-wise attention')
     parser.add_argument('--position_and_content', default=False, action='store_true',
-                        help='use position and content-wise attention')
+                        help='(GMA) use position and content-wise attention')
     parser.add_argument('--num_heads', default=1, type=int,
-                        help='number of heads in attention and aggregation')
+                        help='(GMA) number of heads in attention and aggregation')
 
     parser.add_argument('--perturbpew', dest='perturb_pew_range', type=float, default=0.,
                         help='The range of added random noise to pos_embed_weight during training')
@@ -310,8 +308,8 @@ if __name__ == '__main__':
     # In inter-frame attention, having QK biases performs slightly better.
     parser.add_argument('--interqknobias', dest='inter_qk_have_bias', action='store_false', 
                         help='Do not use biases in the QK projections in the inter-frame attention')
-    parser.add_argument('--interpos', dest='inter_pos_embed_weight', type=float, default=0.5)
-    parser.add_argument('--intrapos', dest='intra_pos_embed_weight', type=float, default=1.0)
+    parser.add_argument('--interpew', dest='inter_pos_embed_weight', type=float, default=0.5)
+    parser.add_argument('--intrapew', dest='intra_pos_embed_weight', type=float, default=1.0)
 
     args = parser.parse_args()
 
