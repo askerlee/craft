@@ -19,7 +19,8 @@ from utils import frame_utils
 
 def save_corr(filename, corr):
     # corr = F.avg_pool2d(corr, 4, stride=4).squeeze(1).squeeze(0)
-    print("{}: {}".format(filename, list(corr.shape)))
+    print("{}: {}. mean/std: {:.5f}, {:.5f}".format(filename, list(corr.shape), 
+           corr.abs().mean(), corr.std()))
     plt.imshow(corr.data.numpy())
     plt.colorbar()
     plt.savefig(filename, dpi=1200)
@@ -92,7 +93,12 @@ if __name__ == '__main__':
         inter_corr = inter_corr.reshape(N*N, N*N)
         save_corr("{}-inter-pos-attn.pdf".format(model_sig), inter_corr)
     
-    inp_feat = torch.zeros(1, 128, N, N, device='cpu')
+    if args.setrans:
+        inp_feat = torch.zeros(1, 128, N, N, device='cpu')
+    else:
+        # GMA cannot take zero visual features (it will output all-zero attention).
+        inp_feat = torch.randn(1, 128, N, N, device='cpu').abs()
+        
     intra_corr = model.module.att(inp_feat)
     
     nhead = intra_corr.shape[1]

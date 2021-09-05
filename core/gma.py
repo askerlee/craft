@@ -98,7 +98,7 @@ class Attention(nn.Module):
                 pew_noise = 0
                 
             sim = sim_content + (self.pos_embed_weight + pew_noise) * sim_pos
-
+            
         else:
             sim = einsum('b h x y d, b h u v d -> b h x y u v', q, k)
 

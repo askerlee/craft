@@ -70,8 +70,7 @@ def fetch_optimizer(args, model):
     """ Create the optimizer and learning rate scheduler """
     optimizer = optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.wdecay, eps=args.epsilon)
 
-    # At most 6000 warmup steps.
-    pct_start = min(0.05, 6000./args.num_steps)
+    pct_start = 0.05
         
     scheduler = optim.lr_scheduler.OneCycleLR(optimizer=optimizer, max_lr=args.lr, total_steps=args.num_steps+100,
                                               pct_start=pct_start, cycle_momentum=False, anneal_strategy='linear')

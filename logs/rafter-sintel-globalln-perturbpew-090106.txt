@@ -1,5 +1,31 @@
-Validation (clean) EPE: 0.609179, 1px: 0.928742, 3px: 0.971994, 5px: 0.981928
-Validation (final) EPE: 1.018651, 1px: 0.893977, 3px: 0.950924, 5px: 0.967316
+ 10000 Validation (clean) EPE: 1.247215, 1px: 0.907281, 3px: 0.960961, 5px: 0.972659
+       Validation (final) EPE: 2.078083, 1px: 0.865760, 3px: 0.933459, 5px: 0.952192
+ 20000 Validation (clean) EPE: 0.970447, 1px: 0.910176, 3px: 0.962564, 5px: 0.974318
+       Validation (final) EPE: 1.642934, 1px: 0.872945, 3px: 0.937704, 5px: 0.955995
+ 30000 Validation (clean) EPE: 0.868538, 1px: 0.915340, 3px: 0.965042, 5px: 0.976307
+       Validation (final) EPE: 1.511824, 1px: 0.877236, 3px: 0.939993, 5px: 0.957493
+ 40000 Validation (clean) EPE: 0.847980, 1px: 0.918437, 3px: 0.966384, 5px: 0.977305
+       Validation (final) EPE: 1.502302, 1px: 0.880377, 3px: 0.941862, 5px: 0.959263
+ 50000 Validation (clean) EPE: 0.808382, 1px: 0.918686, 3px: 0.966650, 5px: 0.977524
+       Validation (final) EPE: 1.433880, 1px: 0.880439, 3px: 0.942381, 5px: 0.960071
+ 60000 Validation (clean) EPE: 0.755582, 1px: 0.920513, 3px: 0.967863, 5px: 0.978716
+       Validation (final) EPE: 1.306213, 1px: 0.883608, 3px: 0.944225, 5px: 0.961405
+ 70000 Validation (clean) EPE: 0.733687, 1px: 0.922809, 3px: 0.968675, 5px: 0.979259
+       Validation (final) EPE: 1.284180, 1px: 0.886156, 3px: 0.945828, 5px: 0.962763
+ 80000 Validation (clean) EPE: 0.730458, 1px: 0.923154, 3px: 0.968593, 5px: 0.979218
+       Validation (final) EPE: 1.182365, 1px: 0.887239, 3px: 0.946791, 5px: 0.963813
+ 90000 Validation (clean) EPE: 0.674227, 1px: 0.924680, 3px: 0.969861, 5px: 0.980272
+       Validation (final) EPE: 1.160205, 1px: 0.889496, 3px: 0.947846, 5px: 0.964408
+100000 Validation (clean) EPE: 0.710354, 1px: 0.926083, 3px: 0.970374, 5px: 0.980786
+       Validation (final) EPE: 1.109148, 1px: 0.890300, 3px: 0.948499, 5px: 0.964812
+110000 Validation (clean) EPE: 0.643991, 1px: 0.927203, 3px: 0.970999, 5px: 0.981215
+       Validation (final) EPE: 1.083570, 1px: 0.891739, 3px: 0.949702, 5px: 0.966086
+120000 Validation (clean) EPE: 0.624116, 1px: 0.927649, 3px: 0.971425, 5px: 0.981534
+       Validation (final) EPE: 1.097485, 1px: 0.892514, 3px: 0.950078, 5px: 0.966751
+130000 Validation (clean) EPE: 0.620240, 1px: 0.928602, 3px: 0.972041, 5px: 0.981925
+       Validation (final) EPE: 1.049096, 1px: 0.893487, 3px: 0.950611, 5px: 0.966976
+140000 Validation (clean) EPE: 0.609179, 1px: 0.928742, 3px: 0.971994, 5px: 0.981928
+       Validation (final) EPE: 1.018651, 1px: 0.893977, 3px: 0.950924, 5px: 0.967316
 
 using evaluate.py:
 Validation (clean) EPE: 0.607304, 1px: 0.928771, 3px: 0.972005, 5px: 0.981930
