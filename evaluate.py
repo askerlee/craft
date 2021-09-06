@@ -435,8 +435,13 @@ if __name__ == '__main__':
         sys.exit()
 
     model = torch.nn.DataParallel(RAFTER(args))
-    model.load_state_dict(torch.load(args.model))
-
+    checkpoint = torch.load(args.model)
+    if 'model' in checkpoint:
+        model.load_state_dict(checkpoint['model'])
+    else:
+        # Load old checkpoint.
+        model.load_state_dict(checkpoint)
+        
     model.cuda()
     model.eval()
 

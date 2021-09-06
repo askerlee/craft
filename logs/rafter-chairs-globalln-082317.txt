@@ -1,4 +1,15 @@
-Validation Chairs EPE: 0.764362
+ 1 Validation Chairs EPE: 1.842484
+ 2 Validation Chairs EPE: 1.331563
+ 3 Validation Chairs EPE: 1.192952
+ 4 Validation Chairs EPE: 1.076393
+ 5 Validation Chairs EPE: 0.993025
+ 6 Validation Chairs EPE: 0.943900
+ 7 Validation Chairs EPE: 0.882002
+ 8 Validation Chairs EPE: 0.881079
+ 9 Validation Chairs EPE: 0.816221
+10 Validation Chairs EPE: 0.801714
+11 Validation Chairs EPE: 0.787045
+12 Validation Chairs EPE: 0.764362
 
 python3 train.py --name setrans-chairs --stage chairs --validation chairs --output results/chairs/setrans --num_steps 120000 --lr 0.00025 --image_size 368 496 --wdecay 0.0001 --gpus 0 1 --batch_size 8 --val_freq 10000 --print_freq 100 --mixed_precision --setrans --rafter --corrnorm global
 Time: 08231749

@@ -34,6 +34,12 @@ using validate.py:
 160000  Validation (clean) EPE: 0.583696, 1px: 0.930498, 3px: 0.972972, 5px: 0.982657
         Validation (final) EPE: 0.978619, 1px: 0.896604, 3px: 0.953256, 5px: 0.968775
 
+Things:
+120000  Validation (frames_cleanpass) EPE: 3.462847, 1px: 0.818217, 3px: 0.899221, 5px: 0.921652
+        Validation (frames_finalpass) EPE: 3.559263, 1px: 0.814847, 3px: 0.897443, 5px: 0.920188
+160000  Validation (frames_cleanpass) EPE: 3.303829, 1px: 0.821797, 3px: 0.901979, 5px: 0.924049
+        Validation (frames_finalpass) EPE: 3.315021, 1px: 0.818944, 3px: 0.900707, 5px: 0.923267
+
 env CUDA_VISIBLE_DEVICES=2,3 python train.py --name setrans-sintel --stage sintel --validation sintel --output results/sintel/setrans --restore_ckpt results/things/setrans-things-warmup8k.pth --num_steps 160000 --lr 0.000125 --image_size 368 768 --wdecay 0.00001 --gamma 0.85 --gpus 0 1 --batch_size 6 --val_freq 10000 --print_freq 100 --mixed_precision --setrans --rafter --corrnorm global --perturbpew 0.2 
 
 Time: 09041049

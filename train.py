@@ -123,24 +123,49 @@ class Logger:
             self._print_training_status()
             self.running_loss_dict = {}
 
+def save_checkpoint(cp_path, model, optimizer, lr_scheduler):
+    save_state = { 'model':        model.state_dict(),
+                   'optimizer':    optimizer.state_dict(),
+                   'lr_scheduler': lr_scheduler.state_dict()
+                 }
 
+    torch.save(save_state, cp_path)
+    print(f"{cp_path} saved")
+
+def load_checkpoint(cp_path, model, optimizer, lr_scheduler):
+    checkpoint = torch.load(cp_path)
+
+    if 'model' in checkpoint:
+        msg = model.load_state_dict(checkpoint['model'], strict=False)
+    else:
+        # Load old checkpoint.
+        msg = model.load_state_dict(checkpoint, strict=False)
+
+    print(msg)            
+
+    if 'optimizer' in checkpoint and 'lr_scheduler' in checkpoint:
+        optimizer.load_state_dict(checkpoint['optimizer'])
+        lr_scheduler.load_state_dict(checkpoint['lr_scheduler'])
+        print(f"Loaded checkpoint from {cp_path}.")
+
+        
 def main(args):
 
     model = nn.DataParallel(RAFTER(args), device_ids=args.gpus)
 
     print(f"Parameter Count: {count_parameters(model)}")
 
+    train_loader = datasets.fetch_dataloader(args)
+    optimizer, scheduler = fetch_optimizer(args, model)
+
     if args.restore_ckpt is not None:
-        model.load_state_dict(torch.load(args.restore_ckpt), strict=False)
+        load_checkpoint(args.restore_ckpt, model, optimizer, scheduler)
 
     model.cuda()
     model.train()
 
     if args.freeze_bn and args.stage != 'chairs':
         model.module.freeze_bn()
-
-    train_loader = datasets.fetch_dataloader(args)
-    optimizer, scheduler = fetch_optimizer(args, model)
 
     scaler = GradScaler(enabled=args.mixed_precision)
     logger = Logger(model, scheduler, args)
@@ -153,7 +178,7 @@ def main(args):
             break
 
     PATH = args.output+f'/{args.name}.pth'
-    torch.save(model.state_dict(), PATH)
+    save_checkpoint(PATH, model, optimizer, scheduler)
     return PATH
 
 
@@ -189,8 +214,7 @@ def train(model, train_loader, optimizer, scheduler, logger, scaler, args):
         # Validate
         if logger.total_steps % args.val_freq == args.val_freq - 1:
             PATH = args.output + f'/{logger.total_steps+1}_{args.name}.pth'
-            torch.save(model.state_dict(), PATH)
-
+            save_checkpoint(PATH, model, optimizer, scheduler)
             validate(model, args, logger)
             plot_train(logger, args)
             plot_val(logger, args)

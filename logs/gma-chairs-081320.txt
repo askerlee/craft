@@ -1,4 +1,15 @@
-Validation Chairs EPE: 0.813795
+ 1 Validation Chairs EPE: 2.057700
+ 2 Validation Chairs EPE: 1.562813
+ 3 Validation Chairs EPE: 1.261380
+ 4 Validation Chairs EPE: 1.192097
+ 5 Validation Chairs EPE: 1.098331
+ 6 Validation Chairs EPE: 1.034828
+ 7 Validation Chairs EPE: 0.999268
+ 8 Validation Chairs EPE: 0.915559
+ 9 Validation Chairs EPE: 0.878293
+10 Validation Chairs EPE: 0.851846
+11 Validation Chairs EPE: 0.840951
+12 Validation Chairs EPE: 0.813795
 
 python train.py --name gma-chairs --stage chairs --validation chairs --output results/chairs/gma --num_steps 120000 --lr 0.00025 --image_size 368 496 --wdecay 0.0001 --gpus 0 1 --batch_size 8 --val_freq 10000 --print_freq 100 --mixed_precision
 

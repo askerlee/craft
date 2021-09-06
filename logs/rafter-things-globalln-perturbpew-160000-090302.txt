@@ -35,8 +35,10 @@ using validate.py:
        Validation (final) EPE: 2.657325, 1px: 0.850244, 3px: 0.917541, 5px: 0.937155
 
 Things:
-Validation (frames_cleanpass) EPE: 2.918349, 1px: 0.827850, 3px: 0.907101, 5px: 0.929184
-Validation (frames_finalpass) EPE: 2.721107, 1px: 0.825880, 3px: 0.907138, 5px: 0.929601
+120000 Validation (frames_cleanpass) EPE: 3.014300, 1px: 0.822736, 3px: 0.904201, 5px: 0.926720
+       Validation (frames_finalpass) EPE: 2.822575, 1px: 0.820534, 3px: 0.904372, 5px: 0.927661
+160000 Validation (frames_cleanpass) EPE: 2.918349, 1px: 0.827850, 3px: 0.907101, 5px: 0.929184
+       Validation (frames_finalpass) EPE: 2.721107, 1px: 0.825880, 3px: 0.907138, 5px: 0.929601
 
 env CUDA_VISIBLE_DEVICES=2,3 python train.py --name setrans-things --stage things --validation sintel --output results/things/setrans --restore_ckpt results/chairs/setrans/setrans-chairs.pth --num_steps 160000 --lr 0.000125 --image_size 400 720 --wdecay 0.0001 --gpus 0 1 --batch_size 6 --val_freq 10000 --print_freq 100 --mixed_precision --setrans --rafter --corrnorm global --perturbpew 0.2
 

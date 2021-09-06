@@ -79,15 +79,19 @@ class Attention(nn.Module):
     def forward(self, fmap):
         heads, b, c, h, w = self.heads, *fmap.shape
 
+        # q, k: [8, 128, 46, 62]
         q, k = self.to_qk(fmap).chunk(2, dim=1)
 
+        # q, k: [8, 1, 46, 62, 128]
         q, k = map(lambda t: rearrange(t, 'b (h d) x y -> b h x y d', h=heads), (q, k))
+        # Why not scale k?
         q = self.scale * q
-
+        
         if self.args.position_only:
             sim = self.pos_emb(q)
 
         elif self.args.position_and_content:
+            # [..., 46, 62, ...] . [..., 46, 62, ...] => [..., 46, 62, 46, 62]
             sim_content = einsum('b h x y d, b h u v d -> b h x y u v', q, k)
             sim_pos = self.pos_emb(q)
             
@@ -100,6 +104,7 @@ class Attention(nn.Module):
             sim = sim_content + (self.pos_embed_weight + pew_noise) * sim_pos
             
         else:
+            # sim: [8, 1, 46, 62, 46, 62]
             sim = einsum('b h x y d, b h u v d -> b h x y u v', q, k)
 
         sim = rearrange(sim, 'b h x y u v -> b h (x y) (u v)')
