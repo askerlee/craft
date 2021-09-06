@@ -75,8 +75,13 @@ if __name__ == '__main__':
     print("Args:\n{}".format(args))
     
     model = torch.nn.DataParallel(RAFTER(args))
-    model.load_state_dict(torch.load(args.model, map_location='cpu'))
-
+    checkpoint = torch.load(args.model, map_location='cpu')
+    if 'model' in checkpoint:
+        model.load_state_dict(checkpoint['model'])
+    else:
+        # Load old checkpoint.
+        model.load_state_dict(checkpoint)
+            
     model.eval()
 
     model_sig = args.model.split("/")[-1].split(".")[0]

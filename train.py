@@ -132,8 +132,8 @@ def save_checkpoint(cp_path, model, optimizer, lr_scheduler):
     torch.save(save_state, cp_path)
     print(f"{cp_path} saved")
 
-def load_checkpoint(cp_path, model, optimizer, lr_scheduler):
-    checkpoint = torch.load(cp_path)
+def load_checkpoint(args, model, optimizer, lr_scheduler):
+    checkpoint = torch.load(args.restore_ckpt)
 
     if 'model' in checkpoint:
         msg = model.load_state_dict(checkpoint['model'], strict=False)
@@ -141,12 +141,18 @@ def load_checkpoint(cp_path, model, optimizer, lr_scheduler):
         # Load old checkpoint.
         msg = model.load_state_dict(checkpoint, strict=False)
 
-    print(msg)            
+    print(f"Model checkpoint loaded from {cp_path}: {msg}.")
 
-    if 'optimizer' in checkpoint and 'lr_scheduler' in checkpoint:
+    if args.load_optimizer_state and 'optimizer' in checkpoint:
         optimizer.load_state_dict(checkpoint['optimizer'])
+        print("Optimizer state loaded.")
+    else:
+        print("Optimizer state NOT loaded.")
+    if args.load_scheduler_state and 'lr_scheduler' in checkpoint:
         lr_scheduler.load_state_dict(checkpoint['lr_scheduler'])
-        print(f"Loaded checkpoint from {cp_path}.")
+        print("Scheduler state loaded.")
+    else:
+        print("Scheduler state NOT loaded.")
 
         
 def main(args):
@@ -159,7 +165,7 @@ def main(args):
     optimizer, scheduler = fetch_optimizer(args, model)
 
     if args.restore_ckpt is not None:
-        load_checkpoint(args.restore_ckpt, model, optimizer, scheduler)
+        load_checkpoint(args, model, optimizer, scheduler)
 
     model.cuda()
     model.train()
@@ -277,8 +283,14 @@ if __name__ == '__main__':
     parser.add_argument('--stage', help="determines which dataset to use for training")
     parser.add_argument('--validation', type=str, nargs='+')
     parser.add_argument('--restore_ckpt', help="restore checkpoint")
+    parser.add_argument('--noloadopt', dest='load_optimizer_state', action='store_false', 
+                        help='Do not load optimizer state from checkpoint (default: load)')
+    parser.add_argument('--loadsched', dest='load_scheduler_state', action='store_true', 
+                        help='Load scheduler state from checkpoint (default: not load)')
+    
     parser.add_argument('--small', action='store_true', help='use small model')
-    parser.add_argument('--output', type=str, default='checkpoints', help='output directory to save checkpoints and plots')
+    parser.add_argument('--output', type=str, default='checkpoints', 
+                        help='output directory to save checkpoints and plots')
     parser.add_argument('--radius', dest='corr_radius', type=int, default=4)    
 
     parser.add_argument('--lr', type=float, default=0.00002)
