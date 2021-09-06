@@ -1,7 +1,7 @@
-# RAFTER: Recurrent Transformers for Optical Flow Estimation
+# CRAFT: Cross-Attentional Flow Transformers for Optical Flow Estimation
 This repository contains the source code for our optical flow estimation method:
 
-[RAFTER: Recurrent Transformers for Optical Flow Estimation](https://arxiv.org/abs/xxxx)<br/>
+[CRAFT: Cross-Attentional Flow Transformers for Optical Flow Estimation](https://arxiv.org/abs/xxxx)<br/>
 **Xiuchao Sui**, Shaohua Li, Yan Wu, Xinxing Xu, Kenneth Kwok<br/>
 IHPC & I2R, A*STAR, Singapore<br/>
 
