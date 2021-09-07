@@ -133,7 +133,7 @@ def save_checkpoint(cp_path, model, optimizer, lr_scheduler):
     print(f"{cp_path} saved")
 
 def load_checkpoint(args, model, optimizer, lr_scheduler):
-    checkpoint = torch.load(args.restore_ckpt)
+    checkpoint = torch.load(args.restore_ckpt, map_location='cuda')
 
     if 'model' in checkpoint:
         msg = model.load_state_dict(checkpoint['model'], strict=False)
@@ -141,7 +141,7 @@ def load_checkpoint(args, model, optimizer, lr_scheduler):
         # Load old checkpoint.
         msg = model.load_state_dict(checkpoint, strict=False)
 
-    print(f"Model checkpoint loaded from {cp_path}: {msg}.")
+    print(f"Model checkpoint loaded from {args.restore_ckpt}: {msg}.")
 
     if args.load_optimizer_state and 'optimizer' in checkpoint:
         optimizer.load_state_dict(checkpoint['optimizer'])
@@ -161,14 +161,14 @@ def main(args):
 
     print(f"Parameter Count: {count_parameters(model)}")
 
+    model.cuda()
+    model.train()
+
     train_loader = datasets.fetch_dataloader(args)
     optimizer, scheduler = fetch_optimizer(args, model)
 
     if args.restore_ckpt is not None:
         load_checkpoint(args, model, optimizer, scheduler)
-
-    model.cuda()
-    model.train()
 
     if args.freeze_bn and args.stage != 'chairs':
         model.module.freeze_bn()

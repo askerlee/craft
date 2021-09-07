@@ -16,6 +16,7 @@ from setrans import gen_all_indices
 import datasets
 from utils import flow_viz
 from utils import frame_utils
+import torchvision.transforms as transforms
 
 def save_corr(filename, corr):
     # corr = F.avg_pool2d(corr, 4, stride=4).squeeze(1).squeeze(0)
@@ -83,30 +84,57 @@ if __name__ == '__main__':
         model.load_state_dict(checkpoint)
             
     model.eval()
-
+    model = model.module()
+    
     model_sig = args.model.split("/")[-1].split(".")[0]
     
-    N = 64
-    if args.rafter:
-        fmap1 = fmap2 = torch.zeros(1, 256, N, N, device='cpu')
-        coords1 = gen_all_indices(fmap1.shape[2:], device='cpu')
-        coords1 = coords1.unsqueeze(0).repeat(fmap1.shape[0], 1, 1, 1)
-        model.module.corr_fn.update(fmap1, fmap2, coords1)
-        # corr: [N*N, 1, N, N]
-        inter_corr = model.module.corr_fn.corr_pyramid[0]
-        # corr: [4096, 4096]
-        inter_corr = inter_corr.reshape(N*N, N*N)
-        save_corr("{}-inter-pos-attn.pdf".format(model_sig), inter_corr)
+    vis_whole_pos = False
     
-    if args.setrans:
-        inp_feat = torch.zeros(1, 128, N, N, device='cpu')
-    else:
-        # GMA cannot take zero visual features (it will output all-zero attention).
-        inp_feat = torch.randn(1, 128, N, N, device='cpu').abs()
+    if vis_whole_pos:
+        N = 64
+        if args.rafter:
+            fmap1 = fmap2 = torch.zeros(1, 256, N, N, device='cpu')
+            coords1 = gen_all_indices(fmap1.shape[2:], device='cpu')
+            coords1 = coords1.unsqueeze(0).repeat(fmap1.shape[0], 1, 1, 1)
+            model.corr_fn.update(fmap1, fmap2, coords1)
+            # corr: [N*N, 1, N, N]
+            inter_corr = model.corr_fn.corr_pyramid[0]
+            # corr: [4096, 4096]
+            inter_corr = inter_corr.reshape(N*N, N*N)
+            save_corr("{}-inter-pos-attn.pdf".format(model_sig), inter_corr)
         
-    intra_corr = model.module.att(inp_feat)
+        if args.setrans:
+            inp_feat = torch.zeros(1, 128, N, N, device='cpu')
+        else:
+            # GMA cannot take zero visual features (it will output all-zero attention).
+            inp_feat = torch.randn(1, 128, N, N, device='cpu').abs()
+            
+        intra_corr = model.att(inp_feat)
+        
+        nhead = intra_corr.shape[1]
+        for i in range(nhead):
+            save_corr("{}-intra-pos-attn-{}.pdf".format(model_sig, i), intra_corr[0, i])
     
-    nhead = intra_corr.shape[1]
-    for i in range(nhead):
-        save_corr("{}-intra-pos-attn-{}.pdf".format(model_sig, i), intra_corr[0, i])
-    
+    else:
+        # (436, 1024, 3)
+        image1 = Image.open("visualization/ambush_2/frame_0001.png")
+        image2 = Image.open("visualization/ambush_2/frame_0002.png")
+        
+        data_transforms = transforms.Compose([
+                                    transforms.Resize((368, 768)),
+                                    transforms.ToTensor(),
+                                ])
+        # image: [3, 368, 768], within [0, 1]
+        image1 = data_transforms(image1)
+        image1 = 2 * image1 - 1.0
+        image2 = data_transforms(image2)
+        image2 = 2 * image2 - 1.0
+        image1 = image1.unsqueeze(0)
+        image2 = image2.unsqueeze(0)
+        with torch.no_grad():
+            fmap1, fmap2 = model.fnet([image1, image2])
+            coords0, coords1 = model.initialize_flow(image1)
+            model.corr_fn.update(fmap1, fmap2, coords1, coords2=None)
+            corr = self.corr_fn(coords1)
+        breakpoint()
+                

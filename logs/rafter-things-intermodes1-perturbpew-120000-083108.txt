@@ -1,12 +1,35 @@
-Validation (clean) EPE: 1.402257, 1px: 0.900650, 3px: 0.956539, 5px: 0.968892
-Validation (final) EPE: 2.686828, 1px: 0.849965, 3px: 0.917530, 5px: 0.936884
+ 1 Validation (clean) EPE: 1.921172, 1px: 0.872963, 3px: 0.942818, 5px: 0.957881
+ 1 Validation (final) EPE: 3.307474, 1px: 0.821831, 3px: 0.899873, 5px: 0.921761
+ 2 Validation (clean) EPE: 1.932902, 1px: 0.880630, 3px: 0.946595, 5px: 0.960656
+ 2 Validation (final) EPE: 3.345512, 1px: 0.832583, 3px: 0.908505, 5px: 0.928867
+ 3 Validation (clean) EPE: 1.866749, 1px: 0.881117, 3px: 0.945809, 5px: 0.960103
+ 3 Validation (final) EPE: 3.294571, 1px: 0.832651, 3px: 0.906741, 5px: 0.927388
+ 4 Validation (clean) EPE: 1.715059, 1px: 0.886937, 3px: 0.949566, 5px: 0.963307
+ 4 Validation (final) EPE: 3.128649, 1px: 0.831823, 3px: 0.908260, 5px: 0.928924
+ 5 Validation (clean) EPE: 1.761719, 1px: 0.891096, 3px: 0.951077, 5px: 0.964623
+ 5 Validation (final) EPE: 3.064673, 1px: 0.839892, 3px: 0.911215, 5px: 0.931396
+ 6 Validation (clean) EPE: 1.641398, 1px: 0.892286, 3px: 0.952545, 5px: 0.965859
+ 6 Validation (final) EPE: 2.927135, 1px: 0.841341, 3px: 0.912545, 5px: 0.932665
+ 7 Validation (clean) EPE: 1.545521, 1px: 0.893396, 3px: 0.952918, 5px: 0.966151
+ 7 Validation (final) EPE: 3.008778, 1px: 0.840285, 3px: 0.910802, 5px: 0.930656
+ 8 Validation (clean) EPE: 1.517802, 1px: 0.895620, 3px: 0.953557, 5px: 0.966455
+ 8 Validation (final) EPE: 2.876325, 1px: 0.844220, 3px: 0.913623, 5px: 0.933527
+ 9 Validation (clean) EPE: 1.504792, 1px: 0.897246, 3px: 0.954005, 5px: 0.966711
+ 9 Validation (final) EPE: 2.766732, 1px: 0.846595, 3px: 0.915961, 5px: 0.935700
+10 Validation (clean) EPE: 1.463975, 1px: 0.899696, 3px: 0.955762, 5px: 0.968309
+10 Validation (final) EPE: 2.741779, 1px: 0.848468, 3px: 0.916730, 5px: 0.936028
+11 Validation (clean) EPE: 1.465769, 1px: 0.900488, 3px: 0.956260, 5px: 0.968593
+11 Validation (final) EPE: 2.749579, 1px: 0.848904, 3px: 0.917414, 5px: 0.936806
+12 Validation (clean) EPE: 1.402257, 1px: 0.900650, 3px: 0.956539, 5px: 0.968892
+12 Validation (final) EPE: 2.686828, 1px: 0.849965, 3px: 0.917530, 5px: 0.936884
 
 Using evaluate.py:
-Validation (clean) EPE: 1.395549, 1px: 0.900644, 3px: 0.956567, 5px: 0.968893
-Validation (final) EPE: 2.680318, 1px: 0.850000, 3px: 0.917726, 5px: 0.937039
+12 Validation (clean) EPE: 1.395549, 1px: 0.900644, 3px: 0.956567, 5px: 0.968893
+12 Validation (final) EPE: 2.680318, 1px: 0.850000, 3px: 0.917726, 5px: 0.937039
 
-Validation (frames_cleanpass) EPE: 3.026996, 1px: 0.823169, 3px: 0.904625, 5px: 0.926911
-Validation (frames_finalpass) EPE: 2.800991, 1px: 0.820804, 3px: 0.904253, 5px: 0.927572
+Things:
+12 Validation (frames_cleanpass) EPE: 3.026996, 1px: 0.823169, 3px: 0.904625, 5px: 0.926911
+12 Validation (frames_finalpass) EPE: 2.800991, 1px: 0.820804, 3px: 0.904253, 5px: 0.927572
 
 
 env CUDA_VISIBLE_DEVICES=2,3 python train.py --name setrans-things --stage things --validation sintel --output results/things/setrans --restore_ckpt results/chairs/setrans/setrans-chairs.pth --num_steps 120000 --lr 0.000125 --image_size 400 720 --wdecay 0.0001 --gpus 0 1 --batch_size 6 --val_freq 10000 --print_freq 100 --mixed_precision --setrans --rafter --corrnorm global --perturbpew
