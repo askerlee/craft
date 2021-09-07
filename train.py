@@ -283,7 +283,7 @@ if __name__ == '__main__':
     parser.add_argument('--stage', help="determines which dataset to use for training")
     parser.add_argument('--validation', type=str, nargs='+')
     parser.add_argument('--restore_ckpt', help="restore checkpoint")
-    parser.add_argument('--noloadopt', dest='load_optimizer_state', action='store_false', 
+    parser.add_argument('--loadopt',   dest='load_optimizer_state', action='store_true', 
                         help='Do not load optimizer state from checkpoint (default: load)')
     parser.add_argument('--loadsched', dest='load_scheduler_state', action='store_true', 
                         help='Load scheduler state from checkpoint (default: not load)')
@@ -334,7 +334,7 @@ if __name__ == '__main__':
                         choices=['none', 'global'], default='none')
     parser.add_argument('--setrans', dest='setrans', action='store_true', 
                         help='use setrans (Squeeze-Expansion Transformer) as the intra-frame attention')
-    parser.add_argument('--intermodes', dest='inter_num_modes', type=int, default=1, 
+    parser.add_argument('--intermodes', dest='inter_num_modes', type=int, default=4, 
                         help='Number of modes in inter-frame attention')
     parser.add_argument('--intramodes', dest='intra_num_modes', type=int, default=4, 
                         help='Number of modes in intra-frame attention')
@@ -344,7 +344,7 @@ if __name__ == '__main__':
     parser.add_argument('--interqknobias', dest='inter_qk_have_bias', action='store_false', 
                         help='Do not use biases in the QK projections in the inter-frame attention')
     parser.add_argument('--interpew', dest='inter_pos_embed_weight', type=float, default=0.5)
-    parser.add_argument('--intrapew', dest='intra_pos_embed_weight', type=float, default=1.0)
+    parser.add_argument('--intrapew', dest='intra_pos_embed_weight', type=float, default=0.0)
 
     args = parser.parse_args()
 
