@@ -9,6 +9,7 @@ import torch
 import imageio
 
 from network import RAFTER
+from torchvision import transforms
 
 import datasets
 from utils import flow_viz
@@ -48,6 +49,7 @@ def create_sintel_submission(model, warm_start=False, output_path='sintel_submis
             frame_utils.writeFlow(output_file, flow)
             sequence_prev = sequence
 
+    print("Created sintel submission.")
 
 @torch.no_grad()
 def create_sintel_submission_vis(model, warm_start=False, output_path='sintel_submission'):
@@ -95,6 +97,7 @@ def create_sintel_submission_vis(model, warm_start=False, output_path='sintel_su
             frame_utils.writeFlow(output_file, flow)
             sequence_prev = sequence
 
+    print("Created sintel submission.")
 
 @torch.no_grad()
 def create_kitti_submission(model, output_path='kitti_submission'):
@@ -116,6 +119,7 @@ def create_kitti_submission(model, output_path='kitti_submission'):
         output_filename = os.path.join(output_path, frame_id)
         frame_utils.writeFlowKITTI(output_filename, flow)
 
+    print("Created KITTI submission.")
 
 @torch.no_grad()
 def create_kitti_submission_vis(model, output_path='kitti_submission'):
@@ -148,6 +152,7 @@ def create_kitti_submission_vis(model, output_path='kitti_submission'):
         imageio.imwrite(f'vis_kitti/image/{test_id}_0.png', image1[0].cpu().permute(1, 2, 0).numpy())
         imageio.imwrite(f'vis_kitti/image/{test_id}_1.png', image2[0].cpu().permute(1, 2, 0).numpy())
 
+    print("Created KITTI submission.")
 
 @torch.no_grad()
 def validate_chairs(model, iters=6):
@@ -242,6 +247,53 @@ def validate_sintel(model, iters=6):
 
     return results
 
+@torch.no_grad()
+def validate_hd1k(model, iters=6):
+    """ Peform validation using the HD1k data """
+    model.eval()
+    results = {}
+    val_dataset = datasets.HD1K()
+    epe_list = []
+    
+    for val_id in range(len(val_dataset)):
+        image1, image2, flow_gt, _ = val_dataset[val_id]
+        image1 = image1[None].cuda()
+        image2 = image2[None].cuda()
+
+        halfsize = transforms.Resize((360, 853))
+        image1   = halfsize(image1)
+        image2   = halfsize(image2)
+        flow_gt  = halfsize(flow_gt)
+            
+        padder = InputPadder(image1.shape)
+        image1, image2 = padder.pad(image1, image2)
+
+        _, flow_pr = model(image1, image2, iters=iters, test_mode=True)
+        flow = padder.unpad(flow_pr[0]).cpu()
+
+        epe = torch.sum((flow - flow_gt)**2, dim=0).sqrt()
+        epe_list.append(epe.view(-1).numpy())
+
+        if val_id % 100 == 0:
+            print(f"{val_id}/{len(val_dataset)}")
+            epe_all = np.concatenate(epe_list)
+            epe = np.mean(epe_all)
+            px1 = np.mean(epe_all<1)
+            px3 = np.mean(epe_all<3)
+            px5 = np.mean(epe_all<5)
+            print("EPE: %f, 1px: %f, 3px: %f, 5px: %f" % (epe, px1, px3, px5))
+
+    print(f"{val_id}/{len(val_dataset)}")
+    epe_all = np.concatenate(epe_list)
+    epe = np.mean(epe_all)
+    px1 = np.mean(epe_all<1)
+    px3 = np.mean(epe_all<3)
+    px5 = np.mean(epe_all<5)
+    print("EPE: %f, 1px: %f, 3px: %f, 5px: %f" % (epe, px1, px3, px5))
+                    
+    results = np.mean(epe_list)
+
+    return results
 
 @torch.no_grad()
 def validate_sintel_occ(model, iters=6):
@@ -465,3 +517,6 @@ if __name__ == '__main__':
 
         elif args.dataset == 'kitti':
             validate_kitti(model.module, iters=args.iters)
+
+        elif args.dataset == 'hd1k':
+            validate_hd1k(model.module, iters=args.iters)
