@@ -1,4 +1,8 @@
-Validation KITTI: 0.630841, 1.533409
+1 Validation KITTI: 0.843105, 2.405778
+2 Validation KITTI: 0.727073, 1.870762
+3 Validation KITTI: 0.678809, 1.681517
+4 Validation KITTI: 0.650121, 1.580483
+5 Validation KITTI: 0.630841, 1.533409
 
 env CUDA_VISIBLE_DEVICES=2,3 python train.py --name setrans-kitti --stage kitti --validation kitti --output results/kitti/setrans --restore_ckpt results/sintel/setrans/setrans-sintel.pth --num_steps 50000 --lr 0.000125 --image_size 288 960 --wdecay 0.00001 --gamma 0.85 --gpus 0 1 --batch_size 6 --val_freq 10000 --print_freq 100 --mixed_precision --setrans --rafter --corrnorm global
 

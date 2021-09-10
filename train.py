@@ -329,7 +329,10 @@ if __name__ == '__main__':
                         help='The range of added random noise to pos_embed_weight during training')
                         
     parser.add_argument('--pos', dest='pos_embed_type', type=str, 
-                        choices=['lsinu', 'gma'], default='lsinu')
+                        choices=['lsinu', 'bias'], default='bias')
+    parser.add_argument('--posr', dest='pos_bias_radius', type=int, default=8, 
+                        help='The radius of positional biases')
+                        
     parser.add_argument('--corrnorm', dest='corr_norm_type', type=str, 
                         choices=['none', 'global'], default='none')
     parser.add_argument('--setrans', dest='setrans', action='store_true', 

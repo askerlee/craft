@@ -139,11 +139,12 @@ class TransCorrBlock(CorrBlock, nn.Module):
             coords2 = gen_all_indices(fmap2.shape[2:], device=fmap2.device)
             coords2 = coords2.unsqueeze(0).repeat(fmap2.shape[0], 1, 1, 1)
         
-        vispos1 = self.vispos_encoder(fmap1, coords1)
-        vispos2 = self.vispos_encoder(fmap2, coords2)
+        vispos1, pos_biases = self.vispos_encoder(fmap1, coords1, get_pos_biases=True)
+        vispos2             = self.vispos_encoder(fmap2, coords2, get_pos_biases=False)
+        
         batch, dim, ht, wd = fmap1.shape
         # all pairs correlation
-        corr = self.corr(ht, wd, vispos1, vispos2)
+        corr = self.corr(ht, wd, vispos1, vispos2, pos_biases)
 
         batch, h1, w1, dim, h2, w2 = corr.shape
         # Merge batch with h1 and w1 to improve efficiency. They will be separate later.
@@ -154,7 +155,7 @@ class TransCorrBlock(CorrBlock, nn.Module):
             corr = F.avg_pool2d(corr, 2, stride=2)
             self.corr_pyramid.append(corr)
 
-    def corr(self, ht, wd, vispos1, vispos2):
+    def corr(self, ht, wd, vispos1, vispos2, pos_biases):
         batch, ht_wd, dim = vispos1.shape
         assert ht_wd == ht * wd
         # if out_attn_only, output attention matrix is in the shape of (query unit number, key unit number)
@@ -162,7 +163,7 @@ class TransCorrBlock(CorrBlock, nn.Module):
         # key features are recombined to get new query features by matmul(attention_probs, V(key features))
         #             frame1 frame2
         # corr: [1, 1, 7040, 7040]
-        corr = self.setrans(vispos1, vispos2)
+        corr = self.setrans(vispos1, vispos2, pos_biases)
         if self.do_corr_global_norm:
             B, C, H, W = corr.shape
             corr_3d = corr.view(B, C, H*W)

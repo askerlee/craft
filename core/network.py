@@ -7,7 +7,7 @@ from extractor import BasicEncoder
 from corr import CorrBlock, TransCorrBlock
 from utils.utils import bilinear_sampler, coords_grid, upflow8
 from gma import Attention, Aggregate
-from setrans import SETransConfig, CrossAttVisPosTrans
+from setrans import SETransConfig, SelfAttVisPosTrans
 import copy
 
 try:
@@ -87,7 +87,7 @@ class RAFTER(nn.Module):
             self.intra_trans_config.attn_diag_cycles = 1000
             self.intra_trans_config.num_modes        = args.intra_num_modes
             self.intra_trans_config.pos_embed_weight = args.intra_pos_embed_weight
-            self.att = CrossAttVisPosTrans(self.intra_trans_config, "intra-frame attention")
+            self.att = SelfAttVisPosTrans(self.intra_trans_config, "intra-frame attention")
             self.args.intra_trans_config = self.intra_trans_config
             print("intra-frame trans config:\n{}".format(self.intra_trans_config.__dict__))
         else:

@@ -115,7 +115,7 @@ class SETransConfig(object):
                               'tie_qk_scheme', 'feattrans_lin1_idbias_scale', 'qk_have_bias', 'v_has_bias',
                               # out_attn_probs_only/out_attn_scores_only are only True for the optical flow correlation block.
                               'out_attn_probs_only', 'out_attn_scores_only',
-                              'in_feat_dim', 'perturb_pew_range')
+                              'in_feat_dim', 'perturb_pew_range', 'pos_bias_radius')
         
         if self.try_assign(args, 'out_feat_dim'):
             self.feat_dim   = self.out_feat_dim
@@ -347,7 +347,7 @@ class ExpandedFeatTrans(nn.Module):
 
         # Have to ensure U1 == U2.
         if self.has_input_skip:
-            self.input_skip_coeff = nn.Parameter(torch.ones(1))
+            self.input_skip_coeff = Parameter(torch.ones(1))
             self.skip_layer_norm  = nn.LayerNorm(self.feat_dim, eps=1e-12, elementwise_affine=False)
             
     def add_identity_bias(self):
@@ -491,7 +491,9 @@ class CrossAttFeatTrans(SETransInitWeights):
         x = x.view(*new_x_shape)
         return x.permute(0, 2, 1, 3)
 
-    def forward(self, query_feat, key_feat=None, attention_mask=None):
+    # pos_biases: [1, 1, U1, U2].
+    # attention_mask is seldom used. Abandon it.
+    def forward(self, query_feat, key_feat=None, pos_biases=None):
         # query_feat: [B, U1, 1792]
         # if key_feat == None: self attention.
         if key_feat is None:
@@ -527,10 +529,10 @@ class CrossAttFeatTrans(SETransInitWeights):
                 self.max_attn    = 0
                 self.clamp_count = 0
 
-        # Apply the attention mask
-        if attention_mask is not None:
-            # [B0, 8, U1, U2] + [B0, 1, 1, U2] -> [B0, 8, U1, U2]
-            attention_scores = attention_scores + attention_mask
+        # Apply the positional biases
+        if pos_biases is not None:
+            #[B0, 8, U1, U2] = [B0, 8, U1, U2]  + [1, 1, U1, U2].
+            attention_scores = attention_scores + pos_biases
 
         # Normalize the attention scores to probabilities.
         attention_probs = nn.functional.softmax(attention_scores, dim=-1)
@@ -560,7 +562,7 @@ class CrossAttFeatTrans(SETransInitWeights):
             out_feat      = self.out_trans(key_feat, attention_probs)
             return out_feat
 
-class CrossAttVisPosTrans(nn.Module):
+class SelfAttVisPosTrans(nn.Module):
     def __init__(self, config, name):
         nn.Module.__init__(self)
         self.config = config
@@ -572,7 +574,7 @@ class CrossAttVisPosTrans(nn.Module):
         coords = gen_all_indices(x.shape[2:], device=x.device)
         coords = coords.unsqueeze(0).repeat(x.shape[0], 1, 1, 1)
         
-        x_vispos = self.vispos_encoder(x, coords)
+        x_vispos, pos_biases = self.vispos_encoder(x, coords)
         # if out_attn_scores_only/out_attn_probs_only, 
         # x_trans is an attention matrix in the shape of (query unit number, key unit number)
         # otherwise, output features are in the same shape as the query features.
@@ -580,7 +582,7 @@ class CrossAttVisPosTrans(nn.Module):
         #             frame1 frame2
         # corr: [1, 1, 7040, 7040]
         # x_vispos: [B0, num_voxels, 256]
-        x_trans = self.setrans(x_vispos)
+        x_trans = self.setrans(x_vispos, pos_biases=pos_biases)
         if not self.out_attn_only:
             x_trans = x_trans.permute(0, 2, 1).reshape(x.shape)
             
@@ -609,6 +611,36 @@ class LearnSinuPosEmbedder(nn.Module):
 
         return pos_embed_out
 
+class ShiftedPosBias(nn.Module):
+    def __init__(self, pos_dim=2, pos_bias_radius=8):
+        super().__init__()
+        self.pos_dim = pos_dim
+        self.R = pos_bias_radius
+        # biases: [17, 17]
+        pos_bias_shape = [ pos_bias_radius * 2 + 1 for i in range(pos_dim) ]
+        self.biases = Parameter(torch.zeros(pos_bias_shape))
+                    
+    def forward(self, feat):
+        feat_shape = feat.shape
+        R = self.R
+        spatial_shape = feat_shape[-self.pos_dim:]
+        padded_pos_shape  = list(spatial_shape) + [ 2*R + spatial_shape[i] for i in range(self.pos_dim) ]
+        padded_pos_biases = torch.zeros(padded_pos_shape, device=feat.device)
+        # Currently only feature maps with a 2D spatial shape (i.e., 2D images) are supported.
+        if self.pos_dim == 2:
+            for i in range(feat_shape[0]):
+                for j in range(feat_shape[1]):
+                    padded_pos_biases[i, j, i : i+2*R+1, j : j+2*R+1] = self.biases
+        
+        # Remove padding.
+        pos_biases = padded_pos_biases[:, :, R:-R, R:-R]
+        
+        # [H, W, H, W] => [1, 1, H, W, H, W]
+        for i in range(len(feat_shape) - self.pos_dim):
+            pos_biases = pos_biases.unsqueeze(0)
+            
+        return pos_biases
+        
 class SETransInputFeatEncoder(nn.Module):
     def __init__(self, config):
         super().__init__()
@@ -616,7 +648,14 @@ class SETransInputFeatEncoder(nn.Module):
         self.pos_embed_dim    = self.feat_dim
         self.dropout          = nn.Dropout(config.hidden_dropout_prob)
         self.comb_norm_layer  = nn.LayerNorm(self.feat_dim, eps=1e-12, elementwise_affine=False)
-        self.pos_embed_weight = config.pos_embed_weight
+        self.pos_embed_type   = config.pos_embed_type
+        
+        # if using ShiftedPosBias, do not add positional embeddings here.
+        if config.pos_embed_type != 'bias':
+            self.pos_embed_weight = config.pos_embed_weight
+        else:
+            self.pos_embed_weight = 0
+            
         # args.perturb_pew_range is the relative ratio. Get the absolute range here.
         self.perturb_pew_range  = self.pos_embed_weight * config.perturb_pew_range
         print("Positional embedding weight perturbation: {:.3}".format(self.perturb_pew_range))
@@ -631,18 +670,32 @@ class SETransInputFeatEncoder(nn.Module):
             self.pos_embedder = SinuPosEmbedder(config.pos_dim, self.pos_embed_dim, shape=(36, 36), affine=False)
         elif config.pos_embed_type == 'zero':
             self.pos_embedder = ZeroEmbedder(self.pos_embed_dim)
-
+        elif config.pos_embed_type == 'bias':
+            self.pos_embedder = ShiftedPosBias(config.pos_dim, config.pos_bias_radius)
+            
     # return: [B0, num_voxels, 256]
-    def forward(self, vis_feat, voxels_pos):
+    def forward(self, vis_feat, voxels_pos, get_pos_biases=True):
         # vis_feat:  [8, 256, 46, 62]
-        # voxels_pos: [8, 46, 62, 2]
-        voxels_pos_normed = voxels_pos / voxels_pos.max()
-        # voxels_pos_normed: [B0, num_voxels, 2]
-        # pos_embed:         [B0, num_voxels, 256]
         batch, dim, ht, wd  = vis_feat.shape
-        voxels_pos_normed   = voxels_pos_normed.view(batch, ht * wd, -1)
-        pos_embed           = self.pos_embedder(voxels_pos_normed)
-        vis_feat            = vis_feat.view(batch, dim, ht * wd).transpose(1, 2)
+
+        if self.pos_embed_type != 'bias':
+            # voxels_pos: [8, 46, 62, 2]
+            voxels_pos_normed = voxels_pos / voxels_pos.max()
+            # voxels_pos_normed: [B0, num_voxels, 2]
+            # pos_embed:         [B0, num_voxels, 256]
+            voxels_pos_normed   = voxels_pos_normed.view(batch, ht * wd, -1)
+            pos_embed   = self.pos_embedder(voxels_pos_normed)
+            pos_biases  = None
+        else:
+            pos_embed   = 0
+            # ShiftedPosBias() may be a bit slow. So only generate when necessary.
+            if get_pos_biases:
+                # pos_biases: [1, 1, H, W, H, W]
+                pos_biases  = self.pos_embedder(vis_feat)
+                # pos_biases: [1, 1, H*W, H*W]
+                pos_biases  = pos_biases.view(1, 1, ht*wd, ht*wd)
+                   
+        vis_feat    = vis_feat.view(batch, dim, ht * wd).transpose(1, 2)
         
         if self.perturb_pew_range > 0 and self.training:
             pew_noise = random.uniform(-self.perturb_pew_range, 
@@ -654,5 +707,8 @@ class SETransInputFeatEncoder(nn.Module):
             
         feat_normed         = self.comb_norm_layer(feat_comb)
         feat_normed         = self.dropout(feat_normed)
-                    
-        return feat_normed
+                  
+        if get_pos_biases:
+            return feat_normed, pos_biases
+        else:
+            return feat_normed
