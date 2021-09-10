@@ -446,7 +446,16 @@ class CrossAttFeatTrans(SETransInitWeights):
         self.tie_qk_scheme    = config.tie_qk_scheme
         print("{}: in_feat_dim: {}, feat_dim: {}, modes: {}, qk_have_bias: {}".format(
               self.name, self.in_feat_dim, self.feat_dim, self.num_modes, config.qk_have_bias))
-              
+
+        # if using ShiftedPosBias, then add positional embeddings here.
+        if config.pos_embed_type == 'bias':
+            self.pos_biases_weight = config.pos_embed_weight
+            # args.perturb_pew_range is the relative ratio. Get the absolute range here.
+            self.perturb_pew_range  = self.pos_biases_weight * config.perturb_pew_range
+            print("Positional embedding weight perturbation: {:.3}".format(self.perturb_pew_range))
+        else:
+            self.pos_biases_weight = 1
+                          
         self.attn_clip    = config.attn_clip
         if 'attn_diag_cycles' in config.__dict__:
             self.attn_diag_cycles   = config.attn_diag_cycles
@@ -531,8 +540,14 @@ class CrossAttFeatTrans(SETransInitWeights):
 
         # Apply the positional biases
         if pos_biases is not None:
+            if self.perturb_pew_range > 0 and self.training:
+                pew_noise = random.uniform(-self.perturb_pew_range, 
+                                            self.perturb_pew_range)
+            else:
+                pew_noise = 0
+                        
             #[B0, 8, U1, U2] = [B0, 8, U1, U2]  + [1, 1, U1, U2].
-            attention_scores = attention_scores + pos_biases
+            attention_scores = attention_scores + (self.pos_biases_weight + pew_noise) * pos_biases
 
         # Normalize the attention scores to probabilities.
         attention_probs = nn.functional.softmax(attention_scores, dim=-1)
@@ -687,12 +702,11 @@ class SETransInputFeatEncoder(nn.Module):
         # if using ShiftedPosBias, do not add positional embeddings here.
         if config.pos_embed_type != 'bias':
             self.pos_embed_weight = config.pos_embed_weight
+            # args.perturb_pew_range is the relative ratio. Get the absolute range here.
+            self.perturb_pew_range  = self.pos_embed_weight * config.perturb_pew_range
+            print("Positional embedding weight perturbation: {:.3}".format(self.perturb_pew_range))
         else:
             self.pos_embed_weight = 0
-            
-        # args.perturb_pew_range is the relative ratio. Get the absolute range here.
-        self.perturb_pew_range  = self.pos_embed_weight * config.perturb_pew_range
-        print("Positional embedding weight perturbation: {:.3}".format(self.perturb_pew_range))
         
         # Box position encoding. no affine, but could have bias.
         # 2 channels => 1792 channels
