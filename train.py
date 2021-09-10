@@ -346,8 +346,8 @@ if __name__ == '__main__':
     # In inter-frame attention, having QK biases performs slightly better.
     parser.add_argument('--interqknobias', dest='inter_qk_have_bias', action='store_false', 
                         help='Do not use biases in the QK projections in the inter-frame attention')
-    parser.add_argument('--interpew', dest='inter_pos_embed_weight', type=float, default=0.5)
-    parser.add_argument('--intrapew', dest='intra_pos_embed_weight', type=float, default=0.0)
+    parser.add_argument('--interpew', dest='inter_pos_embed_weight', type=float, default=1.0)
+    parser.add_argument('--intrapew', dest='intra_pos_embed_weight', type=float, default=1.0)
 
     args = parser.parse_args()
 
