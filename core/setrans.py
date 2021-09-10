@@ -450,9 +450,9 @@ class CrossAttFeatTrans(SETransInitWeights):
         # if using ShiftedPosBias, then add positional embeddings here.
         if config.pos_embed_type == 'bias':
             self.pos_biases_weight = config.pos_embed_weight
-            # args.perturb_pew_range is the relative ratio. Get the absolute range here.
-            self.perturb_pew_range  = self.pos_biases_weight * config.perturb_pew_range
-            print("Positional embedding weight perturbation: {:.3}".format(self.perturb_pew_range))
+            # args.perturb_pb_range is the relative ratio. Get the absolute range here.
+            self.perturb_pb_range  = self.pos_biases_weight * config.perturb_pew_range
+            print("Positional biases weight perturbation: {:.3}".format(self.perturb_pb_range))
         else:
             self.pos_biases_weight = 1
                           
@@ -540,9 +540,9 @@ class CrossAttFeatTrans(SETransInitWeights):
 
         # Apply the positional biases
         if pos_biases is not None:
-            if self.perturb_pew_range > 0 and self.training:
-                pew_noise = random.uniform(-self.perturb_pew_range, 
-                                            self.perturb_pew_range)
+            if self.perturb_pb_range > 0 and self.training:
+                pew_noise = random.uniform(-self.perturb_pb_range, 
+                                            self.perturb_pb_range)
             else:
                 pew_noise = 0
                         
