@@ -706,8 +706,9 @@ class SETransInputFeatEncoder(nn.Module):
             self.perturb_pew_range  = self.pos_embed_weight * config.perturb_pew_range
             print("Positional embedding weight perturbation: {:.3}".format(self.perturb_pew_range))
         else:
-            self.pos_embed_weight = 0
-        
+            self.pos_embed_weight   = 0
+            self.perturb_pew_range  = 0
+            
         # Box position encoding. no affine, but could have bias.
         # 2 channels => 1792 channels
         if config.pos_embed_type == 'lsinu':
