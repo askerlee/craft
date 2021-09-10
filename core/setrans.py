@@ -612,26 +612,60 @@ class LearnSinuPosEmbedder(nn.Module):
         return pos_embed_out
 
 class ShiftedPosBias(nn.Module):
-    def __init__(self, pos_dim=2, pos_bias_radius=8):
+    def __init__(self, pos_dim=2, pos_bias_radius=8, max_pos_shape=(200, 200)):
         super().__init__()
         self.pos_dim = pos_dim
-        self.R = pos_bias_radius
+        self.R = R = pos_bias_radius
         # biases: [17, 17]
         pos_bias_shape = [ pos_bias_radius * 2 + 1 for i in range(pos_dim) ]
         self.biases = Parameter(torch.zeros(pos_bias_shape))
-                    
+        # Currently only feature maps with a 2D spatial shape (i.e., 2D images) are supported.
+        if self.pos_dim == 2:
+            all_h1s, all_w1s, all_h2s, all_w2s = [], [], [], []
+            for i in range(max_pos_shape[0]):
+                i_h1s, i_w1s, i_h2s, i_w2s = [], [], [], []
+                for j in range(max_pos_shape[1]):
+                    h1s, w1s, h2s, w2s = torch.meshgrid(torch.tensor(i), torch.tensor(j), 
+                                                        torch.arange(i, i+2*R+1), torch.arange(j, j+2*R+1))
+                    i_h1s.append(h1s)
+                    i_w1s.append(w1s)
+                    i_h2s.append(h2s)
+                    i_w2s.append(w2s)
+                                                  
+                i_h1s = torch.cat(i_h1s, dim=1)
+                i_w1s = torch.cat(i_w1s, dim=1)
+                i_h2s = torch.cat(i_h2s, dim=1)
+                i_w2s = torch.cat(i_w2s, dim=1)
+                all_h1s.append(i_h1s)
+                all_w1s.append(i_w1s)
+                all_h2s.append(i_h2s)
+                all_w2s.append(i_w2s)
+            
+            all_h1s = torch.cat(all_h1s, dim=0)
+            all_w1s = torch.cat(all_w1s, dim=0)
+            all_h2s = torch.cat(all_h2s, dim=0)
+            all_w2s = torch.cat(all_w2s, dim=0)
+            
+        self.all_h1s = all_h1s
+        self.all_w1s = all_w1s
+        self.all_h2s = all_h2s
+        self.all_w2s = all_w2s
+        
     def forward(self, feat):
         feat_shape = feat.shape
         R = self.R
         spatial_shape = feat_shape[-self.pos_dim:]
         padded_pos_shape  = list(spatial_shape) + [ 2*R + spatial_shape[i] for i in range(self.pos_dim) ]
         padded_pos_biases = torch.zeros(padded_pos_shape, device=feat.device)
-        # Currently only feature maps with a 2D spatial shape (i.e., 2D images) are supported.
-        if self.pos_dim == 2:
-            for i in range(feat_shape[0]):
-                for j in range(feat_shape[1]):
-                    padded_pos_biases[i, j, i : i+2*R+1, j : j+2*R+1] = self.biases
         
+        if self.pos_dim == 2:
+            H, W = spatial_shape
+            all_h1s = self.all_h1s[:H, :W]
+            all_w1s = self.all_w1s[:H, :W]
+            all_h2s = self.all_h2s[:H, :W]
+            all_w2s = self.all_w2s[:H, :W]
+            padded_pos_biases[(all_h1s, all_w1s, all_h2s, all_w2s)] = self.biases
+                
         # Remove padding.
         pos_biases = padded_pos_biases[:, :, R:-R, R:-R]
         
@@ -693,7 +727,7 @@ class SETransInputFeatEncoder(nn.Module):
                 # pos_biases: [1, 1, H, W, H, W]
                 pos_biases  = self.pos_embedder(vis_feat)
                 # pos_biases: [1, 1, H*W, H*W]
-                pos_biases  = pos_biases.view(1, 1, ht*wd, ht*wd)
+                pos_biases  = pos_biases.reshape(1, 1, ht*wd, ht*wd)
                    
         vis_feat    = vis_feat.view(batch, dim, ht * wd).transpose(1, 2)
         
