@@ -123,16 +123,17 @@ class Logger:
             self._print_training_status()
             self.running_loss_dict = {}
 
-def save_checkpoint(cp_path, model, optimizer, lr_scheduler):
+def save_checkpoint(cp_path, model, optimizer, lr_scheduler, logger):
     save_state = { 'model':        model.state_dict(),
                    'optimizer':    optimizer.state_dict(),
-                   'lr_scheduler': lr_scheduler.state_dict()
+                   'lr_scheduler': lr_scheduler.state_dict(),
+                   'logger':       logger
                  }
 
     torch.save(save_state, cp_path)
     print(f"{cp_path} saved")
 
-def load_checkpoint(args, model, optimizer, lr_scheduler):
+def load_checkpoint(args, model, optimizer, lr_scheduler, logger):
     checkpoint = torch.load(args.restore_ckpt, map_location='cuda')
 
     if 'model' in checkpoint:
@@ -148,12 +149,19 @@ def load_checkpoint(args, model, optimizer, lr_scheduler):
         print("Optimizer state loaded.")
     else:
         print("Optimizer state NOT loaded.")
+        
     if args.load_scheduler_state and 'lr_scheduler' in checkpoint:
         lr_scheduler.load_state_dict(checkpoint['lr_scheduler'])
         print("Scheduler state loaded.")
+        if 'logger' in checkpoint:
+            # https://stackoverflow.com/questions/243836/how-to-copy-all-properties-of-an-object-to-another-object-in-python
+            logger.__dict__.update(checkpoint['logger'].__dict__)
+            print("Logger loaded.")
+        else:
+            print("Logger NOT loaded.")
     else:
         print("Scheduler state NOT loaded.")
-
+        print("Logger NOT loaded.")
         
 def main(args):
 
@@ -167,14 +175,14 @@ def main(args):
     train_loader = datasets.fetch_dataloader(args)
     optimizer, scheduler = fetch_optimizer(args, model)
 
+    scaler = GradScaler(enabled=args.mixed_precision)
+    logger = Logger(model, scheduler, args)
+
     if args.restore_ckpt is not None:
-        load_checkpoint(args, model, optimizer, scheduler)
+        load_checkpoint(args, model, optimizer, scheduler, logger)
 
     if args.freeze_bn and args.stage != 'chairs':
         model.module.freeze_bn()
-
-    scaler = GradScaler(enabled=args.mixed_precision)
-    logger = Logger(model, scheduler, args)
 
     while logger.total_steps <= args.num_steps:
         train(model, train_loader, optimizer, scheduler, logger, scaler, args)
@@ -184,7 +192,7 @@ def main(args):
             break
 
     PATH = args.output+f'/{args.name}.pth'
-    save_checkpoint(PATH, model, optimizer, scheduler)
+    save_checkpoint(PATH, model, optimizer, scheduler, logger)
     return PATH
 
 
