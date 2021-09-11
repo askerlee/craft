@@ -48,10 +48,10 @@ class SETransConfig(object):
 
         # Positional encoding settings.
         self.pos_dim            = 2
-        self.pos_embed_weight   = 1
-        # If perturb_pew_range > 0, add random noise to pos_embed_weight during training.
-        # perturb_pew_range: the scale of the added random noise (relative to pos_embed_weight)
-        self.perturb_pew_range  = 0
+        self.pos_code_weight   = 1
+        # If perturb_posw_range > 0, add random noise to pos_code_weight during training.
+        # perturb_posw_range: the scale of the added random noise (relative to pos_code_weight)
+        self.perturb_posw_range  = 0
         
         # Architecture settings
         # Number of modes in the expansion attention block.
@@ -82,7 +82,7 @@ class SETransConfig(object):
         # Randomness settings
         self.hidden_dropout_prob = 0.1
         self.attention_probs_dropout_prob = 0.2
-        self.pos_embed_type  = 'lsinu'
+        self.pos_code_type          = 'bias'
         self.ablate_multihead       = False
         self.out_attn_probs_only    = False
         # When out_attn_scores_only, dropout is not applied to attention scores.
@@ -111,11 +111,11 @@ class SETransConfig(object):
         self.set_backbone_type(args)
         self.try_assign(args, 'use_pretrained', 'apply_attn_stage', 'num_modes', 
                               'trans_output_type', 'mid_type', 'base_initializer_range', 
-                              'pos_embed_type', 'ablate_multihead', 'attn_clip', 'attn_diag_cycles', 
+                              'pos_code_type', 'ablate_multihead', 'attn_clip', 'attn_diag_cycles', 
                               'tie_qk_scheme', 'feattrans_lin1_idbias_scale', 'qk_have_bias', 'v_has_bias',
                               # out_attn_probs_only/out_attn_scores_only are only True for the optical flow correlation block.
                               'out_attn_probs_only', 'out_attn_scores_only',
-                              'in_feat_dim', 'perturb_pew_range', 'pos_bias_radius')
+                              'in_feat_dim', 'perturb_posw_range', 'pos_bias_radius')
         
         if self.try_assign(args, 'out_feat_dim'):
             self.feat_dim   = self.out_feat_dim
@@ -447,15 +447,17 @@ class CrossAttFeatTrans(SETransInitWeights):
         print("{}: in_feat_dim: {}, feat_dim: {}, modes: {}, qk_have_bias: {}".format(
               self.name, self.in_feat_dim, self.feat_dim, self.num_modes, config.qk_have_bias))
 
-        # if using ShiftedPosBias, then add positional embeddings here.
-        if config.pos_embed_type == 'bias':
-            self.pos_biases_weight = config.pos_embed_weight
-            # args.perturb_pb_range is the relative ratio. Get the absolute range here.
-            self.perturb_pb_range  = self.pos_biases_weight * config.perturb_pew_range
-            print("Positional biases weight perturbation: {:.3}".format(self.perturb_pb_range))
+        # if using SlidingPosBiases, then add positional embeddings here.
+        if config.pos_code_type == 'bias':
+            self.pos_code_weight = config.pos_code_weight
+            # args.perturb_posw_range is the relative ratio. Get the absolute range here.
+            self.perturb_posw_range  = self.pos_code_weight * config.perturb_posw_range
+            print("Positional biases weight perturbation: {:.3}/{:.3}".format(
+                  self.perturb_posw_range, self.pos_code_weight))
         else:
-            self.pos_biases_weight = 1
-                          
+            self.pos_code_weight = 1
+            self.perturb_posw_range = 0
+            
         self.attn_clip    = config.attn_clip
         if 'attn_diag_cycles' in config.__dict__:
             self.attn_diag_cycles   = config.attn_diag_cycles
@@ -540,14 +542,14 @@ class CrossAttFeatTrans(SETransInitWeights):
 
         # Apply the positional biases
         if pos_biases is not None:
-            if self.perturb_pb_range > 0 and self.training:
-                pew_noise = random.uniform(-self.perturb_pb_range, 
-                                            self.perturb_pb_range)
+            if self.perturb_posw_range > 0 and self.training:
+                posw_noise = random.uniform(-self.perturb_posw_range, 
+                                             self.perturb_posw_range)
             else:
-                pew_noise = 0
+                posw_noise = 0
                         
             #[B0, 8, U1, U2] = [B0, 8, U1, U2]  + [1, 1, U1, U2].
-            attention_scores = attention_scores + (self.pos_biases_weight + pew_noise) * pos_biases
+            attention_scores = attention_scores + (self.pos_code_weight + posw_noise) * pos_biases
 
         # Normalize the attention scores to probabilities.
         attention_probs = nn.functional.softmax(attention_scores, dim=-1)
@@ -589,7 +591,7 @@ class SelfAttVisPosTrans(nn.Module):
         coords = gen_all_indices(x.shape[2:], device=x.device)
         coords = coords.unsqueeze(0).repeat(x.shape[0], 1, 1, 1)
         
-        x_vispos, pos_biases = self.vispos_encoder(x, coords)
+        x_vispos, pos_biases = self.vispos_encoder(x, coords, return_pos_biases=True)
         # if out_attn_scores_only/out_attn_probs_only, 
         # x_trans is an attention matrix in the shape of (query unit number, key unit number)
         # otherwise, output features are in the same shape as the query features.
@@ -626,8 +628,8 @@ class LearnSinuPosEmbedder(nn.Module):
 
         return pos_embed_out
 
-class ShiftedPosBias(nn.Module):
-    def __init__(self, pos_dim=2, pos_bias_radius=8, max_pos_shape=(200, 200)):
+class SlidingPosBiases(nn.Module):
+    def __init__(self, pos_dim=2, pos_bias_radius=7, max_pos_size=(200, 200)):
         super().__init__()
         self.pos_dim = pos_dim
         self.R = R = pos_bias_radius
@@ -637,9 +639,9 @@ class ShiftedPosBias(nn.Module):
         # Currently only feature maps with a 2D spatial shape (i.e., 2D images) are supported.
         if self.pos_dim == 2:
             all_h1s, all_w1s, all_h2s, all_w2s = [], [], [], []
-            for i in range(max_pos_shape[0]):
+            for i in range(max_pos_size[0]):
                 i_h1s, i_w1s, i_h2s, i_w2s = [], [], [], []
-                for j in range(max_pos_shape[1]):
+                for j in range(max_pos_size[1]):
                     h1s, w1s, h2s, w2s = torch.meshgrid(torch.tensor(i), torch.tensor(j), 
                                                         torch.arange(i, i+2*R+1), torch.arange(j, j+2*R+1))
                     i_h1s.append(h1s)
@@ -660,16 +662,20 @@ class ShiftedPosBias(nn.Module):
             all_w1s = torch.cat(all_w1s, dim=0)
             all_h2s = torch.cat(all_h2s, dim=0)
             all_w2s = torch.cat(all_w2s, dim=0)
-            
+        else:
+            breakpoint()
+                
         self.all_h1s = all_h1s
         self.all_w1s = all_w1s
         self.all_h2s = all_h2s
         self.all_w2s = all_w2s
+        print("Sliding-window Positional Biases")
         
     def forward(self, feat):
         feat_shape = feat.shape
         R = self.R
         spatial_shape = feat_shape[-self.pos_dim:]
+        # [H, W, H, W] => [H+2R, W+2R, H+2R, W+2R].
         padded_pos_shape  = list(spatial_shape) + [ 2*R + spatial_shape[i] for i in range(self.pos_dim) ]
         padded_pos_biases = torch.zeros(padded_pos_shape, device=feat.device)
         
@@ -681,12 +687,8 @@ class ShiftedPosBias(nn.Module):
             all_w2s = self.all_w2s[:H, :W]
             padded_pos_biases[(all_h1s, all_w1s, all_h2s, all_w2s)] = self.biases
                 
-        # Remove padding.
+        # Remove padding. [H+2R, W+2R, H+2R, W+2R] => [H, W, H, W].
         pos_biases = padded_pos_biases[:, :, R:-R, R:-R]
-        
-        # [H, W, H, W] => [1, 1, H, W, H, W]
-        for i in range(len(feat_shape) - self.pos_dim):
-            pos_biases = pos_biases.unsqueeze(0)
             
         return pos_biases
         
@@ -697,67 +699,67 @@ class SETransInputFeatEncoder(nn.Module):
         self.pos_embed_dim    = self.feat_dim
         self.dropout          = nn.Dropout(config.hidden_dropout_prob)
         self.comb_norm_layer  = nn.LayerNorm(self.feat_dim, eps=1e-12, elementwise_affine=False)
-        self.pos_embed_type   = config.pos_embed_type
+        self.pos_code_type    = config.pos_code_type
         
-        # if using ShiftedPosBias, do not add positional embeddings here.
-        if config.pos_embed_type != 'bias':
-            self.pos_embed_weight = config.pos_embed_weight
-            # args.perturb_pew_range is the relative ratio. Get the absolute range here.
-            self.perturb_pew_range  = self.pos_embed_weight * config.perturb_pew_range
-            print("Positional embedding weight perturbation: {:.3}".format(self.perturb_pew_range))
+        # if using SlidingPosBiases, do not add positional embeddings here.
+        if config.pos_code_type != 'bias':
+            self.pos_code_weight = config.pos_code_weight
+            # args.perturb_posw_range is the relative ratio. Get the absolute range here.
+            self.perturb_posw_range  = self.pos_code_weight * config.perturb_posw_range
+            print("Positional embedding weight perturbation: {:.3}/{:.3}".format(
+                  self.perturb_posw_range, self.pos_code_weight))
         else:
-            self.pos_embed_weight   = 0
-            self.perturb_pew_range  = 0
+            self.pos_code_weight   = 0
+            self.perturb_posw_range  = 0
             
         # Box position encoding. no affine, but could have bias.
         # 2 channels => 1792 channels
-        if config.pos_embed_type == 'lsinu':
-            self.pos_embedder = LearnSinuPosEmbedder(config.pos_dim, self.pos_embed_dim, omega=1, affine=False)
-        elif config.pos_embed_type == 'rand':
-            self.pos_embedder = RandPosEmbedder(config.pos_dim, self.pos_embed_dim, shape=(36, 36), affine=False)
-        elif config.pos_embed_type == 'sinu':
-            self.pos_embedder = SinuPosEmbedder(config.pos_dim, self.pos_embed_dim, shape=(36, 36), affine=False)
-        elif config.pos_embed_type == 'zero':
-            self.pos_embedder = ZeroEmbedder(self.pos_embed_dim)
-        elif config.pos_embed_type == 'bias':
-            self.pos_embedder = ShiftedPosBias(config.pos_dim, config.pos_bias_radius)
+        if config.pos_code_type == 'lsinu':
+            self.pos_coder = LearnSinuPosEmbedder(config.pos_dim, self.pos_embed_dim, omega=1, affine=False)
+        elif config.pos_code_type == 'rand':
+            self.pos_coder = RandPosEmbedder(config.pos_dim, self.pos_embed_dim, shape=(36, 36), affine=False)
+        elif config.pos_code_type == 'sinu':
+            self.pos_coder = SinuPosEmbedder(config.pos_dim, self.pos_embed_dim, shape=(36, 36), affine=False)
+        elif config.pos_code_type == 'zero':
+            self.pos_coder = ZeroEmbedder(self.pos_embed_dim)
+        elif config.pos_code_type == 'bias':
+            self.pos_coder = SlidingPosBiases(config.pos_dim, config.pos_bias_radius)
             
     # return: [B0, num_voxels, 256]
-    def forward(self, vis_feat, voxels_pos, get_pos_biases=True):
+    def forward(self, vis_feat, voxels_pos, return_pos_biases=True):
         # vis_feat:  [8, 256, 46, 62]
         batch, dim, ht, wd  = vis_feat.shape
 
-        if self.pos_embed_type != 'bias':
+        if self.pos_code_type != 'bias':
             # voxels_pos: [8, 46, 62, 2]
             voxels_pos_normed = voxels_pos / voxels_pos.max()
             # voxels_pos_normed: [B0, num_voxels, 2]
             # pos_embed:         [B0, num_voxels, 256]
-            voxels_pos_normed   = voxels_pos_normed.view(batch, ht * wd, -1)
-            pos_embed   = self.pos_embedder(voxels_pos_normed)
-            pos_biases  = None
+            voxels_pos_normed = voxels_pos_normed.view(batch, ht * wd, -1)
+            pos_embed   = self.pos_coder(voxels_pos_normed)
         else:
             pos_embed   = 0
-            # ShiftedPosBias() may be a bit slow. So only generate when necessary.
-            if get_pos_biases:
+            # SlidingPosBiases() may be a bit slow. So only generate when necessary.
+            if return_pos_biases:
                 # pos_biases: [1, 1, H, W, H, W]
-                pos_biases  = self.pos_embedder(vis_feat)
+                pos_biases  = self.pos_coder(vis_feat)
                 # pos_biases: [1, 1, H*W, H*W]
                 pos_biases  = pos_biases.reshape(1, 1, ht*wd, ht*wd)
                    
         vis_feat    = vis_feat.view(batch, dim, ht * wd).transpose(1, 2)
         
-        if self.perturb_pew_range > 0 and self.training:
-            pew_noise = random.uniform(-self.perturb_pew_range, 
-                                        self.perturb_pew_range)
+        if self.perturb_posw_range > 0 and self.training:
+            posw_noise = random.uniform(-self.perturb_posw_range, 
+                                        self.perturb_posw_range)
         else:
-            pew_noise = 0
+            posw_noise = 0
             
-        feat_comb           = vis_feat + (self.pos_embed_weight + pew_noise) * pos_embed
+        feat_comb           = vis_feat + (self.pos_code_weight + posw_noise) * pos_embed
             
         feat_normed         = self.comb_norm_layer(feat_comb)
         feat_normed         = self.dropout(feat_normed)
                   
-        if get_pos_biases:
+        if return_pos_biases:
             return feat_normed, pos_biases
         else:
             return feat_normed

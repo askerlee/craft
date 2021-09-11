@@ -24,13 +24,6 @@ except:
         def __exit__(self, *args):
             pass
 
-def normalize_pos_embed_weights(pos_embed_weight_score):
-    batch, _, height, width = pos_embed_weight_score.shape
-    # pos_embed_weight \in (0.5, 1)
-    pos_embed_weight = pos_embed_weight_score.sigmoid() * 0.3 + 0.3
-    pos_embed_weight = pos_embed_weight.view(batch, height*width, 1)
-    return pos_embed_weight
-            
 class RAFTER(nn.Module):
     def __init__(self, args):
         super().__init__()
@@ -60,9 +53,9 @@ class RAFTER(nn.Module):
             self.inter_trans_config.attn_diag_cycles = 1000
             self.inter_trans_config.num_modes        = args.inter_num_modes
             self.inter_trans_config.qk_have_bias     = args.inter_qk_have_bias
-            self.inter_trans_config.pos_embed_weight = args.inter_pos_embed_weight
+            self.inter_trans_config.pos_code_weight = args.inter_pos_code_weight
             self.args.inter_trans_config = self.inter_trans_config
-            print("inter-frame trans config:\n{}".format(self.inter_trans_config.__dict__))
+            print("Inter-frame trans config:\n{}".format(self.inter_trans_config.__dict__))
             
             self.corr_fn = TransCorrBlock(self.inter_trans_config, radius=self.args.corr_radius,
                                           do_corr_global_norm=self.do_corr_global_norm)
@@ -86,10 +79,10 @@ class RAFTER(nn.Module):
             self.intra_trans_config.out_attn_probs_only    = True
             self.intra_trans_config.attn_diag_cycles = 1000
             self.intra_trans_config.num_modes        = args.intra_num_modes
-            self.intra_trans_config.pos_embed_weight = args.intra_pos_embed_weight
-            self.att = SelfAttVisPosTrans(self.intra_trans_config, "intra-frame attention")
+            self.intra_trans_config.pos_code_weight = args.intra_pos_code_weight
+            self.att = SelfAttVisPosTrans(self.intra_trans_config, "Intra-frame attention")
             self.args.intra_trans_config = self.intra_trans_config
-            print("intra-frame trans config:\n{}".format(self.intra_trans_config.__dict__))
+            print("Intra-frame trans config:\n{}".format(self.intra_trans_config.__dict__))
         else:
             self.att = Attention(args=self.args, dim=cdim, heads=self.args.num_heads, max_pos_size=160, dim_head=cdim)
 

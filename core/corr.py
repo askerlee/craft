@@ -124,7 +124,7 @@ class TransCorrBlock(CorrBlock, nn.Module):
         self.num_levels = num_levels
         self.radius = radius
         self.config = config
-        self.setrans = CrossAttFeatTrans(self.config, "inter-frame correlation block")
+        self.setrans = CrossAttFeatTrans(self.config, "Inter-frame correlation block")
         self.vispos_encoder = SETransInputFeatEncoder(self.config)
         self.coords2 = None
         self.do_corr_global_norm = do_corr_global_norm
@@ -139,8 +139,8 @@ class TransCorrBlock(CorrBlock, nn.Module):
             coords2 = gen_all_indices(fmap2.shape[2:], device=fmap2.device)
             coords2 = coords2.unsqueeze(0).repeat(fmap2.shape[0], 1, 1, 1)
         
-        vispos1, pos_biases = self.vispos_encoder(fmap1, coords1, get_pos_biases=True)
-        vispos2             = self.vispos_encoder(fmap2, coords2, get_pos_biases=False)
+        vispos1, pos_biases = self.vispos_encoder(fmap1, coords1, return_pos_biases=True)
+        vispos2             = self.vispos_encoder(fmap2, coords2, return_pos_biases=False)
         
         batch, dim, ht, wd = fmap1.shape
         # all pairs correlation

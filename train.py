@@ -325,12 +325,12 @@ if __name__ == '__main__':
     parser.add_argument('--num_heads', default=1, type=int,
                         help='(GMA) number of heads in attention and aggregation')
 
-    parser.add_argument('--perturbpew', dest='perturb_pew_range', type=float, default=0.,
+    parser.add_argument('--perturbposw', dest='perturb_posw_range', type=float, default=0.,
                         help='The range of added random noise to pos_embed_weight during training')
                         
-    parser.add_argument('--pos', dest='pos_embed_type', type=str, 
+    parser.add_argument('--pos', dest='pos_code_type', type=str, 
                         choices=['lsinu', 'bias'], default='bias')
-    parser.add_argument('--posr', dest='pos_bias_radius', type=int, default=8, 
+    parser.add_argument('--posr', dest='pos_bias_radius', type=int, default=7, 
                         help='The radius of positional biases')
                         
     parser.add_argument('--corrnorm', dest='corr_norm_type', type=str, 
@@ -346,8 +346,8 @@ if __name__ == '__main__':
     # In inter-frame attention, having QK biases performs slightly better.
     parser.add_argument('--interqknobias', dest='inter_qk_have_bias', action='store_false', 
                         help='Do not use biases in the QK projections in the inter-frame attention')
-    parser.add_argument('--interpew', dest='inter_pos_embed_weight', type=float, default=1.0)
-    parser.add_argument('--intrapew', dest='intra_pos_embed_weight', type=float, default=1.0)
+    parser.add_argument('--interpew', dest='inter_pos_code_weight', type=float, default=1.0)
+    parser.add_argument('--intrapew', dest='intra_pos_code_weight', type=float, default=1.0)
 
     args = parser.parse_args()
 
