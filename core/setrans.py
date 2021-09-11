@@ -633,7 +633,7 @@ class SlidingPosBiases(nn.Module):
         super().__init__()
         self.pos_dim = pos_dim
         self.R = R = pos_bias_radius
-        # biases: [17, 17]
+        # biases: [15, 15]
         pos_bias_shape = [ pos_bias_radius * 2 + 1 for i in range(pos_dim) ]
         self.biases = Parameter(torch.zeros(pos_bias_shape))
         # Currently only feature maps with a 2D spatial shape (i.e., 2D images) are supported.
@@ -664,11 +664,12 @@ class SlidingPosBiases(nn.Module):
             all_w2s = torch.cat(all_w2s, dim=0)
         else:
             breakpoint()
-                
-        self.all_h1s = all_h1s
-        self.all_w1s = all_w1s
-        self.all_h2s = all_h2s
-        self.all_w2s = all_w2s
+
+        # Put indices on GPU to speed up.
+        self.register_buffer('all_h1s', all_h1s)
+        self.register_buffer('all_w1s', all_w1s)
+        self.register_buffer('all_h2s', all_h2s)
+        self.register_buffer('all_w2s', all_w2s)
         print("Sliding-window Positional Biases")
         
     def forward(self, feat):
