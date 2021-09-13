@@ -458,13 +458,11 @@ if __name__ == '__main__':
                         help='Remove residual connection. Do not add local features with the aggregated features.')
     parser.add_argument('--radius', dest='corr_radius', type=int, default=4)    
 
-    parser.add_argument('--pos', dest='pos_embed_type', type=str, 
-                        choices=['lsinu', 'hwadd'], default='lsinu')
     parser.add_argument('--corrnorm', dest='corr_norm_type', type=str, 
                         choices=['none', 'local', 'global'], default='none')
     parser.add_argument('--setrans', dest='setrans', action='store_true', 
                         help='use setrans (Squeeze-Expansion Transformer)')
-    parser.add_argument('--intermodes', dest='inter_num_modes', type=int, default=1, 
+    parser.add_argument('--intermodes', dest='inter_num_modes', type=int, default=4, 
                         help='Number of modes in inter-frame attention')
     parser.add_argument('--intramodes', dest='intra_num_modes', type=int, default=4, 
                         help='Number of modes in intra-frame attention')
@@ -473,9 +471,14 @@ if __name__ == '__main__':
     # In inter-frame attention, having QK biases performs slightly better.
     parser.add_argument('--interqknobias', dest='inter_qk_have_bias', action='store_false', 
                         help='Do not use biases in the QK projections in the inter-frame attention')
-    parser.add_argument('--interpew', dest='inter_pos_embed_weight', type=float, default=0.5)
-    parser.add_argument('--intrapew', dest='intra_pos_embed_weight', type=float, default=1.0)
-    parser.add_argument('--perturbpew', dest='perturb_pew_range', type=float, default=0.,
+                        
+    parser.add_argument('--pos', dest='pos_code_type', type=str, 
+                        choices=['lsinu', 'bias'], default='bias')
+    parser.add_argument('--posr', dest='pos_bias_radius', type=int, default=7, 
+                        help='The radius of positional biases')
+    parser.add_argument('--interposw', dest='inter_pos_code_weight', type=float, default=1.0)
+    parser.add_argument('--intraposw', dest='intra_pos_code_weight', type=float, default=1.0)
+    parser.add_argument('--perturbposw', dest='perturb_posw_range', type=float, default=0.,
                         help='The range of added random noise to pos_embed_weight during training')
     
     args = parser.parse_args()

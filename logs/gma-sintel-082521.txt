@@ -1,31 +1,31 @@
- 10000  Validation (clean) EPE: 1.092389, 1px: 0.910946, 3px: 0.961768, 5px: 0.973221
-        Validation (final) EPE: 1.902650, 1px: 0.869111, 3px: 0.933915, 5px: 0.952261
- 20000  Validation (clean) EPE: 1.014290, 1px: 0.913927, 3px: 0.963686, 5px: 0.974985
-        Validation (final) EPE: 1.682310, 1px: 0.874366, 3px: 0.936733, 5px: 0.955188
- 30000  Validation (clean) EPE: 0.882963, 1px: 0.916734, 3px: 0.965405, 5px: 0.976511
-        Validation (final) EPE: 1.552259, 1px: 0.876685, 3px: 0.938961, 5px: 0.957062
- 40000  Validation (clean) EPE: 0.850703, 1px: 0.920461, 3px: 0.967257, 5px: 0.977778
-        Validation (final) EPE: 1.433955, 1px: 0.881490, 3px: 0.941834, 5px: 0.959301
- 50000  Validation (clean) EPE: 0.810397, 1px: 0.920384, 3px: 0.967428, 5px: 0.978186
-        Validation (final) EPE: 1.367864, 1px: 0.882069, 3px: 0.942658, 5px: 0.959964
- 60000  Validation (clean) EPE: 0.750305, 1px: 0.923106, 3px: 0.968637, 5px: 0.978954
-        Validation (final) EPE: 1.315295, 1px: 0.884487, 3px: 0.944172, 5px: 0.961502
- 70000  Validation (clean) EPE: 0.709821, 1px: 0.924709, 3px: 0.969073, 5px: 0.979297
-        Validation (final) EPE: 1.352347, 1px: 0.887030, 3px: 0.945223, 5px: 0.962276
- 80000  Validation (clean) EPE: 0.687801, 1px: 0.926165, 3px: 0.970157, 5px: 0.980316
-        Validation (final) EPE: 1.222029, 1px: 0.889103, 3px: 0.947219, 5px: 0.963738
- 90000  Validation (clean) EPE: 0.670063, 1px: 0.927467, 3px: 0.970351, 5px: 0.980378
-        Validation (final) EPE: 1.153854, 1px: 0.890530, 3px: 0.947935, 5px: 0.964232
-100000  Validation (clean) EPE: 0.646305, 1px: 0.928266, 3px: 0.971333, 5px: 0.981174
-        Validation (final) EPE: 1.117178, 1px: 0.891768, 3px: 0.948741, 5px: 0.965210
-110000  Validation (clean) EPE: 0.637195, 1px: 0.929117, 3px: 0.971591, 5px: 0.981366
-        Validation (final) EPE: 1.080522, 1px: 0.893067, 3px: 0.949780, 5px: 0.966077
-120000  Validation (clean) EPE: 0.618067, 1px: 0.929667, 3px: 0.971825, 5px: 0.981660
-        Validation (final) EPE: 1.064962, 1px: 0.893459, 3px: 0.949861, 5px: 0.965973
+ 1 Validation (clean) EPE: 1.092389, 1px: 0.910946, 3px: 0.961768, 5px: 0.973221
+ 1 Validation (final) EPE: 1.902650, 1px: 0.869111, 3px: 0.933915, 5px: 0.952261
+ 2 Validation (clean) EPE: 1.014290, 1px: 0.913927, 3px: 0.963686, 5px: 0.974985
+ 2 Validation (final) EPE: 1.682310, 1px: 0.874366, 3px: 0.936733, 5px: 0.955188
+ 3 Validation (clean) EPE: 0.882963, 1px: 0.916734, 3px: 0.965405, 5px: 0.976511
+ 3 Validation (final) EPE: 1.552259, 1px: 0.876685, 3px: 0.938961, 5px: 0.957062
+ 4 Validation (clean) EPE: 0.850703, 1px: 0.920461, 3px: 0.967257, 5px: 0.977778
+ 4 Validation (final) EPE: 1.433955, 1px: 0.881490, 3px: 0.941834, 5px: 0.959301
+ 5 Validation (clean) EPE: 0.810397, 1px: 0.920384, 3px: 0.967428, 5px: 0.978186
+ 5 Validation (final) EPE: 1.367864, 1px: 0.882069, 3px: 0.942658, 5px: 0.959964
+ 6 Validation (clean) EPE: 0.750305, 1px: 0.923106, 3px: 0.968637, 5px: 0.978954
+ 6 Validation (final) EPE: 1.315295, 1px: 0.884487, 3px: 0.944172, 5px: 0.961502
+ 7 Validation (clean) EPE: 0.709821, 1px: 0.924709, 3px: 0.969073, 5px: 0.979297
+ 7 Validation (final) EPE: 1.352347, 1px: 0.887030, 3px: 0.945223, 5px: 0.962276
+ 8 Validation (clean) EPE: 0.687801, 1px: 0.926165, 3px: 0.970157, 5px: 0.980316
+ 8 Validation (final) EPE: 1.222029, 1px: 0.889103, 3px: 0.947219, 5px: 0.963738
+ 9 Validation (clean) EPE: 0.670063, 1px: 0.927467, 3px: 0.970351, 5px: 0.980378
+ 9 Validation (final) EPE: 1.153854, 1px: 0.890530, 3px: 0.947935, 5px: 0.964232
+10 Validation (clean) EPE: 0.646305, 1px: 0.928266, 3px: 0.971333, 5px: 0.981174
+10 Validation (final) EPE: 1.117178, 1px: 0.891768, 3px: 0.948741, 5px: 0.965210
+11 Validation (clean) EPE: 0.637195, 1px: 0.929117, 3px: 0.971591, 5px: 0.981366
+11 Validation (final) EPE: 1.080522, 1px: 0.893067, 3px: 0.949780, 5px: 0.966077
+12 Validation (clean) EPE: 0.618067, 1px: 0.929667, 3px: 0.971825, 5px: 0.981660
+12 Validation (final) EPE: 1.064962, 1px: 0.893459, 3px: 0.949861, 5px: 0.965973
 
 Things:
-120000  Validation (frames_cleanpass) EPE: 3.444200, 1px: 0.821986, 3px: 0.899740, 5px: 0.921739
-        Validation (frames_finalpass) EPE: 3.430202, 1px: 0.818995, 3px: 0.899011, 5px: 0.921611
+12 Validation (frames_cleanpass) EPE: 3.444200, 1px: 0.821986, 3px: 0.899740, 5px: 0.921739
+12 Validation (frames_finalpass) EPE: 3.430202, 1px: 0.818995, 3px: 0.899011, 5px: 0.921611
 
 env CUDA_VISIBLE_DEVICES=2,3 python train.py --name gma-sintel --stage sintel --validation sintel --output results/sintel/gma --restore_ckpt results/things/gma/gma-things.pth --num_steps 120000 --lr 0.000125 --image_size 368 768 --wdecay 0.00001 --gamma 0.85 --gpus 0 1 --batch_size 6 --val_freq 10000 --print_freq 100 --mixed_precision
 
