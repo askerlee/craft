@@ -24,7 +24,7 @@ except:
         def __exit__(self, *args):
             pass
 
-class RAFTER(nn.Module):
+class CRAFT(nn.Module):
     def __init__(self, args):
         super().__init__()
         self.args = args
@@ -36,14 +36,14 @@ class RAFTER(nn.Module):
         if 'dropout' not in self.args:
             self.args.dropout = 0
 
-        # default RAFTER corr_radius: 4
+        # default CRAFT corr_radius: 4
         if args.corr_radius == -1:
             args.corr_radius = 4
         print("Lookup radius: %d" %args.corr_radius)
         
         self.do_corr_global_norm = (args.corr_norm_type == 'global')
         
-        if args.rafter:
+        if args.craft:
             self.inter_trans_config = SETransConfig()
             self.inter_trans_config.update_config(args)
             self.inter_trans_config.in_feat_dim = 256
@@ -140,7 +140,7 @@ class RAFTER(nn.Module):
         fmap1 = fmap1.float()
         fmap2 = fmap2.float()
             
-        if not self.args.rafter:
+        if not self.args.craft:
             self.corr_fn = CorrBlock(fmap1, fmap2, radius=self.args.corr_radius)
 
         with autocast(enabled=self.args.mixed_precision):
@@ -168,7 +168,7 @@ class RAFTER(nn.Module):
         if flow_init is not None:
             coords1 = coords1 + flow_init
 
-        if self.args.rafter:
+        if self.args.craft:
             with autocast(enabled=self.args.mixed_precision):
                 # only update() once, instead of dynamically updating coords1.
                 self.corr_fn.update(fmap1, fmap2, coords1, coords2=None)

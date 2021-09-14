@@ -9,8 +9,8 @@ IHPC & I2R, A*STAR, Singapore<br/>
 You will have to choose cudatoolkit version to match your compute environment. 
 The code is tested on PyTorch 1.8.0 but other versions may also work. 
 ```Shell
-conda create --name rafter python==3.7
-conda activate rafter
+conda create --name craft python==3.8
+conda activate craft
 conda install pytorch=1.8.0 torchvision=0.9.0 cudatoolkit=11.1 -c pytorch -c conda-forge
 pip install matplotlib imageio einops scipy opencv-python
 ```

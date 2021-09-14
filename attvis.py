@@ -11,7 +11,7 @@ import torch.nn.functional as F
 import imageio
 import matplotlib.pyplot as plt
 
-from network import RAFTER
+from network import CRAFT
 from setrans import gen_all_indices
 from corr import CorrBlock
 
@@ -68,8 +68,8 @@ if __name__ == '__main__':
                         help='Number of modes in inter-frame attention')
     parser.add_argument('--intramodes', dest='intra_num_modes', type=int, default=4, 
                         help='Number of modes in intra-frame attention')
-    parser.add_argument('--rafter', dest='rafter', action='store_true', 
-                        help='use rafter (Recurrent All-Pairs Field Transformer)')
+    parser.add_argument('--craft', dest='craft', action='store_true', 
+                        help='use craft (Cross-Attentional Flow Transformer)')
     # In inter-frame attention, having QK biases performs slightly better.
     parser.add_argument('--interqknobias', dest='inter_qk_have_bias', action='store_false', 
                         help='Do not use biases in the QK projections in the inter-frame attention')
@@ -85,7 +85,7 @@ if __name__ == '__main__':
 
     print("Args:\n{}".format(args))
     
-    model = torch.nn.DataParallel(RAFTER(args))
+    model = torch.nn.DataParallel(CRAFT(args))
     checkpoint = torch.load(args.model, map_location='cpu')
     if 'model' in checkpoint:
         model.load_state_dict(checkpoint['model'])
@@ -102,7 +102,7 @@ if __name__ == '__main__':
     
     if vis_whole_pos:
         N = 64
-        if args.rafter:
+        if args.craft:
             fmap1 = fmap2 = torch.zeros(1, 256, N, N, device='cpu')
             coords1 = gen_all_indices(fmap1.shape[2:], device='cpu')
             coords1 = coords1.unsqueeze(0).repeat(fmap1.shape[0], 1, 1, 1)
@@ -139,7 +139,7 @@ if __name__ == '__main__':
                      }
                    ]
 
-        model_name = f'rafter' if args.rafter else 'gma'
+        model_name = f'craft' if args.craft else 'gma'
         
         for example in examples:
             name = example['name']
@@ -178,7 +178,7 @@ if __name__ == '__main__':
                     assert H == H1 and W == W1
                     # coords0 == coords2. [1, 2, 46, 96]
                     coords0, coords1 = model.initialize_flow(image1)
-                    if args.rafter:
+                    if args.craft:
                         corr_fn = model.corr_fn
                         corr_fn.update(fmap1, fmap2, coords1, coords2=None)
                     else:
@@ -197,7 +197,7 @@ if __name__ == '__main__':
                 coords1 = gen_all_indices(fmap1.shape[2:], device='cpu')
                 coords1 = coords1.unsqueeze(0).repeat(fmap1.shape[0], 1, 1, 1)
                 with torch.no_grad():
-                    if args.rafter:
+                    if args.craft:
                         corr_fn = model.corr_fn
                         corr_fn.update(fmap1, fmap2, coords1, coords2=None)
                         vispos1 = corr_fn.vispos_encoder(fmap1, coords1)

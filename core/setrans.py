@@ -547,7 +547,7 @@ class CrossAttFeatTrans(SETransInitWeights):
                                              self.perturb_posw_range)
             else:
                 posw_noise = 0
-                        
+            
             #[B0, 8, U1, U2] = [B0, 8, U1, U2]  + [1, 1, U1, U2].
             attention_scores = attention_scores + (self.pos_code_weight + posw_noise) * pos_biases
 

@@ -8,7 +8,7 @@ import numpy as np
 import torch
 import imageio
 
-from network import RAFTER
+from network import CRAFT
 from torchvision import transforms
 
 import datasets
@@ -17,7 +17,19 @@ from utils import frame_utils
 
 from utils.utils import InputPadder, forward_interpolate
 
-
+# Just an empty Logger definition to satisfy torch.load().
+class Logger:
+    def __init__(self, model, scheduler, args):
+        self.model = model
+        self.args = args
+        self.scheduler = scheduler
+        self.total_steps = 0
+        self.running_loss_dict = {}
+        self.train_epe_list = []
+        self.train_steps_list = []
+        self.val_steps_list = []
+        self.val_results_dict = {}
+        
 @torch.no_grad()
 def create_sintel_submission(model, warm_start=False, output_path='sintel_submission'):
     """ Create submission for the Sintel leaderboard """
@@ -466,8 +478,8 @@ if __name__ == '__main__':
                         help='Number of modes in inter-frame attention')
     parser.add_argument('--intramodes', dest='intra_num_modes', type=int, default=4, 
                         help='Number of modes in intra-frame attention')
-    parser.add_argument('--rafter', dest='rafter', action='store_true', 
-                        help='use rafter (Recurrent All-Pairs Field Transformer)')
+    parser.add_argument('--craft', dest='craft', action='store_true', 
+                        help='use craft (Cross-Attentional Flow Transformer)')
     # In inter-frame attention, having QK biases performs slightly better.
     parser.add_argument('--interqknobias', dest='inter_qk_have_bias', action='store_false', 
                         help='Do not use biases in the QK projections in the inter-frame attention')
@@ -489,7 +501,7 @@ if __name__ == '__main__':
         separate_inout_sintel_occ()
         sys.exit()
 
-    model = torch.nn.DataParallel(RAFTER(args))
+    model = torch.nn.DataParallel(CRAFT(args))
     checkpoint = torch.load(args.model)
     if 'model' in checkpoint:
         model.load_state_dict(checkpoint['model'])

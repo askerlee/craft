@@ -16,7 +16,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from network import RAFTER
+from network import CRAFT
 
 from utils import flow_viz
 import datasets
@@ -165,7 +165,7 @@ def load_checkpoint(args, model, optimizer, lr_scheduler, logger):
         
 def main(args):
 
-    model = nn.DataParallel(RAFTER(args), device_ids=args.gpus)
+    model = nn.DataParallel(CRAFT(args), device_ids=args.gpus)
 
     print(f"Parameter Count: {count_parameters(model)}")
 
@@ -287,7 +287,7 @@ def plot_train(logger, args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--name', default='rafter', help="name your experiment")
+    parser.add_argument('--name', default='craft', help="name your experiment")
     parser.add_argument('--stage', help="determines which dataset to use for training")
     parser.add_argument('--validation', type=str, nargs='+')
     parser.add_argument('--restore_ckpt', help="restore checkpoint")
@@ -341,8 +341,8 @@ if __name__ == '__main__':
                         help='Number of modes in inter-frame attention')
     parser.add_argument('--intramodes', dest='intra_num_modes', type=int, default=4, 
                         help='Number of modes in intra-frame attention')
-    parser.add_argument('--rafter', dest='rafter', action='store_true', 
-                        help='use rafter (Recurrent Flow Transformer)')
+    parser.add_argument('--craft', dest='craft', action='store_true', 
+                        help='use craft (Cross-Attentional Flow Transformer)')
     # In inter-frame attention, having QK biases performs slightly better.
     parser.add_argument('--interqknobias', dest='inter_qk_have_bias', action='store_false', 
                         help='Do not use biases in the QK projections in the inter-frame attention')
