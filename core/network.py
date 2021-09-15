@@ -53,7 +53,9 @@ class CRAFT(nn.Module):
             self.inter_trans_config.attn_diag_cycles = 1000
             self.inter_trans_config.num_modes        = args.inter_num_modes
             self.inter_trans_config.qk_have_bias     = args.inter_qk_have_bias
+            self.inter_trans_config.pos_code_type   = args.inter_pos_code_type
             self.inter_trans_config.pos_code_weight = args.inter_pos_code_weight
+            self.inter_trans_config.perturb_posw_range  = args.perturb_inter_posw_range
             self.args.inter_trans_config = self.inter_trans_config
             print("Inter-frame trans config:\n{}".format(self.inter_trans_config.__dict__))
             
@@ -78,8 +80,10 @@ class CRAFT(nn.Module):
             self.intra_trans_config.qk_have_bias  = False
             self.intra_trans_config.out_attn_probs_only    = True
             self.intra_trans_config.attn_diag_cycles = 1000
-            self.intra_trans_config.num_modes        = args.intra_num_modes
-            self.intra_trans_config.pos_code_weight = args.intra_pos_code_weight
+            self.intra_trans_config.num_modes           = args.intra_num_modes
+            self.intra_trans_config.pos_code_type       = args.intra_pos_code_type
+            self.intra_trans_config.pos_code_weight     = args.intra_pos_code_weight
+            self.intra_trans_config.perturb_posw_range  = args.perturb_intra_posw_range
             self.att = SelfAttVisPosTrans(self.intra_trans_config, "Intra-frame attention")
             self.args.intra_trans_config = self.intra_trans_config
             print("Intra-frame trans config:\n{}".format(self.intra_trans_config.__dict__))

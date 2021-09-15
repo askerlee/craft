@@ -607,7 +607,7 @@ class SelfAttVisPosTrans(nn.Module):
 
 # =================================== SETrans BackBone Components ==============================#
 
-class LearnSinuPosEmbedder(nn.Module):
+class LearnedSinuPosEmbedder(nn.Module):
     def __init__(self, pos_dim, pos_embed_dim, omega=1, affine=True):
         super().__init__()
         self.pos_dim = pos_dim
@@ -716,7 +716,7 @@ class SETransInputFeatEncoder(nn.Module):
         # Box position encoding. no affine, but could have bias.
         # 2 channels => 1792 channels
         if config.pos_code_type == 'lsinu':
-            self.pos_coder = LearnSinuPosEmbedder(config.pos_dim, self.pos_embed_dim, omega=1, affine=False)
+            self.pos_coder = LearnedSinuPosEmbedder(config.pos_dim, self.pos_embed_dim, omega=1, affine=False)
         elif config.pos_code_type == 'rand':
             self.pos_coder = RandPosEmbedder(config.pos_dim, self.pos_embed_dim, shape=(36, 36), affine=False)
         elif config.pos_code_type == 'sinu':

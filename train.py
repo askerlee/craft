@@ -347,14 +347,18 @@ if __name__ == '__main__':
     parser.add_argument('--interqknobias', dest='inter_qk_have_bias', action='store_false', 
                         help='Do not use biases in the QK projections in the inter-frame attention')
                         
-    parser.add_argument('--pos', dest='pos_code_type', type=str, 
+    parser.add_argument('--interpos', dest='inter_pos_code_type', type=str, 
+                        choices=['lsinu', 'bias'], default='lsinu')
+    parser.add_argument('--interposw', dest='inter_pos_code_weight', type=float, default=1.0)
+    parser.add_argument('--perturbinterposw', dest='perturb_inter_posw_range', type=float, default=0.2,
+                        help='The range of added random noise to pos_embed_weight during training')
+    parser.add_argument('--intrapos', dest='intra_pos_code_type', type=str, 
                         choices=['lsinu', 'bias'], default='bias')
+    parser.add_argument('--intraposw', dest='intra_pos_code_weight', type=float, default=1.0)
+    parser.add_argument('--perturbintraposw', dest='perturb_intra_posw_range', type=float, default=0.,
+                        help='The range of added random noise to pos_embed_weight during training')
     parser.add_argument('--posr', dest='pos_bias_radius', type=int, default=7, 
                         help='The radius of positional biases')
-    parser.add_argument('--interposw', dest='inter_pos_code_weight', type=float, default=1.0)
-    parser.add_argument('--intraposw', dest='intra_pos_code_weight', type=float, default=1.0)
-    parser.add_argument('--perturbposw', dest='perturb_posw_range', type=float, default=0.,
-                        help='The range of added random noise to pos_embed_weight during training')
 
     args = parser.parse_args()
 
