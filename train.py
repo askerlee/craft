@@ -324,7 +324,6 @@ if __name__ == '__main__':
     parser.add_argument('--freeze_bn', action='store_true')
     
     parser.add_argument('--iters', type=int, default=12)
-    parser.add_argument('--try1w', dest='try1_loss_weight', type=float, default=0)
     
     parser.add_argument('--val_freq', type=int, default=10000,
                         help='validation frequency')
