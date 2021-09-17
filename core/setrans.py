@@ -670,7 +670,7 @@ class SlidingPosBiases(nn.Module):
         self.register_buffer('all_w1s', all_w1s)
         self.register_buffer('all_h2s', all_h2s)
         self.register_buffer('all_w2s', all_w2s)
-        print("Sliding-window Positional Biases")
+        print("Sliding-window Positional Biases, r: {R}, max size: {max_pos_size}")
         
     def forward(self, feat):
         feat_shape = feat.shape
@@ -702,17 +702,6 @@ class SETransInputFeatEncoder(nn.Module):
         self.comb_norm_layer  = nn.LayerNorm(self.feat_dim, eps=1e-12, elementwise_affine=False)
         self.pos_code_type    = config.pos_code_type
         
-        # if using SlidingPosBiases, do not add positional embeddings here.
-        if config.pos_code_type != 'bias':
-            self.pos_code_weight = config.pos_code_weight
-            # args.perturb_posw_range is the relative ratio. Get the absolute range here.
-            self.perturb_posw_range  = self.pos_code_weight * config.perturb_posw_range
-            print("Positional embedding weight perturbation: {:.3}/{:.3}".format(
-                  self.perturb_posw_range, self.pos_code_weight))
-        else:
-            self.pos_code_weight   = 0
-            self.perturb_posw_range  = 0
-            
         # Box position encoding. no affine, but could have bias.
         # 2 channels => 1792 channels
         if config.pos_code_type == 'lsinu':
@@ -725,6 +714,17 @@ class SETransInputFeatEncoder(nn.Module):
             self.pos_coder = ZeroEmbedder(self.pos_embed_dim)
         elif config.pos_code_type == 'bias':
             self.pos_coder = SlidingPosBiases(config.pos_dim, config.pos_bias_radius)
+
+        # if using SlidingPosBiases, do not add positional embeddings here.
+        if config.pos_code_type != 'bias':
+            self.pos_code_weight = config.pos_code_weight
+            # args.perturb_posw_range is the relative ratio. Get the absolute range here.
+            self.perturb_posw_range  = self.pos_code_weight * config.perturb_posw_range
+            print("Positional embedding weight perturbation: {:.3}/{:.3}".format(
+                  self.perturb_posw_range, self.pos_code_weight))
+        else:
+            self.pos_code_weight   = 0
+            self.perturb_posw_range  = 0
             
     # return: [B0, num_voxels, 256]
     def forward(self, vis_feat, voxels_pos, return_pos_biases=True):
@@ -738,6 +738,7 @@ class SETransInputFeatEncoder(nn.Module):
             # pos_embed:         [B0, num_voxels, 256]
             voxels_pos_normed = voxels_pos_normed.view(batch, ht * wd, -1)
             pos_embed   = self.pos_coder(voxels_pos_normed)
+            pos_biases  = None
         else:
             pos_embed   = 0
             # SlidingPosBiases() may be a bit slow. So only generate when necessary.

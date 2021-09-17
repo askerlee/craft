@@ -65,7 +65,30 @@ class CRAFT(nn.Module):
         # feature network, context network, and update block
         self.fnet = BasicEncoder(output_dim=256,         norm_fn='instance', dropout=args.dropout)
         self.cnet = BasicEncoder(output_dim=hdim + cdim, norm_fn='batch',    dropout=args.dropout)
-       
+
+        if args.f2trans:
+            # f2_trans has the same configuration as GMA att, 
+            # except that the feature dimension is doubled, and not out_attn_probs_only.
+            self.f2_trans_config = SETransConfig()
+            self.f2_trans_config.update_config(args)
+            self.f2_trans_config.in_feat_dim = 256
+            self.f2_trans_config.feat_dim  = 256
+            # No FFN but has input skip. To simply aggregate similar features.
+            self.f2_trans_config.has_FFN = False
+            self.f2_trans_config.has_input_skip = True
+            # Not tying QK performs slightly better.
+            self.f2_trans_config.tie_qk_scheme = None
+            self.f2_trans_config.qk_have_bias  = False
+            self.f2_trans_config.out_attn_probs_only    = False
+            self.f2_trans_config.attn_diag_cycles   = 1000
+            self.f2_trans_config.num_modes          = args.intra_num_modes
+            self.f2_trans_config.pos_code_type      = args.intra_pos_code_type
+            self.f2_trans_config.pos_code_weight    = args.f2_pos_code_weight
+            self.f2_trans_config.perturb_posw_range = args.perturb_intra_posw_range
+            self.f2_trans = SelfAttVisPosTrans(self.f2_trans_config, "F2 transformer")
+            print("F2-trans config:\n{}".format(self.f2_trans_config.__dict__))
+            self.args.f2_trans_config = self.f2_trans_config
+                   
         if args.setrans:
             self.intra_trans_config = SETransConfig()
             self.intra_trans_config.update_config(args)
@@ -139,6 +162,9 @@ class CRAFT(nn.Module):
         with autocast(enabled=self.args.mixed_precision):
             fmap1, fmap2 = self.fnet([image1, image2])
 
+            if self.args.f2trans:
+                fmap2 = self.f2_trans(fmap2)
+                
         # fmap1, fmap2: [1, 256, 55, 128]. 1/8 size of the original image.
         # correlation matrix: 7040*7040 (55*128=7040).
         fmap1 = fmap1.float()

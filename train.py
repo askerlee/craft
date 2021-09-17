@@ -42,13 +42,18 @@ def count_parameters(model):
 def sequence_loss(flow_preds, flow_gt, valid, gamma):
     """ Loss function defined over sequence of flow predictions """
 
+    # n_predictions = args.iters = 12
     n_predictions = len(flow_preds)    
     flow_loss = 0.0
 
-    # exclude invalid pixels and extremely large displacements
+    # exclude invalid pixels and extremely large displacements. 
+    # MAX_FLOW = 400.
     valid = (valid >= 0.5) & ((flow_gt**2).sum(dim=1).sqrt() < MAX_FLOW)
 
     for i in range(n_predictions):
+        # Exponentially increasing weights. (Eq.7 in RAFT paper)
+        # As i increases, flow_preds[i] is expected to be more and more accurate, 
+        # so we are less and less tolerant to errors through gradually increased i_weight.
         i_weight = gamma**(n_predictions - i - 1)
         i_loss = (flow_preds[i] - flow_gt).abs()
         flow_loss += i_weight * (valid[:, None] * i_loss).mean()
@@ -314,11 +319,13 @@ if __name__ == '__main__':
     parser.add_argument('--dropout', type=float, default=0.0)
     parser.add_argument('--upsample-learn', action='store_true', default=False,
                         help='If True, use learned upsampling, otherwise, use bilinear upsampling.')
-    parser.add_argument('--gamma', type=float, default=0.8, help='exponential weighting')
+    parser.add_argument('--gamma', type=float, default=0.8, help='exponential loss weighting of the sequential predictions')
     parser.add_argument('--add_noise', action='store_true')
     parser.add_argument('--freeze_bn', action='store_true')
     
     parser.add_argument('--iters', type=int, default=12)
+    parser.add_argument('--try1w', dest='try1_loss_weight', type=float, default=0)
+    
     parser.add_argument('--val_freq', type=int, default=10000,
                         help='validation frequency')
     parser.add_argument('--print_freq', type=int, default=100,
@@ -335,6 +342,13 @@ if __name__ == '__main__':
 
     parser.add_argument('--corrnorm', dest='corr_norm_type', type=str, 
                         choices=['none', 'global'], default='none')
+    parser.add_argument('--posr', dest='pos_bias_radius', type=int, default=7, 
+                        help='The radius of positional biases')
+                        
+    parser.add_argument('--f2trans', dest='f2trans', action='store_true', 
+                        help='Use transformer on frame 2 features')
+    parser.add_argument('--f2posw', dest='f2_pos_code_weight', type=float, default=0.5)
+
     parser.add_argument('--setrans', dest='setrans', action='store_true', 
                         help='use setrans (Squeeze-Expansion Transformer) as the intra-frame attention')
     parser.add_argument('--intermodes', dest='inter_num_modes', type=int, default=4, 
@@ -348,17 +362,15 @@ if __name__ == '__main__':
                         help='Do not use biases in the QK projections in the inter-frame attention')
                         
     parser.add_argument('--interpos', dest='inter_pos_code_type', type=str, 
-                        choices=['lsinu', 'bias'], default='lsinu')
-    parser.add_argument('--interposw', dest='inter_pos_code_weight', type=float, default=1.0)
-    parser.add_argument('--perturbinterposw', dest='perturb_inter_posw_range', type=float, default=0.2,
+                        choices=['lsinu', 'bias'], default='bias')
+    parser.add_argument('--interposw', dest='inter_pos_code_weight', type=float, default=0.5)
+    parser.add_argument('--perturbinterposw', dest='perturb_inter_posw_range', type=float, default=0.,
                         help='The range of added random noise to pos_embed_weight during training')
     parser.add_argument('--intrapos', dest='intra_pos_code_type', type=str, 
                         choices=['lsinu', 'bias'], default='bias')
     parser.add_argument('--intraposw', dest='intra_pos_code_weight', type=float, default=1.0)
     parser.add_argument('--perturbintraposw', dest='perturb_intra_posw_range', type=float, default=0.,
                         help='The range of added random noise to pos_embed_weight during training')
-    parser.add_argument('--posr', dest='pos_bias_radius', type=int, default=7, 
-                        help='The radius of positional biases')
 
     args = parser.parse_args()
 
