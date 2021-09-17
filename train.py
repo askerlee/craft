@@ -132,7 +132,7 @@ def save_checkpoint(cp_path, model, optimizer, lr_scheduler, logger):
     save_state = { 'model':        model.state_dict(),
                    'optimizer':    optimizer.state_dict(),
                    'lr_scheduler': lr_scheduler.state_dict(),
-                   'logger':       logger
+                   'logger':       logger.__dict__
                  }
 
     torch.save(save_state, cp_path)
@@ -160,7 +160,7 @@ def load_checkpoint(args, model, optimizer, lr_scheduler, logger):
         print("Scheduler state loaded.")
         if 'logger' in checkpoint:
             # https://stackoverflow.com/questions/243836/how-to-copy-all-properties-of-an-object-to-another-object-in-python
-            logger.__dict__.update(checkpoint['logger'].__dict__)
+            logger.__dict__.update(checkpoint['logger'])
             print("Logger loaded.")
         else:
             print("Logger NOT loaded.")
