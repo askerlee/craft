@@ -2,6 +2,7 @@ from __future__ import print_function, division
 import sys
 sys.path.append('core')
 
+import copy
 from datetime import datetime
 import argparse
 import os
@@ -128,10 +129,14 @@ class Logger:
             self.running_loss_dict = {}
 
 def save_checkpoint(cp_path, model, optimizer, lr_scheduler, logger):
+    logger2 = copy.copy(logger)
+    del logger2['args']      if 'args'      in logger2.__dict__
+    del logger2['scheduler'] if 'scheduler' in logger2.__dict__
+
     save_state = { 'model':        model.state_dict(),
                    'optimizer':    optimizer.state_dict(),
                    'lr_scheduler': lr_scheduler.state_dict(),
-                   'logger':       logger.__dict__
+                   'logger':       logger2.__dict__
                  }
 
     torch.save(save_state, cp_path)
