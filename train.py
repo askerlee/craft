@@ -84,8 +84,7 @@ def fetch_optimizer(args, model):
 
 
 class Logger:
-    def __init__(self, model, scheduler, args):
-        self.model = model
+    def __init__(self, scheduler, args):
         self.args = args
         self.scheduler = scheduler
         self.total_steps = 0
@@ -181,7 +180,7 @@ def main(args):
     optimizer, scheduler = fetch_optimizer(args, model)
 
     scaler = GradScaler(enabled=args.mixed_precision)
-    logger = Logger(model, scheduler, args)
+    logger = Logger(scheduler, args)
 
     if args.restore_ckpt is not None:
         load_checkpoint(args, model, optimizer, scheduler, logger)

@@ -19,7 +19,7 @@ from utils.utils import InputPadder, forward_interpolate
 
 # Just an empty Logger definition to satisfy torch.load().
 class Logger:
-    def __init__(self, model, scheduler, args):
+    def __init__(self, scheduler, args):
         self.model = model
         self.args = args
         self.scheduler = scheduler
@@ -446,7 +446,48 @@ def validate_kitti(model, iters=6):
     print("Validation KITTI: %f, %f" % (epe, f1))
     return {'kitti_epe': epe, 'kitti_f1': f1}
 
+def save_checkpoint(cp_path, model, optimizer_state, lr_scheduler_state, logger):
+    save_state = { 'model':        model.state_dict(),
+                   'optimizer':    optimizer_state,
+                   'lr_scheduler': lr_scheduler_state,
+                   'logger':       logger.__dict__
+                 }
 
+    torch.save(save_state, cp_path)
+    print(f"{cp_path} saved")
+
+def fix_checkpoint(args, model):
+    checkpoint = torch.load(args.model, map_location='cuda')
+
+    if 'model' in checkpoint:
+        msg = model.load_state_dict(checkpoint['model'], strict=False)
+    else:
+        # Load old checkpoint.
+        msg = model.load_state_dict(checkpoint, strict=False)
+
+    print(f"Model checkpoint loaded from {args.model}: {msg}.")
+
+    logger = Logger(None, None)
+    if 'logger' in checkpoint:
+        if type(checkpoint['logger']) == dict:
+            # https://stackoverflow.com/questions/243836/how-to-copy-all-properties-of-an-object-to-another-object-in-python
+            logger.__dict__.update(checkpoint['logger'])
+        else:
+            logger.__dict__.update(checkpoint['logger'].__dict__)
+            
+        if 'model' in logger.__dict__:
+            del logger.__dict__['model']
+        logger.__dict__['scheduler'] = None
+        
+        print("Logger loaded.")
+    else:
+        print("Logger NOT loaded.")
+    
+    optimizer_state     = checkpoint['optimizer']    if 'optimizer'    in checkpoint else None
+    lr_scheduler_state  = checkpoint['lr_scheduler'] if 'lr_scheduler' in checkpoint else None
+    
+    save_checkpoint(args.model + "2", model, optimizer_state, lr_scheduler_state, logger)
+    
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', help="restore checkpoint")
@@ -460,6 +501,7 @@ if __name__ == '__main__':
                         help='use position and content-wise attention')
     parser.add_argument('--mixed_precision', type=bool, default=True, help='use mixed precision')
     parser.add_argument('--model_name')
+    parser.add_argument('--fix', action='store_true', help='Fix loaded checkpoint')
 
     # Ablations
     parser.add_argument('--replace', default=False, action='store_true',
@@ -472,6 +514,13 @@ if __name__ == '__main__':
 
     parser.add_argument('--corrnorm', dest='corr_norm_type', type=str, 
                         choices=['none', 'local', 'global'], default='none')
+    parser.add_argument('--posr', dest='pos_bias_radius', type=int, default=7, 
+                        help='The radius of positional biases')
+                        
+    parser.add_argument('--f2trans', dest='f2trans', action='store_true', 
+                        help='Use transformer on frame 2 features')
+    parser.add_argument('--f2posw', dest='f2_pos_code_weight', type=float, default=0.5)
+                            
     parser.add_argument('--setrans', dest='setrans', action='store_true', 
                         help='use setrans (Squeeze-Expansion Transformer)')
     parser.add_argument('--intermodes', dest='inter_num_modes', type=int, default=4, 
@@ -485,17 +534,15 @@ if __name__ == '__main__':
                         help='Do not use biases in the QK projections in the inter-frame attention')
                         
     parser.add_argument('--interpos', dest='inter_pos_code_type', type=str, 
-                        choices=['lsinu', 'bias'], default='lsinu')
-    parser.add_argument('--interposw', dest='inter_pos_code_weight', type=float, default=1.0)
-    parser.add_argument('--perturbinterposw', dest='perturb_inter_posw_range', type=float, default=0.2,
+                        choices=['lsinu', 'bias'], default='bias')
+    parser.add_argument('--interposw', dest='inter_pos_code_weight', type=float, default=0.5)
+    parser.add_argument('--perturbinterposw', dest='perturb_inter_posw_range', type=float, default=0.,
                         help='The range of added random noise to pos_embed_weight during training')
     parser.add_argument('--intrapos', dest='intra_pos_code_type', type=str, 
                         choices=['lsinu', 'bias'], default='bias')
     parser.add_argument('--intraposw', dest='intra_pos_code_weight', type=float, default=1.0)
     parser.add_argument('--perturbintraposw', dest='perturb_intra_posw_range', type=float, default=0.,
                         help='The range of added random noise to pos_embed_weight during training')
-    parser.add_argument('--posr', dest='pos_bias_radius', type=int, default=7, 
-                        help='The radius of positional biases')
     
     args = parser.parse_args()
 
@@ -506,12 +553,19 @@ if __name__ == '__main__':
         sys.exit()
 
     model = torch.nn.DataParallel(CRAFT(args))
+    
+    if args.fix:
+        fix_checkpoint(args, model)
+        exit()
+        
     checkpoint = torch.load(args.model)
     if 'model' in checkpoint:
-        model.load_state_dict(checkpoint['model'])
+        msg = model.load_state_dict(checkpoint['model'], strict=False)
     else:
         # Load old checkpoint.
-        model.load_state_dict(checkpoint)
+        msg = model.load_state_dict(checkpoint, strict=False)
+    
+    print(f"Model checkpoint loaded from {args.model}: {msg}.")
         
     model.cuda()
     model.eval()
