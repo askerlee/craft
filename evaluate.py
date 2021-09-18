@@ -19,10 +19,7 @@ from utils.utils import InputPadder, forward_interpolate
 
 # Just an empty Logger definition to satisfy torch.load().
 class Logger:
-    def __init__(self, scheduler, args):
-        self.model = model
-        self.args = args
-        self.scheduler = scheduler
+    def __init__(self):
         self.total_steps = 0
         self.running_loss_dict = {}
         self.train_epe_list = []
@@ -467,18 +464,18 @@ def fix_checkpoint(args, model):
 
     print(f"Model checkpoint loaded from {args.model}: {msg}.")
 
-    logger = Logger(None, None)
+    logger = Logger()
     if 'logger' in checkpoint:
         if type(checkpoint['logger']) == dict:
-            # https://stackoverflow.com/questions/243836/how-to-copy-all-properties-of-an-object-to-another-object-in-python
-            logger.__dict__.update(checkpoint['logger'])
+            logger_dict = checkpoint['logger']
         else:
-            logger.__dict__.update(checkpoint['logger'].__dict__)
-            
-        if 'model' in logger.__dict__:
-            del logger.__dict__['model']
-        logger.__dict__['scheduler'] = None
+            logger_dict = checkpoint['logger'].__dict__
         
+        # The scheduler will be updated by checkpoint['lr_scheduler'], no need to update here.
+        for key in ('args', 'scheduler', 'model'):
+            if key in logger_dict:
+                del logger_dict[key]
+        logger.__dict__.update(logger_dict)
         print("Logger loaded.")
     else:
         print("Logger NOT loaded.")
