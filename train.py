@@ -130,8 +130,9 @@ class Logger:
 
 def save_checkpoint(cp_path, model, optimizer, lr_scheduler, logger):
     logger2 = copy.copy(logger)
-    del logger2['args']      if 'args'      in logger2.__dict__
-    del logger2['scheduler'] if 'scheduler' in logger2.__dict__
+    for key in ('args', 'scheduler'):
+        if key in logger2.__dict__:
+            del logger2[key]
 
     save_state = { 'model':        model.state_dict(),
                    'optimizer':    optimizer.state_dict(),
