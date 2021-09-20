@@ -672,7 +672,7 @@ class SlidingPosBiases(nn.Module):
         self.register_buffer('all_w1s', all_w1s, persistent=False)
         self.register_buffer('all_h2s', all_h2s, persistent=False)
         self.register_buffer('all_w2s', all_w2s, persistent=False)
-        print("Sliding-window Positional Biases, r: {R}, max size: {max_pos_size}")
+        print(f"Sliding-window Positional Biases, r: {R}, max size: {max_pos_size}")
         
     def forward(self, feat):
         feat_shape = feat.shape
