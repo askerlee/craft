@@ -129,15 +129,15 @@ class Logger:
             self.running_loss_dict = {}
 
 def save_checkpoint(cp_path, model, optimizer, lr_scheduler, logger):
-    logger2 = copy.copy(logger)
+    logger_dict = copy.copy(logger.__dict__)
     for key in ('args', 'scheduler'):
-        if key in logger2.__dict__:
-            del logger2[key]
+        if key in logger_dict:
+            del logger_dict[key]
 
     save_state = { 'model':        model.state_dict(),
                    'optimizer':    optimizer.state_dict(),
                    'lr_scheduler': lr_scheduler.state_dict(),
-                   'logger':       logger2.__dict__
+                   'logger':       logger_dict
                  }
 
     torch.save(save_state, cp_path)
