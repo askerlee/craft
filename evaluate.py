@@ -9,6 +9,9 @@ import torch
 import imageio
 
 from network import CRAFT
+import network
+# back-compatible with older checkpoints.
+network.RAFTER = CRAFT
 from torchvision import transforms
 
 import datasets
