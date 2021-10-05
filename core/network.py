@@ -144,7 +144,7 @@ class CRAFT(nn.Module):
         up_flow = up_flow.permute(0, 1, 4, 2, 5, 3)
         return up_flow.reshape(N, 2, 8 * H, 8 * W)
 
-    def forward(self, image1, image2, iters=12, flow_init=None, upsample=True, test_mode=False):
+    def forward(self, image1, image2, iters=12, flow_init=None, upsample=True, test_mode=0):
         """ Estimate optical flow between pair of frames """
 
         # image1, image2: [1, 3, 440, 1024]
@@ -235,7 +235,9 @@ class CRAFT(nn.Module):
 
             flow_predictions.append(flow_up)
 
-        if test_mode:
+        if test_mode == 1:
             return coords1 - coords0, flow_up
-
+        if test_mode == 2:
+            return coords1 - coords0, flow_predictions
+            
         return flow_predictions

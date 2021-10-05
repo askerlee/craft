@@ -71,8 +71,8 @@ class Attention(nn.Module):
 
         self.pos_emb = RelPosEmb(max_pos_size, dim_head)
         self.pos_embed_weight               = 1.0
-        # args.perturb_pew_range is the relative ratio. Get the absolute range here.
-        self.perturb_pew_range = self.pos_embed_weight * args.perturb_pew_range
+        # args.perturb_intra_posw_range is the relative ratio. Get the absolute range here.
+        self.perturb_pew_range = self.pos_embed_weight * args.perturb_intra_posw_range
         if args.position_and_content and self.perturb_pew_range > 0 and self.training:
             print("Positional embedding weight perturbation: {:.3}".format(self.perturb_pew_range))
         

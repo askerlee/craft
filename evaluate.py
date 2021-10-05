@@ -31,7 +31,7 @@ class Logger:
         self.val_results_dict = {}
         
 @torch.no_grad()
-def create_sintel_submission(model, warm_start=False, output_path='sintel_submission'):
+def create_sintel_submission(model, warm_start=False, output_path='sintel_submission', test_mode=1):
     """ Create submission for the Sintel leaderboard """
     model.eval()
     for dstype in ['clean', 'final']:
@@ -46,7 +46,7 @@ def create_sintel_submission(model, warm_start=False, output_path='sintel_submis
             padder = InputPadder(image1.shape)
             image1, image2 = padder.pad(image1[None].to(f'cuda:{model.device_ids[0]}'), image2[None].to(f'cuda:{model.device_ids[0]}'))
 
-            flow_low, flow_pr = model.module(image1, image2, iters=32, flow_init=flow_prev, test_mode=True)
+            flow_low, flow_pr = model.module(image1, image2, iters=32, flow_init=flow_prev, test_mode=test_mode)
             flow = padder.unpad(flow_pr[0]).permute(1, 2, 0).cpu().numpy()
 
             if warm_start:
@@ -64,7 +64,7 @@ def create_sintel_submission(model, warm_start=False, output_path='sintel_submis
     print("Created sintel submission.")
 
 @torch.no_grad()
-def create_sintel_submission_vis(model, warm_start=False, output_path='sintel_submission'):
+def create_sintel_submission_vis(model, warm_start=False, output_path='sintel_submission', test_mode=1):
     """ Create submission for the Sintel leaderboard """
     model.eval()
     for dstype in ['clean', 'final']:
@@ -79,7 +79,7 @@ def create_sintel_submission_vis(model, warm_start=False, output_path='sintel_su
             padder = InputPadder(image1.shape)
             image1, image2 = padder.pad(image1[None].to(f'cuda:{model.device_ids[0]}'), image2[None].to(f'cuda:{model.device_ids[0]}'))
 
-            flow_low, flow_pr = model.module(image1, image2, iters=32, flow_init=flow_prev, test_mode=True)
+            flow_low, flow_pr = model.module(image1, image2, iters=32, flow_init=flow_prev, test_mode=test_mode)
             flow = padder.unpad(flow_pr[0]).permute(1, 2, 0).cpu().numpy()
 
             # Visualizations
@@ -112,7 +112,7 @@ def create_sintel_submission_vis(model, warm_start=False, output_path='sintel_su
     print("Created sintel submission.")
 
 @torch.no_grad()
-def create_kitti_submission(model, output_path='kitti_submission'):
+def create_kitti_submission(model, output_path='kitti_submission', test_mode=1):
     """ Create submission for the Sintel leaderboard """
     model.eval()
     test_dataset = datasets.KITTI(split='testing', aug_params=None)
@@ -125,7 +125,7 @@ def create_kitti_submission(model, output_path='kitti_submission'):
         padder = InputPadder(image1.shape, mode='kitti')
         image1, image2 = padder.pad(image1[None].to(f'cuda:{model.device_ids[0]}'), image2[None].to(f'cuda:{model.device_ids[0]}'))
 
-        _, flow_pr = model.module(image1, image2, iters=24, test_mode=True)
+        _, flow_pr = model.module(image1, image2, iters=24, test_mode=test_mode)
         flow = padder.unpad(flow_pr[0]).permute(1, 2, 0).cpu().numpy()
 
         output_filename = os.path.join(output_path, frame_id)
@@ -134,7 +134,7 @@ def create_kitti_submission(model, output_path='kitti_submission'):
     print("Created KITTI submission.")
 
 @torch.no_grad()
-def create_kitti_submission_vis(model, output_path='kitti_submission'):
+def create_kitti_submission_vis(model, output_path='kitti_submission', test_mode=1):
     """ Create submission for the Sintel leaderboard """
     model.eval()
     test_dataset = datasets.KITTI(split='testing', aug_params=None)
@@ -147,7 +147,7 @@ def create_kitti_submission_vis(model, output_path='kitti_submission'):
         padder = InputPadder(image1.shape, mode='kitti')
         image1, image2 = padder.pad(image1[None].to(f'cuda:{model.device_ids[0]}'), image2[None].to(f'cuda:{model.device_ids[0]}'))
 
-        _, flow_pr = model.module(image1, image2, iters=24, test_mode=True)
+        _, flow_pr = model.module(image1, image2, iters=24, test_mode=test_mode)
         flow = padder.unpad(flow_pr[0]).permute(1, 2, 0).cpu().numpy()
 
         output_filename = os.path.join(output_path, frame_id)
@@ -167,7 +167,7 @@ def create_kitti_submission_vis(model, output_path='kitti_submission'):
     print("Created KITTI submission.")
 
 @torch.no_grad()
-def validate_chairs(model, iters=6):
+def validate_chairs(model, iters=6, test_mode=1):
     """ Perform evaluation on the FlyingChairs (test) split """
     model.eval()
     epe_list = []
@@ -178,7 +178,7 @@ def validate_chairs(model, iters=6):
         image1 = image1[None].cuda()
         image2 = image2[None].cuda()
 
-        _, flow_pr = model(image1, image2, iters=iters, test_mode=True)
+        _, flow_pr = model(image1, image2, iters=iters, test_mode=test_mode)
         epe = torch.sum((flow_pr[0].cpu() - flow_gt)**2, dim=0).sqrt()
         epe_list.append(epe.view(-1).numpy())
 
@@ -188,13 +188,13 @@ def validate_chairs(model, iters=6):
 
 
 @torch.no_grad()
-def validate_things(model, iters=6):
+def validate_things(model, iters=6, test_mode=1):
     """ Perform evaluation on the FlyingThings (test) split """
     model.eval()
     results = {}
 
     for dstype in ['frames_cleanpass', 'frames_finalpass']:
-        epe_list = []
+        epe_list = {}
         val_dataset = datasets.FlyingThings3D(dstype=dstype, split='validation')
         print(f'Dataset length {len(val_dataset)}')
         for val_id in range(len(val_dataset)):
@@ -205,33 +205,42 @@ def validate_things(model, iters=6):
             padder = InputPadder(image1.shape)
             image1, image2 = padder.pad(image1, image2)
 
-            _, flow_pr = model(image1, image2, iters=iters, test_mode=True)
-            flow = padder.unpad(flow_pr[0]).cpu()
+            _, flow_prs = model(image1, image2, iters=iters, test_mode=test_mode)
+            # if test_mode == 2: list of 12 tensors, each is [1, 2, 544, 960].
+            # if test_mode == 1: a tensor of [1, 2, 544, 960].
+            if test_mode == 1:
+                flow_prs = [ flow_prs ]
+            
+            for it, flow_pr in enumerate(flow_prs):
+                flow = padder.unpad(flow_pr[0]).cpu()
+                epe = torch.sum((flow - flow_gt)**2, dim=0).sqrt()
+                epe_list.setdefault(it, [])
+                epe_list[it].append(epe.view(-1).numpy())
 
-            epe = torch.sum((flow - flow_gt)**2, dim=0).sqrt()
-            epe_list.append(epe.view(-1).numpy())
+        for it in range(iters):
+            epe_all = np.concatenate(epe_list[it])
 
-        epe_all = np.concatenate(epe_list)
+            epe = np.mean(epe_all)
+            px1 = np.mean(epe_all < 1)
+            px3 = np.mean(epe_all < 3)
+            px5 = np.mean(epe_all < 5)
 
-        epe = np.mean(epe_all)
-        px1 = np.mean(epe_all < 1)
-        px3 = np.mean(epe_all < 3)
-        px5 = np.mean(epe_all < 5)
-
-        print("Validation (%s) EPE: %f, 1px: %f, 3px: %f, 5px: %f" % (dstype, epe, px1, px3, px5))
-        results[dstype] = np.mean(epe_list)
+            print("Iter %d, Valid (%s) EPE: %f, 1px: %f, 3px: %f, 5px: %f" % (it, dstype, epe, px1, px3, px5))
+            
+        results[dstype] = epe
 
     return results
 
 
 @torch.no_grad()
-def validate_sintel(model, iters=6):
+def validate_sintel(model, iters=6, test_mode=1):
     """ Peform validation using the Sintel (train) split """
     model.eval()
     results = {}
+    
     for dstype in ['clean', 'final']:
         val_dataset = datasets.MpiSintel(split='training', dstype=dstype)
-        epe_list = []
+        epe_list = {}
 
         for val_id in range(len(val_dataset)):
             image1, image2, flow_gt, _ = val_dataset[val_id]
@@ -241,26 +250,39 @@ def validate_sintel(model, iters=6):
             padder = InputPadder(image1.shape)
             image1, image2 = padder.pad(image1, image2)
 
-            _, flow_pr = model(image1, image2, iters=iters, test_mode=True)
+            _, flow_prs = model(image1, image2, iters=iters, test_mode=test_mode)
+            # if test_mode == 2: list of 12 tensors, each is [1, 2, H, W].
+            # if test_mode == 1: a tensor of [1, 2, H, W].
+            if test_mode == 1:
+                flow_prs = [ flow_prs ]
+
+            for it, flow_pr in enumerate(flow_prs):
+                flow = padder.unpad(flow_pr[0]).cpu()
+                epe = torch.sum((flow - flow_gt)**2, dim=0).sqrt()
+                epe_list.setdefault(it, [])
+                epe_list[it].append(epe.view(-1).numpy())
+                                            
             flow = padder.unpad(flow_pr[0]).cpu()
 
             epe = torch.sum((flow - flow_gt)**2, dim=0).sqrt()
             epe_list.append(epe.view(-1).numpy())
 
-        epe_all = np.concatenate(epe_list)
+        for it in range(iters):
+            epe_all = np.concatenate(epe_list[it])
+            
+            epe = np.mean(epe_all)
+            px1 = np.mean(epe_all<1)
+            px3 = np.mean(epe_all<3)
+            px5 = np.mean(epe_all<5)
 
-        epe = np.mean(epe_all)
-        px1 = np.mean(epe_all<1)
-        px3 = np.mean(epe_all<3)
-        px5 = np.mean(epe_all<5)
+            print("Iter %d, Valid (%s) EPE: %f, 1px: %f, 3px: %f, 5px: %f" % (it, dstype, epe, px1, px3, px5))
 
-        print("Validation (%s) EPE: %f, 1px: %f, 3px: %f, 5px: %f" % (dstype, epe, px1, px3, px5))
-        results[dstype] = np.mean(epe_list)
+        results[dstype] = epe
 
     return results
 
 @torch.no_grad()
-def validate_hd1k(model, iters=6):
+def validate_hd1k(model, iters=6, test_mode=1):
     """ Peform validation using the HD1k data """
     model.eval()
     results = {}
@@ -280,7 +302,7 @@ def validate_hd1k(model, iters=6):
         padder = InputPadder(image1.shape)
         image1, image2 = padder.pad(image1, image2)
 
-        _, flow_pr = model(image1, image2, iters=iters, test_mode=True)
+        _, flow_pr = model(image1, image2, iters=iters, test_mode=test_mode)
         flow = padder.unpad(flow_pr[0]).cpu()
 
         epe = torch.sum((flow - flow_gt)**2, dim=0).sqrt()
@@ -308,7 +330,7 @@ def validate_hd1k(model, iters=6):
     return results
 
 @torch.no_grad()
-def validate_sintel_occ(model, iters=6):
+def validate_sintel_occ(model, iters=6, test_mode=1):
     """ Peform validation using the Sintel (train) split """
     model.eval()
     results = {}
@@ -327,7 +349,7 @@ def validate_sintel_occ(model, iters=6):
             padder = InputPadder(image1.shape)
             image1, image2 = padder.pad(image1, image2)
 
-            _, flow_pr = model(image1, image2, iters=iters, test_mode=True)
+            _, flow_pr = model(image1, image2, iters=iters, test_mode=test_mode)
             flow = padder.unpad(flow_pr[0]).cpu()
 
             epe = torch.sum((flow - flow_gt)**2, dim=0).sqrt()
@@ -409,7 +431,7 @@ def separate_inout_sintel_occ():
 
 
 @torch.no_grad()
-def validate_kitti(model, iters=6):
+def validate_kitti(model, iters=6, test_mode=1):
     """ Peform validation using the KITTI-2015 (train) split """
     model.eval()
     val_dataset = datasets.KITTI(split='training')
@@ -423,7 +445,7 @@ def validate_kitti(model, iters=6):
         padder = InputPadder(image1.shape, mode='kitti')
         image1, image2 = padder.pad(image1, image2)
 
-        _, flow_pr = model(image1, image2, iters=iters, test_mode=True)
+        _, flow_pr = model(image1, image2, iters=iters, test_mode=test_mode)
         flow = padder.unpad(flow_pr[0]).cpu()
 
         epe = torch.sum((flow - flow_gt)**2, dim=0).sqrt()
@@ -502,6 +524,9 @@ if __name__ == '__main__':
     parser.add_argument('--mixed_precision', type=bool, default=True, help='use mixed precision')
     parser.add_argument('--model_name')
     parser.add_argument('--fix', action='store_true', help='Fix loaded checkpoint')
+    parser.add_argument('--submit', action='store_true', help='Make a sintel/kitti submission')
+    parser.add_argument('--test_mode', default=1, type=int, 
+                        help='Test mode (1: normal, 2: evaluate performance of every iteration)')
 
     # Ablations
     parser.add_argument('--replace', default=False, action='store_true',
@@ -570,26 +595,31 @@ if __name__ == '__main__':
     model.cuda()
     model.eval()
 
-    # create_sintel_submission(model, warm_start=True)
-    # create_sintel_submission_vis(model, warm_start=True)
-    # create_kitti_submission(model)
+    if args.dataset == 'sintel' and args.submit:
+        create_sintel_submission(model, warm_start=True)
+        exit(0)
+        # create_sintel_submission_vis(model, warm_start=True)
+        
+    if args.dataset == 'kitti' and args.submit:
+        create_kitti_submission(model)
+        exit(0)
     # create_kitti_submission_vis(model)
 
     with torch.no_grad():
         if args.dataset == 'chairs':
-            validate_chairs(model.module, iters=args.iters)
+            validate_chairs(model.module, iters=args.iters, test_mode=args.test_mode)
 
         elif args.dataset == 'things':
-            validate_things(model.module, iters=args.iters)
+            validate_things(model.module, iters=args.iters, test_mode=args.test_mode)
 
         elif args.dataset == 'sintel':
-            validate_sintel(model.module, iters=args.iters)
+            validate_sintel(model.module, iters=args.iters, test_mode=args.test_mode)
 
         elif args.dataset == 'sintel_occ':
-            validate_sintel_occ(model.module, iters=args.iters)
+            validate_sintel_occ(model.module, iters=args.iters, test_mode=args.test_mode)
 
         elif args.dataset == 'kitti':
-            validate_kitti(model.module, iters=args.iters)
+            validate_kitti(model.module, iters=args.iters, test_mode=args.test_mode)
 
         elif args.dataset == 'hd1k':
-            validate_hd1k(model.module, iters=args.iters)
+            validate_hd1k(model.module, iters=args.iters, test_mode=args.test_mode)
