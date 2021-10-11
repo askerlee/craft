@@ -19,6 +19,7 @@ class CorrBlock:
         self.radius = radius
         self.corr_pyramid = []
         self.do_corr_global_norm = do_corr_global_norm
+        
         # all pairs correlation
         corr = CorrBlock.corr(fmap1, fmap2)
 
@@ -120,6 +121,7 @@ class CorrBlockSingleScale(nn.Module):
 # It is only for a particular pair of image features fmap1, fmap2
 class TransCorrBlock(CorrBlock, nn.Module):
     def __init__(self, config, num_levels=4, radius=4, do_corr_global_norm=False):
+        # Do not call CorrBlock.__init__(), as corr is computed differently.
         nn.Module.__init__(self)
         self.num_levels = num_levels
         self.radius = radius

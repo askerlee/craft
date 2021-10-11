@@ -41,9 +41,16 @@ class ResidualBlock(nn.Module):
             self.downsample = None
 
         else:
-            self.downsample = nn.Sequential(
-                nn.Conv2d(in_planes, planes, kernel_size=1, stride=stride), self.norm3)
-
+            use_old_downsampling_scheme = False
+            if use_old_downsampling_scheme:
+                self.downsample = nn.Sequential(
+                    nn.Conv2d(in_planes, planes, kernel_size=1, stride=stride), self.norm3)
+            elif stride == 2:
+                self.downsample = nn.Sequential(
+                    nn.Conv2d(in_planes, planes, kernel_size=3, stride=2, padding=1), self.norm3)
+            else:
+                breakpoint()
+                   
     def forward(self, x):
         y = x
         y = self.relu(self.norm1(self.conv1(y)))
