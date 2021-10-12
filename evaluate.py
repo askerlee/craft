@@ -195,6 +195,15 @@ def validate_things(model, iters=6, test_mode=1):
 
     for dstype in ['frames_cleanpass', 'frames_finalpass']:
         epe_list = {}
+        # test_mode == 1, a list of iters=6 flows.
+        if test_mode == 1:
+            its = [0]
+        # test_mode == 2, the final flow only.
+        elif test_mode == 2:
+            its = range(iters)
+        elif test_mode == 0:
+            breakpoint()
+                       
         val_dataset = datasets.FlyingThings3D(dstype=dstype, split='validation')
         print(f'Dataset length {len(val_dataset)}')
         for val_id in range(len(val_dataset)):
@@ -206,7 +215,7 @@ def validate_things(model, iters=6, test_mode=1):
             image1, image2 = padder.pad(image1, image2)
 
             _, flow_prs = model(image1, image2, iters=iters, test_mode=test_mode)
-            # if test_mode == 2: list of 12 tensors, each is [1, 2, 544, 960].
+            # if test_mode == 2: list of iters=6 tensors, each is [1, 2, 544, 960].
             # if test_mode == 1: a tensor of [1, 2, 544, 960].
             if test_mode == 1:
                 flow_prs = [ flow_prs ]
@@ -217,7 +226,7 @@ def validate_things(model, iters=6, test_mode=1):
                 epe_list.setdefault(it, [])
                 epe_list[it].append(epe.view(-1).numpy())
 
-        for it in range(iters):
+        for it in its:
             epe_all = np.concatenate(epe_list[it])
 
             epe = np.mean(epe_all)
@@ -241,7 +250,13 @@ def validate_sintel(model, iters=6, test_mode=1):
     for dstype in ['clean', 'final']:
         val_dataset = datasets.MpiSintel(split='training', dstype=dstype)
         epe_list = {}
-
+        if test_mode == 1:
+            its = [0]
+        elif test_mode == 2:
+            its = range(iters)
+        elif test_mode == 0:
+            breakpoint()
+        
         for val_id in range(len(val_dataset)):
             image1, image2, flow_gt, _ = val_dataset[val_id]
             image1 = image1[None].cuda()
@@ -262,12 +277,7 @@ def validate_sintel(model, iters=6, test_mode=1):
                 epe_list.setdefault(it, [])
                 epe_list[it].append(epe.view(-1).numpy())
                                             
-            flow = padder.unpad(flow_pr[0]).cpu()
-
-            epe = torch.sum((flow - flow_gt)**2, dim=0).sqrt()
-            epe_list.append(epe.view(-1).numpy())
-
-        for it in range(iters):
+        for it in its:
             epe_all = np.concatenate(epe_list[it])
             
             epe = np.mean(epe_all)

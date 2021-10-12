@@ -1264,5 +1264,3 @@ Validation Chairs EPE: 0.760666
 results/chairs/craft/120000_craft-chairs.pth saved
 Validation Chairs EPE: 0.747408
 results/chairs/craft/craft-chairs.pth saved
-[2m⏎[m                                                                               ⏎ [K[?2004h]0;fish /home/li_shaohua/craft[30m[m(venv) [m[32mli_shaohua[m@[33mDGXA100[m [32m~/craft[m (main)[m> [K[42C
-[30m[m[30m[m[?2004l

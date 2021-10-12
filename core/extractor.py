@@ -46,6 +46,7 @@ class ResidualBlock(nn.Module):
                 self.downsample = nn.Sequential(
                     nn.Conv2d(in_planes, planes, kernel_size=1, stride=stride), self.norm3)
             elif stride == 2:
+                # The trick proposed in "Detail Preserving Residual Feature Pyramid Modules for Optical Flow".
                 self.downsample = nn.Sequential(
                     nn.Conv2d(in_planes, planes, kernel_size=3, stride=2, padding=1), self.norm3)
             else:
