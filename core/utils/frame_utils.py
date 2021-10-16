@@ -119,7 +119,7 @@ def writeFlowKITTI(filename, uv):
     uv = np.concatenate([uv, valid], axis=-1).astype(np.uint16)
     cv2.imwrite(filename, uv[..., ::-1])
     
-
+# read_gen: general read? choose reader according to the file extension.
 def read_gen(file_name, pil=False):
     ext = splitext(file_name)[-1]
     if ext == '.png' or ext == '.jpeg' or ext == '.ppm' or ext == '.jpg':

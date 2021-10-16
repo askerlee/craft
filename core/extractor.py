@@ -41,10 +41,11 @@ class ResidualBlock(nn.Module):
             self.downsample = None
 
         else:
-            use_old_downsampling_scheme = False
+            use_old_downsampling_scheme = True
             if use_old_downsampling_scheme:
                 self.downsample = nn.Sequential(
                     nn.Conv2d(in_planes, planes, kernel_size=1, stride=stride), self.norm3)
+            # kernel size = 3 performs worse than 1. Disabled.
             elif stride == 2:
                 # The trick proposed in "Detail Preserving Residual Feature Pyramid Modules for Optical Flow".
                 self.downsample = nn.Sequential(

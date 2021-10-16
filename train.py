@@ -299,6 +299,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--name', default='craft', help="name your experiment")
     parser.add_argument('--stage', help="determines which dataset to use for training")
+    parser.add_argument('--autoflow',   dest='use_autoflow', action='store_true', 
+                        help='Use autoflow training data')
+    
     parser.add_argument('--validation', type=str, nargs='+')
     parser.add_argument('--restore_ckpt', help="restore checkpoint")
     parser.add_argument('--loadopt',   dest='load_optimizer_state', action='store_true', 

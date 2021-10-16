@@ -25,6 +25,7 @@ class FlowDataset(data.Dataset):
             else:
                 self.augmentor = FlowAugmentor(**aug_params)
 
+        # if is_test, do not return flow (only for LB evaluation).
         self.is_test = False
         self.init_seed = False
         self.flow_list = []
@@ -58,6 +59,7 @@ class FlowDataset(data.Dataset):
         if self.sparse:
             flow, valid = frame_utils.readFlowKITTI(self.flow_list[index])
         else:
+            # read_gen: general read? choose reader according to the file extension.
             flow = frame_utils.read_gen(self.flow_list[index])
 
         if self.occ_list is not None:
@@ -265,6 +267,23 @@ class HD1K(FlowDataset):
 
             seq_ix += 1
 
+class Autoflow(FlowDataset):
+    def __init__(self, aug_params=None, split='training', root='datasets/autoflow'):
+        super(Autoflow, self).__init__(aug_params)
+        scene_count = len(os.listdir(root))
+        training_size = int(scene_count * 0.9)
+        
+        for i, scene in enumerate(os.listdir(root)):
+            if split == 'training' and i <= training_size or \
+               split == 'test'     and i > training_size:
+                image0_path = osp.join(root, scene, 'im0.png')
+                image1_path = osp.join(root, scene, 'im1.png')
+                flow_path   = osp.join(root, scene, 'forward.flo')
+                
+                self.image_list += [ [image0_path, image1_path] ]
+                self.flow_list  += [ flow_path ]
+                self.extra_info += [ [scene] ]
+
 # 'crop_size' = args.image_size: no cropping.
 def fetch_dataloader(args, SINTEL_TRAIN_DS='C+T+K+S+H'):
     """ Create the data loader for the corresponding training set """
@@ -289,7 +308,10 @@ def fetch_dataloader(args, SINTEL_TRAIN_DS='C+T+K+S+H'):
             kitti = KITTI({'crop_size': args.image_size, 'min_scale': -0.3, 'max_scale': 0.5, 'do_flip': True})
             hd1k = HD1K({'crop_size': args.image_size, 'min_scale': -0.5, 'max_scale': 0.2, 'do_flip': True})
             train_dataset = 100*sintel_clean + 100*sintel_final + 200*kitti + 5*hd1k + things
-
+            if args.use_autoflow:
+                autoflow = Autoflow({'crop_size': args.image_size, 'min_scale': -0.3, 'max_scale': 0.2, 'do_flip': True})
+                train_dataset = train_dataset + autoflow
+                
         elif SINTEL_TRAIN_DS == 'C+T+K/S':
             train_dataset = 100*sintel_clean + 100*sintel_final + things
 
