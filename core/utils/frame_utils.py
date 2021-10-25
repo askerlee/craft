@@ -111,8 +111,7 @@ def readDispKITTI(filename):
     valid = disp > 0.0
     flow = np.stack([-disp, np.zeros_like(disp)], -1)
     return flow, valid
-
-
+    
 def writeFlowKITTI(filename, uv):
     uv = 64.0 * uv + 2**15
     valid = np.ones([uv.shape[0], uv.shape[1], 1])

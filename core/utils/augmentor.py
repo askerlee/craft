@@ -13,13 +13,13 @@ import torch.nn.functional as F
 
 
 class FlowAugmentor:
-    def __init__(self, crop_size, min_scale=-0.2, max_scale=0.5, do_flip=True):
+    def __init__(self, crop_size, min_scale=-0.2, max_scale=0.5, spatial_aug_prob=0.8, do_flip=True):
         
         # spatial augmentation params
         self.crop_size = crop_size
         self.min_scale = min_scale
         self.max_scale = max_scale
-        self.spatial_aug_prob = 0.8
+        self.spatial_aug_prob = spatial_aug_prob
         self.stretch_prob = 0.8
         self.max_stretch = 0.2
 
@@ -101,7 +101,7 @@ class FlowAugmentor:
 
         y0 = np.random.randint(0, img1.shape[0] - self.crop_size[0])
         x0 = np.random.randint(0, img1.shape[1] - self.crop_size[1])
-        
+            
         img1 = img1[y0:y0+self.crop_size[0], x0:x0+self.crop_size[1]]
         img2 = img2[y0:y0+self.crop_size[0], x0:x0+self.crop_size[1]]
         flow = flow[y0:y0+self.crop_size[0], x0:x0+self.crop_size[1]]

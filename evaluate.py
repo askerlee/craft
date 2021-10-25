@@ -478,6 +478,63 @@ def validate_kitti(model, iters=6, test_mode=1):
     print("Validation KITTI: %f, %f" % (epe, f1))
     return {'kitti_epe': epe, 'kitti_f1': f1}
 
+@torch.no_grad()
+def validate_viper(model, iters=6, test_mode=1):
+    """ Peform validation using the VIPER validation split """
+    model.eval()
+    val_dataset = datasets.KITTI(split='validation')
+
+    out_list, epe_list = {}, {}
+    if test_mode == 1:
+        its = [0]
+    elif test_mode == 2:
+        its = range(iters)
+    elif test_mode == 0:
+        breakpoint()
+                
+    for val_id in range(len(val_dataset)):
+        image1, image2, flow_gt, valid_gt = val_dataset[val_id]
+        image1 = image1[None].cuda()
+        image2 = image2[None].cuda()
+
+        padder = InputPadder(image1.shape, mode='kitti')
+        image1, image2 = padder.pad(image1, image2)
+
+        _, flow_prs = model(image1, image2, iters=iters, test_mode=test_mode)
+        # if test_mode == 2: list of 12 tensors, each is [1, 2, H, W].
+        # if test_mode == 1: a tensor of [1, 2, H, W].
+        if test_mode == 1:
+            flow_prs = [ flow_prs ]
+
+        for it, flow_pr in enumerate(flow_prs):
+            flow = padder.unpad(flow_pr[0]).cpu()
+            epe = torch.sum((flow - flow_gt)**2, dim=0).sqrt()
+            mag = torch.sum(flow_gt**2, dim=0).sqrt()
+            epe = epe.view(-1)
+            mag = mag.view(-1)
+            val = valid_gt.view(-1) >= 0.5
+
+            out = ((epe > 3.0) & ((epe/mag) > 0.05)).float()
+                        
+            epe_list.setdefault(it, [])
+            out_list.setdefault(it, [])
+            epe_list[it].append(epe[val].view(-1).numpy())
+            out_list[it].append(out[val].view(-1).numpy())
+                                            
+    for it in its:
+        epe_all = np.concatenate(epe_list[it])
+        out_all = np.concatenate(out_list[it])
+        
+        epe = np.mean(epe_all)
+        px1 = np.mean(epe_all<1)
+        px3 = np.mean(epe_all<3)
+        px5 = np.mean(epe_all<5)
+
+        f1 = 100 * np.mean(out_all)
+        print("Iter %d, Valid (%s) EPE: %.4f, F1: %.4f, 1px: %.4f, 3px: %.4f, 5px: %.4f" % (it, dstype, epe, f1, px1, px3, px5))
+
+    return {'epe': epe, 'f1': f1}
+        
 def save_checkpoint(cp_path, model, optimizer_state, lr_scheduler_state, logger):
     save_state = { 'model':        model.state_dict(),
                    'optimizer':    optimizer_state,

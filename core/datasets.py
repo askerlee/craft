@@ -56,6 +56,7 @@ class FlowDataset(data.Dataset):
 
         index = index % len(self.image_list)
         valid = None
+        # KITTI flow is saved as image files. 
         if self.sparse:
             flow, valid = frame_utils.readFlowKITTI(self.flow_list[index])
         else:
@@ -284,6 +285,66 @@ class Autoflow(FlowDataset):
                 self.flow_list  += [ flow_path ]
                 self.extra_info += [ [scene] ]
 
+# The VIPER .npz flow files have been converted to KITTI .png format.
+class VIPER(FlowDataset):
+    def __init__(self, aug_params=None, split='training', root='datasets/viper/', filetype='jpg'):
+        super(Autoflow, self).__init__(aug_params, sparse=True)
+        scene_count = len(os.listdir(root))
+        split_map = { 'training': 'train', 'validation': 'val', 'test': 'test' }
+        split = split_map[split]
+        split_img_root  = osp.join(root, filetype, split, 'img')
+        split_flow_root = osp.join(root, filetype, split, 'flow')
+        skip_count = 0
+        if split == 'test':
+            # 001_00001, 001_00076, ...
+            TEST_FRAMES = open(osp.join(root, "test_frames.txt"))
+            test_frames_dict = {}
+            for frame_trunk in TEST_FRAMES:
+                frame_trunk = frame_trunk.strip()
+                test_frames_dict[frame_trunk] = 1
+            print("{} test frame names loaded".format(len(test_frames_dict)))
+            
+        for i, scene in enumerate(os.listdir(split_img_root)):
+            # scene: 001, 002, ...
+            # dir: viper/train/img/001
+            # img0_name: 001_00001.png, 001_00010.png, ...
+            for img0_name in sorted(os.listdir(osp.join(split_img_root, scene))):
+                matches = re.match(r"(\d{3})_(\d{5}).(jpg|png)", img0_name)
+                if not matches:
+                    breakpoint()
+                scene0   = matches.group(1)
+                img0_idx = matches.group(2)
+                suffix   = matches.group(3)
+                assert scene == scene0
+                # img0_trunk: img0_name without suffix.
+                img0_trunk  = f"{scene}_{img1_idx}"
+                if (split == 'train' or split == 'val') and file_idx[-1] == '0' \
+                  or \
+                  split == 'test' and img0_trunk in test_frames_dict:
+                    img1_idx    = "{:05d}".format(int(img0_idx) + 1)
+                    img1_name   = f"{scene}_{img1_idx}.{suffix}"
+                    flow_name   = img0_name[:-3] + "png"
+                    image0_path = osp.join(split_img_root,  scene, img0_name)
+                    image1_path = osp.join(split_img_root,  scene, img1_name)
+                    flow_path   = osp.join(split_flow_root, scene, flow_name)
+                    # Sometimes image1 is missing. Skip this pair.
+                    if not os.path.isfile(image1_path):
+                        # In the test set, image1 should always be there.
+                        if split == 'test':
+                            breakpoint()
+                        continue
+                    # if both image0_path and image1_path exist, then flow_path should exist.
+                    if not os.path.isfile(flow_path):
+                        breakpoint()
+                # This file is not considered as the first frame. Skip.
+                else:
+                    skip_count += 1
+                    continue
+                        
+                self.image_list += [ [image0_path, image1_path] ]
+                self.flow_list  += [ flow_path ]
+                self.extra_info += [ [scene] ]
+                
 # 'crop_size' = args.image_size: no cropping.
 def fetch_dataloader(args, SINTEL_TRAIN_DS='C+T+K+S+H'):
     """ Create the data loader for the corresponding training set """
@@ -309,7 +370,10 @@ def fetch_dataloader(args, SINTEL_TRAIN_DS='C+T+K+S+H'):
             hd1k = HD1K({'crop_size': args.image_size, 'min_scale': -0.5, 'max_scale': 0.2, 'do_flip': True})
             train_dataset = 100*sintel_clean + 100*sintel_final + 200*kitti + 5*hd1k + things
             if args.use_autoflow:
-                autoflow = Autoflow({'crop_size': args.image_size, 'min_scale': -0.3, 'max_scale': 0.2, 'do_flip': True})
+                # autoflow image size: (488, 576)
+                # minimal scale = 2**0.42 = 1.338. 576*1.338=770.6 > 768. Otherwise there'll be exceptions.
+                autoflow = Autoflow({'crop_size': args.image_size, 'min_scale': 0, 'max_scale': 0.8, 
+                                     'spatial_aug_prob': 1, 'do_flip': True})
                 train_dataset = train_dataset + autoflow
                 
         elif SINTEL_TRAIN_DS == 'C+T+K/S':
