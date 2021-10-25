@@ -288,7 +288,7 @@ class Autoflow(FlowDataset):
 # The VIPER .npz flow files have been converted to KITTI .png format.
 class VIPER(FlowDataset):
     def __init__(self, aug_params=None, split='training', root='datasets/viper/', filetype='jpg'):
-        super(Autoflow, self).__init__(aug_params, sparse=True)
+        super(VIPER, self).__init__(aug_params, sparse=True)
         scene_count = len(os.listdir(root))
         split_map = { 'training': 'train', 'validation': 'val', 'test': 'test' }
         split = split_map[split]
