@@ -348,7 +348,7 @@ class VIPER(FlowDataset):
                 self.flow_list  += [ flow_path ]
                 self.extra_info += [ [scene] ]
                 
-# 'crop_size' is the minimal size of images after resizing. It's not used to crop the image.
+# 'crop_size' is first used to bound the minimal size of images after resizing. Then it's used to crop the image.
 def fetch_dataloader(args, SINTEL_TRAIN_DS='C+T+K+S+H'):
     """ Create the data loader for the corresponding training set """
 
