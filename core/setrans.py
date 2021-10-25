@@ -522,9 +522,7 @@ class CrossAttFeatTrans(SETransInitWeights):
 
         with torch.no_grad():
             curr_max_attn = attention_scores.max().item()
-            pos_count     = (attention_scores > 0).sum()
-            curr_avg_attn = attention_scores.sum() / pos_count
-            curr_avg_attn = curr_avg_attn.item()
+            curr_avg_attn = attention_scores.abs().mean().item()
 
         if curr_max_attn > self.max_attn:
             self.max_attn = curr_max_attn

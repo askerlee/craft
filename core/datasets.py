@@ -348,7 +348,7 @@ class VIPER(FlowDataset):
                 self.flow_list  += [ flow_path ]
                 self.extra_info += [ [scene] ]
                 
-# 'crop_size' = args.image_size: no cropping.
+# 'crop_size' is the minimal size of images after resizing. It's not used to crop the image.
 def fetch_dataloader(args, SINTEL_TRAIN_DS='C+T+K+S+H'):
     """ Create the data loader for the corresponding training set """
 
@@ -387,7 +387,8 @@ def fetch_dataloader(args, SINTEL_TRAIN_DS='C+T+K+S+H'):
         train_dataset = KITTI(aug_params, split='training')
         
     elif args.stage == 'viper':
-        aug_params = {'crop_size': args.image_size, 'min_scale': -0.2, 'max_scale': 0.4, 'do_flip': False}
+        aug_params = {'crop_size': args.image_size, 'min_scale': -1, 'max_scale': -0.5, 
+                      'spatial_aug_prob': 1, 'do_flip': False}
         train_dataset = VIPER(aug_params, split='training')
 
     train_loader = data.DataLoader(train_dataset, batch_size=args.batch_size,

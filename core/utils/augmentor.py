@@ -121,12 +121,12 @@ class FlowAugmentor:
 
 
 class SparseFlowAugmentor:
-    def __init__(self, crop_size, min_scale=-0.2, max_scale=0.5, do_flip=False):
+    def __init__(self, crop_size, min_scale=-0.2, max_scale=0.5, spatial_aug_prob=0.8, do_flip=False):
         # spatial augmentation params
         self.crop_size = crop_size
         self.min_scale = min_scale
         self.max_scale = max_scale
-        self.spatial_aug_prob = 0.8
+        self.spatial_aug_prob = spatial_aug_prob
         self.stretch_prob = 0.8
         self.max_stretch = 0.2
 
@@ -193,10 +193,13 @@ class SparseFlowAugmentor:
 
         return flow_img, valid_img
 
+    # crop_size: minimal image size after resizing. 
+    # Images are cropped to crop_size at the end of spatial_transform().
     def spatial_transform(self, img1, img2, flow, valid):
         # randomly sample scale
 
         ht, wd = img1.shape[:2]
+        # min_scale: the scale is at least min_scale.
         min_scale = np.maximum(
             (self.crop_size[0] + 1) / float(ht), 
             (self.crop_size[1] + 1) / float(wd))
@@ -204,13 +207,13 @@ class SparseFlowAugmentor:
         scale = 2 ** np.random.uniform(self.min_scale, self.max_scale)
         scale_x = np.clip(scale, min_scale, None)
         scale_y = np.clip(scale, min_scale, None)
-
+        
         if np.random.rand() < self.spatial_aug_prob:
             # rescale the images
             img1 = cv2.resize(img1, None, fx=scale_x, fy=scale_y, interpolation=cv2.INTER_LINEAR)
             img2 = cv2.resize(img2, None, fx=scale_x, fy=scale_y, interpolation=cv2.INTER_LINEAR)
             flow, valid = self.resize_sparse_flow_map(flow, valid, fx=scale_x, fy=scale_y)
-
+            
         if self.do_flip:
             if np.random.rand() < 0.5: # h-flip
                 img1 = img1[:, ::-1]
@@ -231,6 +234,7 @@ class SparseFlowAugmentor:
         img2 = img2[y0:y0+self.crop_size[0], x0:x0+self.crop_size[1]]
         flow = flow[y0:y0+self.crop_size[0], x0:x0+self.crop_size[1]]
         valid = valid[y0:y0+self.crop_size[0], x0:x0+self.crop_size[1]]
+        # print(img1.shape)
         return img1, img2, flow, valid
 
     def __call__(self, img1, img2, flow, valid):

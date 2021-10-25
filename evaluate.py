@@ -13,6 +13,7 @@ import network
 # back-compatible with older checkpoints.
 network.RAFTER = CRAFT
 from torchvision import transforms
+import torch.utils.data as data
 
 import datasets
 from utils import flow_viz
@@ -478,12 +479,20 @@ def validate_kitti(model, iters=6, test_mode=1):
     print("Validation KITTI: %f, %f" % (epe, f1))
     return {'kitti_epe': epe, 'kitti_f1': f1}
 
+# Set max_val_count=-1 to evaluate the whole dataset.
 @torch.no_grad()
-def validate_viper(model, iters=6, test_mode=1):
+def validate_viper(model, iters=6, test_mode=1, batch_size=2, max_val_count=500):
     """ Peform validation using the VIPER validation split """
     model.eval()
-    val_dataset = datasets.VIPER(split='validation')
+    # original size: (1080, 1920).
+    # real_scale = 2** scale = 0.5. scale: log(0.5) / log(2) = -1.
+    val_dataset = datasets.VIPER(split='validation', 
+                                 aug_params={'crop_size': (540, 960), 'min_scale': -1, 'max_scale': -1,
+                                             'spatial_aug_prob': 1, })
 
+    val_loader  = data.DataLoader(val_dataset, batch_size=batch_size,
+                                  pin_memory=True, shuffle=False, num_workers=8, drop_last=False)
+                                   
     out_list, epe_list = {}, {}
     if test_mode == 1:
         its = [0]
@@ -491,12 +500,20 @@ def validate_viper(model, iters=6, test_mode=1):
         its = range(iters)
     elif test_mode == 0:
         breakpoint()
-                
-    for val_id in range(len(val_dataset)):
-        image1, image2, flow_gt, valid_gt = val_dataset[val_id]
-        image1 = image1[None].cuda()
-        image2 = image2[None].cuda()
-
+    
+    val_count = 0
+    if max_val_count == -1:
+        max_val_count = len(val_dataset)
+    else:
+        max_val_count = min(max_val_count, len(val_dataset))
+        if max_val_count < len(val_dataset):
+            print(f"Evaluate first {max_val_count} of {len(val_dataset)}")
+            
+    for data_blob in iter(val_loader):
+        image1, image2, flow_gt, valid_gt = data_blob
+        image1 = image1.cuda()
+        image2 = image2.cuda()
+        
         padder = InputPadder(image1.shape, mode='kitti')
         image1, image2 = padder.pad(image1, image2)
 
@@ -520,7 +537,14 @@ def validate_viper(model, iters=6, test_mode=1):
             out_list.setdefault(it, [])
             epe_list[it].append(epe[val].view(-1).numpy())
             out_list[it].append(out[val].view(-1).numpy())
-                                            
+
+        val_count += len(image1)
+        if val_count % 100 == 0:
+            print(f"{val_count}/{max_val_count}")
+        # The validation data is too big. Just evaluate some.
+        if val_count >= max_val_count:
+            break
+                                                       
     for it in its:
         epe_all = np.concatenate(epe_list[it])
         out_all = np.concatenate(out_list[it])
@@ -531,7 +555,7 @@ def validate_viper(model, iters=6, test_mode=1):
         px5 = np.mean(epe_all<5)
 
         f1 = 100 * np.mean(out_all)
-        print("Iter %d, Valid (%s) EPE: %.4f, F1: %.4f, 1px: %.4f, 3px: %.4f, 5px: %.4f" % (it, dstype, epe, f1, px1, px3, px5))
+        print("Iter %d, Valid EPE: %.4f, F1: %.4f, 1px: %.4f, 3px: %.4f, 5px: %.4f" % (it, epe, f1, px1, px3, px5))
 
     return {'epe': epe, 'f1': f1}
         
@@ -688,5 +712,9 @@ if __name__ == '__main__':
         elif args.dataset == 'kitti':
             validate_kitti(model.module, iters=args.iters, test_mode=args.test_mode)
 
+        elif args.dataset == 'viper':
+            validate_viper(model.module, iters=args.iters, test_mode=args.test_mode, max_val_count=-1)
+
         elif args.dataset == 'hd1k':
             validate_hd1k(model.module, iters=args.iters, test_mode=args.test_mode)
+
