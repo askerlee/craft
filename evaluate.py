@@ -482,7 +482,7 @@ def validate_kitti(model, iters=6, test_mode=1):
 def validate_viper(model, iters=6, test_mode=1):
     """ Peform validation using the VIPER validation split """
     model.eval()
-    val_dataset = datasets.KITTI(split='validation')
+    val_dataset = datasets.VIPER(split='validation')
 
     out_list, epe_list = {}, {}
     if test_mode == 1:

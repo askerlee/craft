@@ -10,6 +10,7 @@ import math
 import random
 from glob import glob
 import os.path as osp
+import re
 
 from utils import frame_utils
 from utils.augmentor import FlowAugmentor, SparseFlowAugmentor
@@ -317,8 +318,8 @@ class VIPER(FlowDataset):
                 suffix   = matches.group(3)
                 assert scene == scene0
                 # img0_trunk: img0_name without suffix.
-                img0_trunk  = f"{scene}_{img1_idx}"
-                if (split == 'train' or split == 'val') and file_idx[-1] == '0' \
+                img0_trunk  = f"{scene}_{img0_idx}"
+                if (split == 'train' or split == 'val') and img0_idx[-1] == '0' \
                   or \
                   split == 'test' and img0_trunk in test_frames_dict:
                     img1_idx    = "{:05d}".format(int(img0_idx) + 1)
@@ -332,10 +333,12 @@ class VIPER(FlowDataset):
                         # In the test set, image1 should always be there.
                         if split == 'test':
                             breakpoint()
+                        skip_count += 1
                         continue
                     # if both image0_path and image1_path exist, then flow_path should exist.
                     if not os.path.isfile(flow_path):
-                        breakpoint()
+                        skip_count += 1
+                        continue
                 # This file is not considered as the first frame. Skip.
                 else:
                     skip_count += 1
