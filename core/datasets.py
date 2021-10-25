@@ -382,6 +382,10 @@ def fetch_dataloader(args, SINTEL_TRAIN_DS='C+T+K+S+H'):
     elif args.stage == 'kitti':
         aug_params = {'crop_size': args.image_size, 'min_scale': -0.2, 'max_scale': 0.4, 'do_flip': False}
         train_dataset = KITTI(aug_params, split='training')
+        
+    elif args.stage == 'viper':
+        aug_params = {'crop_size': args.image_size, 'min_scale': -0.2, 'max_scale': 0.4, 'do_flip': False}
+        train_dataset = VIPER(aug_params, split='training')
 
     train_loader = data.DataLoader(train_dataset, batch_size=args.batch_size,
                                    pin_memory=True, shuffle=True, num_workers=8, drop_last=True)
