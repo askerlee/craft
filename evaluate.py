@@ -7,6 +7,7 @@ import os
 import numpy as np
 import torch
 import imageio
+import cv2
 
 from network import CRAFT
 import network
@@ -136,7 +137,7 @@ def create_kitti_submission(model, output_path='kitti_submission', test_mode=1):
 
 @torch.no_grad()
 def create_kitti_submission_vis(model, output_path='kitti_submission', test_mode=1):
-    """ Create submission for the Sintel leaderboard """
+    """ Create submission for the KITTI leaderboard """
     model.eval()
     test_dataset = datasets.KITTI(split='testing', aug_params=None)
 
@@ -166,6 +167,37 @@ def create_kitti_submission_vis(model, output_path='kitti_submission', test_mode
         imageio.imwrite(f'vis_kitti/image/{test_id}_1.png', image2[0].cpu().permute(1, 2, 0).numpy())
 
     print("Created KITTI submission.")
+
+@torch.no_grad()
+def create_viper_submission(model, output_path='viper_submission', test_mode=1):
+    """ Create submission for the viper leaderboard """
+    model.eval()
+    # To reduce RAM use, scale images to half size: 2**-1 = 0.5.
+    test_dataset = datasets.VIPER(split='test', 
+                                 aug_params={'crop_size': (540, 960), 'min_scale': -1, 'max_scale': -1,
+                                             'spatial_aug_prob': 1})
+
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+
+    for test_id in range(len(test_dataset)):
+        image1, image2, (frame_id, ) = test_dataset[test_id]
+        image1 = image1[None].to(f'cuda:{model.device_ids[0]}')
+        image2 = image2[None].to(f'cuda:{model.device_ids[0]}')
+        padder = InputPadder(image1.shape, mode='kitti')
+        image1, image2 = padder.pad(image1, image2)
+
+        _, flow_pr = model.module(image1, image2, iters=24, test_mode=test_mode)
+        flow = padder.unpad(flow_pr[0]).permute(1, 2, 0).cpu().numpy()
+        # Scale flow back to original size.
+        scale_x, scale_y = 2, 2
+        flow = cv2.resize(flow, None, fx=scale_x, fy=scale_y, interpolation=cv2.INTER_LINEAR)
+        flow = flow * [scale_x, scale_y]
+
+        output_filename = os.path.join(output_path, frame_id + ".flo")
+        frame_utils.writeFlow(output_filename, flow)
+
+    print("Created VIPER submission.")
 
 @torch.no_grad()
 def validate_chairs(model, iters=6, test_mode=1):
@@ -442,16 +474,19 @@ def separate_inout_sintel_occ():
 
 
 @torch.no_grad()
-def validate_kitti(model, iters=6, test_mode=1):
+def validate_kitti(model, iters=6, test_mode=1, batch_size=2):
     """ Peform validation using the KITTI-2015 (train) split """
     model.eval()
     val_dataset = datasets.KITTI(split='training')
-
+    val_loader  = data.DataLoader(val_dataset, batch_size=batch_size,
+                                  pin_memory=True, shuffle=False, num_workers=8, drop_last=False)
+                                  
     out_list, epe_list = [], []
-    for val_id in range(len(val_dataset)):
-        image1, image2, flow_gt, valid_gt = val_dataset[val_id]
-        image1 = image1[None].cuda()
-        image2 = image2[None].cuda()
+    
+    for data_blob in iter(val_loader):
+        image1, image2, flow_gt, valid_gt = data_blob
+        image1 = image1.cuda()
+        image2 = image2.cuda()
 
         padder = InputPadder(image1.shape, mode='kitti')
         image1, image2 = padder.pad(image1, image2)
@@ -488,12 +523,13 @@ def validate_viper(model, iters=6, test_mode=1, batch_size=2, max_val_count=500)
     # real_scale = 2** scale = 0.5. scale: log(0.5) / log(2) = -1.
     val_dataset = datasets.VIPER(split='validation', 
                                  aug_params={'crop_size': (540, 960), 'min_scale': -1, 'max_scale': -1,
-                                             'spatial_aug_prob': 1, })
+                                             'spatial_aug_prob': 1})
 
     val_loader  = data.DataLoader(val_dataset, batch_size=batch_size,
-                                  pin_memory=True, shuffle=False, num_workers=8, drop_last=False)
+                                  pin_memory=False, shuffle=False, num_workers=8, drop_last=False)
                                    
     out_list, epe_list = {}, {}
+    out_seg,  epe_seg  = [], []
     if test_mode == 1:
         its = [0]
     elif test_mode == 2:
@@ -514,19 +550,21 @@ def validate_viper(model, iters=6, test_mode=1, batch_size=2, max_val_count=500)
         image1 = image1.cuda()
         image2 = image2.cuda()
         
+        # (540, 960) => (544, 960), to be divided by 8.
         padder = InputPadder(image1.shape, mode='kitti')
         image1, image2 = padder.pad(image1, image2)
 
         _, flow_prs = model(image1, image2, iters=iters, test_mode=test_mode)
+        
         # if test_mode == 2: list of 12 tensors, each is [1, 2, H, W].
         # if test_mode == 1: a tensor of [1, 2, H, W].
         if test_mode == 1:
             flow_prs = [ flow_prs ]
 
         for it, flow_pr in enumerate(flow_prs):
-            flow = padder.unpad(flow_pr[0]).cpu()
-            epe = torch.sum((flow - flow_gt)**2, dim=0).sqrt()
-            mag = torch.sum(flow_gt**2, dim=0).sqrt()
+            flow = padder.unpad(flow_pr).cpu()
+            epe = torch.sum((flow - flow_gt)**2, dim=1).sqrt()
+            mag = torch.sum(flow_gt**2, dim=1).sqrt()
             epe = epe.view(-1)
             mag = mag.view(-1)
             val = valid_gt.view(-1) >= 0.5
@@ -538,9 +576,23 @@ def validate_viper(model, iters=6, test_mode=1, batch_size=2, max_val_count=500)
             epe_list[it].append(epe[val].view(-1).numpy())
             out_list[it].append(out[val].view(-1).numpy())
 
+            epe_seg.append(epe[val].view(-1).numpy())
+            out_seg.append(out[val].view(-1).numpy())
+
         val_count += len(image1)
         if val_count % 100 == 0:
-            print(f"{val_count}/{max_val_count}")
+            epe_seg     = np.concatenate(epe_seg)
+            out_seg     = np.concatenate(out_seg)
+            mean_epe    = np.mean(epe_seg)
+            px1 = np.mean(epe_seg < 1)
+            px3 = np.mean(epe_seg < 3)
+            px5 = np.mean(epe_seg < 5)
+            f1  = 100 * np.mean(out_seg)
+            print(f"{val_count}/{max_val_count}: EPE {mean_epe:.4f}, F1 {f1:.4f}, "
+                  f"1px {px1:.4f}, 3px {px3:.4f}, 5px {px5:.4f}")
+            epe_seg = []
+            out_seg = []
+            
         # The validation data is too big. Just evaluate some.
         if val_count >= max_val_count:
             break
@@ -612,12 +664,17 @@ if __name__ == '__main__':
                         help='only use position-wise attention')
     parser.add_argument('--position_and_content', default=False, action='store_true',
                         help='use position and content-wise attention')
-    parser.add_argument('--mixed_precision', type=bool, default=True, help='use mixed precision')
+    parser.add_argument('--fullprec', dest='mixed_precision',
+                        action='store_false', help='use full precision (default: mixed precision)')
     parser.add_argument('--model_name')
     parser.add_argument('--fix', action='store_true', help='Fix loaded checkpoint')
     parser.add_argument('--submit', action='store_true', help='Make a sintel/kitti submission')
     parser.add_argument('--test_mode', default=1, type=int, 
                         help='Test mode (1: normal, 2: evaluate performance of every iteration)')
+    parser.add_argument('--maxval', dest='max_val_count', default=-1, type=int, 
+                        help='Maximum number of evaluated examples')
+    parser.add_argument('--bs', dest='batch_size', default=2, type=int, 
+                        help='Batch size')
 
     # Ablations
     parser.add_argument('--replace', default=False, action='store_true',
@@ -713,7 +770,8 @@ if __name__ == '__main__':
             validate_kitti(model.module, iters=args.iters, test_mode=args.test_mode)
 
         elif args.dataset == 'viper':
-            validate_viper(model.module, iters=args.iters, test_mode=args.test_mode, max_val_count=-1)
+            validate_viper(model.module, iters=args.iters, test_mode=args.test_mode, 
+                           max_val_count=args.max_val_count, batch_size=args.batch_size)
 
         elif args.dataset == 'hd1k':
             validate_hd1k(model.module, iters=args.iters, test_mode=args.test_mode)

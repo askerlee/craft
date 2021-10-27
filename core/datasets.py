@@ -346,7 +346,7 @@ class VIPER(FlowDataset):
                         
                 self.image_list += [ [image0_path, image1_path] ]
                 self.flow_list  += [ flow_path ]
-                self.extra_info += [ [scene] ]
+                self.extra_info += [ [img0_trunk] ]
                 
 # 'crop_size' is first used to bound the minimal size of images after resizing. Then it's used to crop the image.
 def fetch_dataloader(args, SINTEL_TRAIN_DS='C+T+K+S+H'):

@@ -194,7 +194,7 @@ class CRAFT(nn.Module):
         # coords1 is iteratively updated as coords0 + current estimated flow.
         # At this moment coords0 == coords1.
         coords0, coords1 = self.initialize_flow(image1)
-
+        
         if flow_init is not None:
             coords1 = coords1 + flow_init
 

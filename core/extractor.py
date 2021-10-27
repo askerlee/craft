@@ -52,7 +52,7 @@ class ResidualBlock(nn.Module):
                     nn.Conv2d(in_planes, planes, kernel_size=3, stride=2, padding=1), self.norm3)
             else:
                 breakpoint()
-                   
+        
     def forward(self, x):
         y = x
         y = self.relu(self.norm1(self.conv1(y)))
@@ -121,7 +121,6 @@ class BottleneckBlock(nn.Module):
 
         return self.relu(x + y)
 
-
 class BasicEncoder(nn.Module):
     def __init__(self, output_dim=128, norm_fn='batch', dropout=0.0):
         super(BasicEncoder, self).__init__()
@@ -172,7 +171,6 @@ class BasicEncoder(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-
         # if input is list, combine batch dimension
         # if input is list, x = [image1, image2].
         is_list = isinstance(x, tuple) or isinstance(x, list)
@@ -183,13 +181,12 @@ class BasicEncoder(nn.Module):
         x = self.conv1(x)
         x = self.norm1(x)
         x = self.relu1(x)
-
+        
         x = self.layer1(x)
         x = self.layer2(x)
         x = self.layer3(x)
-
         x = self.conv2(x)
-
+        
         if self.training and self.dropout is not None:
             x = self.dropout(x)
 

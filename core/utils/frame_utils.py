@@ -68,7 +68,7 @@ def readPFM(file):
     return data
 
 def writeFlow(filename,uv,v=None):
-    """ Write optical flow to file.
+    """ Write optical flow to .flo file.
     
     If v is None, uv is assumed to contain both u and v channels,
     stacked in depth.
