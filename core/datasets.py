@@ -304,6 +304,7 @@ class VIPER(FlowDataset):
                 frame_trunk = frame_trunk.strip()
                 test_frames_dict[frame_trunk] = 1
             print("{} test frame names loaded".format(len(test_frames_dict)))
+            self.is_test = True
             
         for i, scene in enumerate(os.listdir(split_img_root)):
             # scene: 001, 002, ...
@@ -336,7 +337,7 @@ class VIPER(FlowDataset):
                         skip_count += 1
                         continue
                     # if both image0_path and image1_path exist, then flow_path should exist.
-                    if not os.path.isfile(flow_path):
+                    if split != 'test' and not os.path.isfile(flow_path):
                         skip_count += 1
                         continue
                 # This file is not considered as the first frame. Skip.
@@ -347,7 +348,8 @@ class VIPER(FlowDataset):
                 self.image_list += [ [image0_path, image1_path] ]
                 self.flow_list  += [ flow_path ]
                 self.extra_info += [ [img0_trunk] ]
-                
+        print(f"{skip_count} files skipped")
+
 # 'crop_size' is first used to bound the minimal size of images after resizing. Then it's used to crop the image.
 def fetch_dataloader(args, SINTEL_TRAIN_DS='C+T+K+S+H'):
     """ Create the data loader for the corresponding training set """
@@ -392,7 +394,7 @@ def fetch_dataloader(args, SINTEL_TRAIN_DS='C+T+K+S+H'):
         train_dataset = VIPER(aug_params, split='training')
 
     train_loader = data.DataLoader(train_dataset, batch_size=args.batch_size,
-                                   pin_memory=True, shuffle=True, num_workers=8, drop_last=True)
+                                   pin_memory=True, shuffle=True, num_workers=4, drop_last=True)
 
     print('Training with %d image pairs' % len(train_dataset))
     return train_loader

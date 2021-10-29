@@ -6,6 +6,7 @@ import argparse
 import os
 import numpy as np
 import torch
+import torch.nn.functional as F
 import imageio
 import cv2
 
@@ -172,27 +173,30 @@ def create_kitti_submission_vis(model, output_path='kitti_submission', test_mode
 def create_viper_submission(model, output_path='viper_submission', test_mode=1):
     """ Create submission for the viper leaderboard """
     model.eval()
-    # To reduce RAM use, scale images to half size: 2**-1 = 0.5.
-    test_dataset = datasets.VIPER(split='test', 
-                                 aug_params={'crop_size': (540, 960), 'min_scale': -1, 'max_scale': -1,
-                                             'spatial_aug_prob': 1})
+    test_dataset = datasets.VIPER(split='test', aug_params=None)
 
     if not os.path.exists(output_path):
         os.makedirs(output_path)
+
+    scale = 0.5
+    inv_scale = 1.0 / scale
 
     for test_id in range(len(test_dataset)):
         image1, image2, (frame_id, ) = test_dataset[test_id]
         image1 = image1[None].to(f'cuda:{model.device_ids[0]}')
         image2 = image2[None].to(f'cuda:{model.device_ids[0]}')
+        # To reduce RAM use, scale images to half size.
+        image1 = F.interpolate(image1, scale_factor=scale, mode='bilinear', align_corners=False)
+        image2 = F.interpolate(image2, scale_factor=scale, mode='bilinear', align_corners=False)
+
         padder = InputPadder(image1.shape, mode='kitti')
         image1, image2 = padder.pad(image1, image2)
 
         _, flow_pr = model.module(image1, image2, iters=24, test_mode=test_mode)
         flow = padder.unpad(flow_pr[0]).permute(1, 2, 0).cpu().numpy()
         # Scale flow back to original size.
-        scale_x, scale_y = 2, 2
-        flow = cv2.resize(flow, None, fx=scale_x, fy=scale_y, interpolation=cv2.INTER_LINEAR)
-        flow = flow * [scale_x, scale_y]
+        flow = cv2.resize(flow, None, fx=inv_scale, fy=inv_scale, interpolation=cv2.INTER_LINEAR)
+        flow = flow * [inv_scale, inv_scale]
 
         output_filename = os.path.join(output_path, frame_id + ".flo")
         frame_utils.writeFlow(output_filename, flow)
@@ -750,6 +754,10 @@ if __name__ == '__main__':
         
     if args.dataset == 'kitti' and args.submit:
         create_kitti_submission(model)
+        exit(0)
+    
+    if args.dataset == 'viper' and args.submit:
+        create_viper_submission(model)
         exit(0)
     # create_kitti_submission_vis(model)
 
