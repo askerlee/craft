@@ -1,3 +1,6 @@
+python evaluate.py --dataset viper --model results/viper/craft/craft-viper.pth --setrans --craft --corrnorm global --f2trans
+Iter 0, Valid EPE: 0.8759, F1: 2.5389, 1px: 0.8961, 3px: 0.9640, 5px: 0.9782
+
 10000:
 100/1000: EPE 1.6806, F1 5.4934, 1px 0.7739, 3px 0.9188, 5px 0.9476
 200/1000: EPE 0.6718, F1 2.3252, 1px 0.9113, 3px 0.9676, 5px 0.9791
