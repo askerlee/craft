@@ -23,6 +23,18 @@
 12 Validation (clean) EPE: 0.604524, 1px: 0.929473, 3px: 0.972002, 5px: 0.981973
 12 Validation (final) EPE: 1.065938, 1px: 0.893737, 3px: 0.951249, 5px: 0.967230
 
+validate_sintel:
+(clean) EPE: 0.607844, 1px: 0.929505, 3px: 0.971988, 5px: 0.981925, 0-3 0.11, 3-5 0.22, 5-10 0.34, 10-inf 1.58
+(final) EPE: 1.066055, 1px: 0.893766, 3px: 0.951289, 5px: 0.967212, 0-3 0.13, 3-5 0.48, 5-10 0.47, 10-inf 2.88
+
+validate_sintel_occ:
+Validation (clean) EPE: 0.607844, 1px: 0.929505, 3px: 0.971988, 5px: 0.981925
+Occ epe: 4.667817, Noc epe: 0.287984
+Validation (final) EPE: 1.066055, 1px: 0.893766, 3px: 0.951289, 5px: 0.967212
+Occ epe: 7.134056, Noc epe: 0.588001
+Validation (albedo) EPE: 0.696081, 1px: 0.932492, 3px: 0.971359, 5px: 0.980616
+Occ epe: 5.740865, Noc epe: 0.298632
+
 Things:
 12 Validation (frames_cleanpass) EPE: 3.020730, 1px: 0.822998, 3px: 0.903329, 5px: 0.925664
 12 Validation (frames_finalpass) EPE: 2.982655, 1px: 0.820309, 3px: 0.902590, 5px: 0.925413

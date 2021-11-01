@@ -11,9 +11,9 @@ import torch
 from torchvision.transforms import ColorJitter
 import torch.nn.functional as F
 
-
 class FlowAugmentor:
-    def __init__(self, crop_size, min_scale=-0.2, max_scale=0.5, spatial_aug_prob=0.8, do_flip=True):
+    def __init__(self, crop_size, min_scale=-0.2, max_scale=0.5, spatial_aug_prob=0.8, 
+                 blur_kernel=5, blur_sigma=-1, do_flip=True):
         
         # spatial augmentation params
         self.crop_size = crop_size
@@ -32,6 +32,9 @@ class FlowAugmentor:
         self.photo_aug = ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.5/3.14)
         self.asymmetric_color_aug_prob = 0.2
         self.eraser_aug_prob = 0.5
+
+        self.blur_kernel = blur_kernel
+        self.blur_sigma = blur_sigma
 
     def color_transform(self, img1, img2):
         """ Photometric augmentation """
@@ -112,6 +115,11 @@ class FlowAugmentor:
         img1, img2 = self.color_transform(img1, img2)
         img1, img2 = self.eraser_transform(img1, img2)
         img1, img2, flow = self.spatial_transform(img1, img2, flow)
+
+        if self.blur_sigma > 0:
+            K = self.blur_kernel
+            img1 = cv2.GaussianBlur(img1, (K, K), self.blur_sigma)
+            img2 = cv2.GaussianBlur(img2, (K, K), self.blur_sigma)
 
         img1 = np.ascontiguousarray(img1)
         img2 = np.ascontiguousarray(img2)

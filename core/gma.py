@@ -71,10 +71,6 @@ class Attention(nn.Module):
 
         self.pos_emb = RelPosEmb(max_pos_size, dim_head)
         self.pos_embed_weight               = 1.0
-        # args.perturb_intra_posw_range is the relative ratio. Get the absolute range here.
-        self.perturb_pew_range = self.pos_embed_weight * args.perturb_intra_posw_range
-        if args.position_and_content and self.perturb_pew_range > 0 and self.training:
-            print("Positional embedding weight perturbation: {:.3}".format(self.perturb_pew_range))
         
     def forward(self, fmap):
         heads, b, c, h, w = self.heads, *fmap.shape
@@ -94,14 +90,7 @@ class Attention(nn.Module):
             # [..., 46, 62, ...] . [..., 46, 62, ...] => [..., 46, 62, 46, 62]
             sim_content = einsum('b h x y d, b h u v d -> b h x y u v', q, k)
             sim_pos = self.pos_emb(q)
-            
-            if self.perturb_pew_range > 0 and self.training:
-                pew_noise = random.uniform(-self.perturb_pew_range, 
-                                            self.perturb_pew_range)
-            else:
-                pew_noise = 0
-                
-            sim = sim_content + (self.pos_embed_weight + pew_noise) * sim_pos
+            sim = sim_content + self.pos_embed_weight * sim_pos
             
         else:
             # sim: [8, 1, 46, 62, 46, 62]

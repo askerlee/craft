@@ -134,10 +134,10 @@ class MpiSintel(FlowDataset):
         super(MpiSintel, self).__init__(aug_params)
         flow_root = osp.join(root, split, 'flow')
         image_root = osp.join(root, split, dstype)
-        # occ_root = osp.join(root, split, 'occlusions')
+        occ_root = osp.join(root, split, 'occlusions')
         # occ_root = osp.join(root, split, 'occ_plus_out')
         # occ_root = osp.join(root, split, 'in_frame_occ')
-        occ_root = osp.join(root, split, 'out_of_frame')
+        # occ_root = osp.join(root, split, 'out_of_frame')
 
         seg_root = osp.join(root, split, 'segmentation')
         seg_inv_root = osp.join(root, split, 'segmentation_invalid')

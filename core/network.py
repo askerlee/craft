@@ -51,11 +51,10 @@ class CRAFT(nn.Module):
             self.inter_trans_config.max_pos_size     = 160
             self.inter_trans_config.out_attn_scores_only    = True
             self.inter_trans_config.attn_diag_cycles = 1000
-            self.inter_trans_config.num_modes        = args.inter_num_modes
-            self.inter_trans_config.qk_have_bias     = args.inter_qk_have_bias
+            self.inter_trans_config.num_modes       = args.inter_num_modes
+            self.inter_trans_config.qk_have_bias    = args.inter_qk_have_bias
             self.inter_trans_config.pos_code_type   = args.inter_pos_code_type
             self.inter_trans_config.pos_code_weight = args.inter_pos_code_weight
-            self.inter_trans_config.perturb_posw_range  = args.perturb_inter_posw_range
             self.args.inter_trans_config = self.inter_trans_config
             print("Inter-frame trans config:\n{}".format(self.inter_trans_config.__dict__))
             
@@ -71,11 +70,11 @@ class CRAFT(nn.Module):
             # except that the feature dimension is doubled, and not out_attn_probs_only.
             self.f2_trans_config = SETransConfig()
             self.f2_trans_config.update_config(args)
-            self.f2_trans_config.in_feat_dim = 256
-            self.f2_trans_config.feat_dim  = 256
+            self.f2_trans_config.in_feat_dim = 128
+            self.f2_trans_config.feat_dim  = 128
             # No FFN but has input skip. To simply aggregate similar features.
             self.f2_trans_config.has_FFN = False
-            self.f2_trans_config.has_input_skip = True
+            self.f2_trans_config.has_input_skip = False
             # Not tying QK performs slightly better.
             self.f2_trans_config.tie_qk_scheme = None
             self.f2_trans_config.qk_have_bias  = False
@@ -84,7 +83,6 @@ class CRAFT(nn.Module):
             self.f2_trans_config.num_modes          = args.intra_num_modes
             self.f2_trans_config.pos_code_type      = args.intra_pos_code_type
             self.f2_trans_config.pos_code_weight    = args.f2_pos_code_weight
-            self.f2_trans_config.perturb_posw_range = args.perturb_intra_posw_range
             self.f2_trans = SelfAttVisPosTrans(self.f2_trans_config, "F2 transformer")
             print("F2-trans config:\n{}".format(self.f2_trans_config.__dict__))
             self.args.f2_trans_config = self.f2_trans_config
@@ -106,7 +104,6 @@ class CRAFT(nn.Module):
             self.intra_trans_config.num_modes           = args.intra_num_modes
             self.intra_trans_config.pos_code_type       = args.intra_pos_code_type
             self.intra_trans_config.pos_code_weight     = args.intra_pos_code_weight
-            self.intra_trans_config.perturb_posw_range  = args.perturb_intra_posw_range
             self.att = SelfAttVisPosTrans(self.intra_trans_config, "Intra-frame attention")
             self.args.intra_trans_config = self.intra_trans_config
             print("Intra-frame trans config:\n{}".format(self.intra_trans_config.__dict__))
@@ -163,8 +160,10 @@ class CRAFT(nn.Module):
             fmap1, fmap2 = self.fnet([image1, image2])
 
             if self.args.f2trans:
-                fmap2 = self.f2_trans(fmap2)
-                
+                fmap2a, fmap2b = torch.split(fmap2, [128, 128], dim=1)
+                fmap2a = self.f2_trans(fmap2a)
+                fmap2  = torch.cat([fmap2a, fmap2b], dim=1)
+
         # fmap1, fmap2: [1, 256, 55, 128]. 1/8 size of the original image.
         # correlation matrix: 7040*7040 (55*128=7040).
         fmap1 = fmap1.float()

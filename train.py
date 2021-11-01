@@ -373,13 +373,9 @@ if __name__ == '__main__':
     parser.add_argument('--interpos', dest='inter_pos_code_type', type=str, 
                         choices=['lsinu', 'bias'], default='bias')
     parser.add_argument('--interposw', dest='inter_pos_code_weight', type=float, default=0.5)
-    parser.add_argument('--perturbinterposw', dest='perturb_inter_posw_range', type=float, default=0.,
-                        help='The range of added random noise to pos_embed_weight during training')
     parser.add_argument('--intrapos', dest='intra_pos_code_type', type=str, 
                         choices=['lsinu', 'bias'], default='bias')
     parser.add_argument('--intraposw', dest='intra_pos_code_weight', type=float, default=1.0)
-    parser.add_argument('--perturbintraposw', dest='perturb_intra_posw_range', type=float, default=0.,
-                        help='The range of added random noise to pos_embed_weight during training')
 
     args = parser.parse_args()
 

@@ -49,9 +49,6 @@ class SETransConfig(object):
         # Positional encoding settings.
         self.pos_dim            = 2
         self.pos_code_weight   = 1
-        # If perturb_posw_range > 0, add random noise to pos_code_weight during training.
-        # perturb_posw_range: the scale of the added random noise (relative to pos_code_weight)
-        self.perturb_posw_range  = 0
         
         # Architecture settings
         # Number of modes in the expansion attention block.
@@ -115,7 +112,7 @@ class SETransConfig(object):
                               'tie_qk_scheme', 'feattrans_lin1_idbias_scale', 'qk_have_bias', 'v_has_bias',
                               # out_attn_probs_only/out_attn_scores_only are only True for the optical flow correlation block.
                               'out_attn_probs_only', 'out_attn_scores_only',
-                              'in_feat_dim', 'perturb_posw_range', 'pos_bias_radius')
+                              'in_feat_dim', 'pos_bias_radius')
         
         if self.try_assign(args, 'out_feat_dim'):
             self.feat_dim   = self.out_feat_dim
@@ -450,13 +447,9 @@ class CrossAttFeatTrans(SETransInitWeights):
         # if using SlidingPosBiases, then add positional embeddings here.
         if config.pos_code_type == 'bias':
             self.pos_code_weight = config.pos_code_weight
-            # args.perturb_posw_range is the relative ratio. Get the absolute range here.
-            self.perturb_posw_range  = self.pos_code_weight * config.perturb_posw_range
-            print("Positional biases weight perturbation: {:.3}/{:.3}".format(
-                  self.perturb_posw_range, self.pos_code_weight))
+            print("Positional biases weight: {:.3}".format(self.pos_code_weight))
         else:
             self.pos_code_weight = 1
-            self.perturb_posw_range = 0
             
         self.attn_clip    = config.attn_clip
         if 'attn_diag_cycles' in config.__dict__:
@@ -538,16 +531,8 @@ class CrossAttFeatTrans(SETransInitWeights):
                 self.max_attn    = 0
                 self.clamp_count = 0
 
-        # Apply the positional biases
-        if pos_biases is not None:
-            if self.perturb_posw_range > 0 and self.training:
-                posw_noise = random.uniform(-self.perturb_posw_range, 
-                                             self.perturb_posw_range)
-            else:
-                posw_noise = 0
-            
             #[B0, 8, U1, U2] = [B0, 8, U1, U2]  + [1, 1, U1, U2].
-            attention_scores = attention_scores + (self.pos_code_weight + posw_noise) * pos_biases
+            attention_scores = attention_scores + self.pos_code_weight * pos_biases
 
         # Normalize the attention scores to probabilities.
         attention_probs = nn.functional.softmax(attention_scores, dim=-1)
@@ -705,13 +690,9 @@ class SETransInputFeatEncoder(nn.Module):
         # if using SlidingPosBiases, do not add positional embeddings here.
         if config.pos_code_type != 'bias':
             self.pos_code_weight = config.pos_code_weight
-            # args.perturb_posw_range is the relative ratio. Get the absolute range here.
-            self.perturb_posw_range  = self.pos_code_weight * config.perturb_posw_range
-            print("Positional embedding weight perturbation: {:.3}/{:.3}".format(
-                  self.perturb_posw_range, self.pos_code_weight))
+            print("Positional embedding weight: {:.3}".format(self.pos_code_weight))
         else:
             self.pos_code_weight   = 0
-            self.perturb_posw_range  = 0
             
         # Box position encoding. no affine, but could have bias.
         # 2 channels => 1792 channels
@@ -749,15 +730,8 @@ class SETransInputFeatEncoder(nn.Module):
                 pos_biases  = pos_biases.reshape(1, 1, ht*wd, ht*wd)
                    
         vis_feat    = vis_feat.view(batch, dim, ht * wd).transpose(1, 2)
-        
-        if self.perturb_posw_range > 0 and self.training:
-            posw_noise = random.uniform(-self.perturb_posw_range, 
-                                        self.perturb_posw_range)
-        else:
-            posw_noise = 0
             
-        feat_comb           = vis_feat + (self.pos_code_weight + posw_noise) * pos_embed
-            
+        feat_comb           = vis_feat + self.pos_code_weight * pos_embed
         feat_normed         = self.comb_norm_layer(feat_comb)
         feat_normed         = self.dropout(feat_normed)
                   

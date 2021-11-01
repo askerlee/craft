@@ -225,7 +225,7 @@ def validate_chairs(model, iters=6, test_mode=1):
 
 
 @torch.no_grad()
-def validate_things(model, iters=6, test_mode=1, max_val_count=-1):
+def validate_things(model, iters=6, test_mode=1, blur_params=None, max_val_count=-1):
     """ Perform evaluation on the FlyingThings (test) split """
     model.eval()
     results = {}
@@ -249,16 +249,25 @@ def validate_things(model, iters=6, test_mode=1, max_val_count=-1):
         elif test_mode == 0:
             breakpoint()
                        
-        val_dataset = datasets.FlyingThings3D(dstype=dstype, split='validation')
+        val_dataset = datasets.FlyingThings3D(dstype=dstype, aug_params=None, split='validation')
         print(f'Dataset length {len(val_dataset)}')
         val_count = 0
         if max_val_count == -1:
             max_val_count = len(val_dataset)
 
+        # if blur_params is not None:
+        #     GaussianBlur = transforms.GaussianBlur(blur_params['kernel'], blur_params['sigma'])
+        # else:
+        #     GaussianBlur = None
+
         for val_id in range(len(val_dataset)):
             image1, image2, flow_gt, _ = val_dataset[val_id]
             image1 = image1[None].cuda()
             image2 = image2[None].cuda()
+
+            # if GaussianBlur is not None:
+            #     image1 = GaussianBlur(image1)
+            #     image2 = GaussianBlur(image2)
 
             padder = InputPadder(image1.shape)
             image1, image2 = padder.pad(image1, image2)
@@ -272,11 +281,11 @@ def validate_things(model, iters=6, test_mode=1, max_val_count=-1):
             for it, flow_pr in enumerate(flow_prs):
                 flow = padder.unpad(flow_pr[0]).cpu()
                 epe = torch.sum((flow - flow_gt)**2, dim=0).sqrt()
-                mag = torch.sum(flow_gt**2, dim=0).sqrt()
                 epe_list.setdefault(it, [])
                 epe_list[it].append(epe.view(-1).numpy())
 
             epe_seg.append(epe.view(-1).numpy())
+            mag = torch.sum(flow_gt**2, dim=0).sqrt()
 
             prev_mag_endpoint = 0
             for mag_endpoint in mag_endpoints:
@@ -350,14 +359,27 @@ def validate_things(model, iters=6, test_mode=1, max_val_count=-1):
 
 
 @torch.no_grad()
-def validate_sintel(model, iters=6, test_mode=1):
+def validate_sintel(model, iters=6, test_mode=1, blur_params=None, max_val_count=-1):
     """ Peform validation using the Sintel (train) split """
     model.eval()
     results = {}
+    mag_endpoints = [3, 5, 10, np.inf]
     
-    for dstype in ['clean', 'final']:
-        val_dataset = datasets.MpiSintel(split='training', dstype=dstype)
+    for dstype in ['final', 'clean']:
+        val_dataset = datasets.MpiSintel(split='training', aug_params=None, dstype=dstype)
+        print(f'Dataset length {len(val_dataset)}')
+        val_count = 0
+        if max_val_count == -1:
+            max_val_count = len(val_dataset)
+
         epe_list = {}
+        segs_len  = []
+        epe_seg  = []
+        mags_seg = {}
+        mags_err = {}
+        mags_segs_err = {}
+        mags_segs_len = {}
+
         if test_mode == 1:
             its = [0]
         elif test_mode == 2:
@@ -365,10 +387,20 @@ def validate_sintel(model, iters=6, test_mode=1):
         elif test_mode == 0:
             breakpoint()
         
+        val_count = 0
+        # if blur_params is not None:
+        #     GaussianBlur = transforms.GaussianBlur(blur_params['kernel'], blur_params['sigma'])
+        # else:
+        #     GaussianBlur = None
+
         for val_id in range(len(val_dataset)):
             image1, image2, flow_gt, _ = val_dataset[val_id]
             image1 = image1[None].cuda()
             image2 = image2[None].cuda()
+
+            # if GaussianBlur is not None:
+            #     #image1 = GaussianBlur(image1)
+            #     image2 = GaussianBlur(image2)
 
             padder = InputPadder(image1.shape)
             image1, image2 = padder.pad(image1, image2)
@@ -384,7 +416,50 @@ def validate_sintel(model, iters=6, test_mode=1):
                 epe = torch.sum((flow - flow_gt)**2, dim=0).sqrt()
                 epe_list.setdefault(it, [])
                 epe_list[it].append(epe.view(-1).numpy())
-                                            
+
+            epe_seg.append(epe.view(-1).numpy())
+            mag = torch.sum(flow_gt**2, dim=0).sqrt()
+
+            prev_mag_endpoint = 0
+            for mag_endpoint in mag_endpoints:
+                mags_seg.setdefault(mag_endpoint, [])
+                mag_in_range = (mag >= prev_mag_endpoint) & (mag < mag_endpoint)
+                mags_seg[mag_endpoint].append(mag_in_range.view(-1).numpy())
+                prev_mag_endpoint = mag_endpoint
+
+            val_count += len(image1)
+            segs_len.append(len(image1))
+
+            if val_count % 100 == 0 or val_count >= max_val_count:
+                epe_seg     = np.concatenate(epe_seg)
+                mean_epe    = np.mean(epe_seg)
+                px1 = np.mean(epe_seg < 1)
+                px3 = np.mean(epe_seg < 3)
+                px5 = np.mean(epe_seg < 5)
+
+                for mag_endpoint in mag_endpoints:
+                    mag_seg = np.concatenate(mags_seg[mag_endpoint])
+                    if mag_seg.sum() == 0:
+                        mag_err = 0
+                    else:
+                        mag_err = np.mean(epe_seg[mag_seg])
+                    mags_err[mag_endpoint] = mag_err
+                    mags_segs_err.setdefault(mag_endpoint, [])
+                    mags_segs_err[mag_endpoint].append(mags_err[mag_endpoint])
+                    mags_segs_len.setdefault(mag_endpoint, [])
+                    mags_segs_len[mag_endpoint].append(mag_seg.sum().item())
+
+                print(f"{val_count}/{max_val_count}: EPE {mean_epe:.4f}, "
+                      f"1px {px1:.4f}, 3px {px3:.4f}, 5px {px5:.4f}", end='')
+                prev_mag_endpoint = 0
+                for mag_endpoint in mag_endpoints:
+                    print(f", {prev_mag_endpoint}-{mag_endpoint} {mags_err[mag_endpoint]:.2f}", end='')
+                    prev_mag_endpoint = mag_endpoint
+                print()
+
+                epe_seg = []
+                mags_seg = {}
+
         for it in its:
             epe_all = np.concatenate(epe_list[it])
             
@@ -395,55 +470,19 @@ def validate_sintel(model, iters=6, test_mode=1):
 
             print("Iter %d, Valid (%s) EPE: %f, 1px: %f, 3px: %f, 5px: %f" % (it, dstype, epe, px1, px3, px5))
 
+        for mag_endpoint in mag_endpoints:
+            mag_errs = np.array(mags_segs_err[mag_endpoint])
+            mag_lens = np.array(mags_segs_len[mag_endpoint])
+            mag_err = np.sum(mag_errs * mag_lens) / np.sum(mag_lens)
+            mags_err[mag_endpoint] = mag_err
+
+        prev_mag_endpoint = 0
+        for mag_endpoint in mag_endpoints:
+            print(f", {prev_mag_endpoint}-{mag_endpoint} {mags_err[mag_endpoint]:.2f}", end='')
+            prev_mag_endpoint = mag_endpoint
+        print()
+
         results[dstype] = epe
-
-    return results
-
-@torch.no_grad()
-def validate_hd1k(model, iters=6, test_mode=1):
-    """ Peform validation using the HD1k data """
-    model.eval()
-    results = {}
-    val_dataset = datasets.HD1K()
-    epe_list = []
-    
-    for val_id in range(len(val_dataset)):
-        image1, image2, flow_gt, _ = val_dataset[val_id]
-        image1 = image1[None].cuda()
-        image2 = image2[None].cuda()
-
-        halfsize = transforms.Resize((360, 853))
-        image1   = halfsize(image1)
-        image2   = halfsize(image2)
-        flow_gt  = halfsize(flow_gt)
-            
-        padder = InputPadder(image1.shape)
-        image1, image2 = padder.pad(image1, image2)
-
-        _, flow_pr = model(image1, image2, iters=iters, test_mode=test_mode)
-        flow = padder.unpad(flow_pr[0]).cpu()
-
-        epe = torch.sum((flow - flow_gt)**2, dim=0).sqrt()
-        epe_list.append(epe.view(-1).numpy())
-
-        if val_id % 100 == 0:
-            print(f"{val_id}/{len(val_dataset)}")
-            epe_all = np.concatenate(epe_list)
-            epe = np.mean(epe_all)
-            px1 = np.mean(epe_all<1)
-            px3 = np.mean(epe_all<3)
-            px5 = np.mean(epe_all<5)
-            print("EPE: %f, 1px: %f, 3px: %f, 5px: %f" % (epe, px1, px3, px5))
-
-    print(f"{val_id}/{len(val_dataset)}")
-    epe_all = np.concatenate(epe_list)
-    epe = np.mean(epe_all)
-    px1 = np.mean(epe_all<1)
-    px3 = np.mean(epe_all<3)
-    px5 = np.mean(epe_all<5)
-    print("EPE: %f, 1px: %f, 3px: %f, 5px: %f" % (epe, px1, px3, px5))
-                    
-    results = np.mean(epe_list)
 
     return results
 
@@ -452,7 +491,7 @@ def validate_sintel_occ(model, iters=6, test_mode=1):
     """ Peform validation using the Sintel (train) split """
     model.eval()
     results = {}
-    for dstype in ['albedo', 'clean', 'final']:
+    for dstype in ['clean', 'final', 'albedo']:
     # for dstype in ['clean', 'final']:
         val_dataset = datasets.MpiSintel(split='training', dstype=dstype, occlusion=True)
         epe_list = []
@@ -546,7 +585,53 @@ def separate_inout_sintel_occ():
         #
         # imageio.imwrite(img_path, in_frame.int().numpy() * 255)
 
+@torch.no_grad()
+def validate_hd1k(model, iters=6, test_mode=1):
+    """ Peform validation using the HD1k data """
+    model.eval()
+    results = {}
+    val_dataset = datasets.HD1K()
+    epe_list = []
+    
+    for val_id in range(len(val_dataset)):
+        image1, image2, flow_gt, _ = val_dataset[val_id]
+        image1 = image1[None].cuda()
+        image2 = image2[None].cuda()
 
+        halfsize = transforms.Resize((360, 853))
+        image1   = halfsize(image1)
+        image2   = halfsize(image2)
+        flow_gt  = halfsize(flow_gt)
+            
+        padder = InputPadder(image1.shape)
+        image1, image2 = padder.pad(image1, image2)
+
+        _, flow_pr = model(image1, image2, iters=iters, test_mode=test_mode)
+        flow = padder.unpad(flow_pr[0]).cpu()
+
+        epe = torch.sum((flow - flow_gt)**2, dim=0).sqrt()
+        epe_list.append(epe.view(-1).numpy())
+
+        if val_id % 100 == 0:
+            print(f"{val_id}/{len(val_dataset)}")
+            epe_all = np.concatenate(epe_list)
+            epe = np.mean(epe_all)
+            px1 = np.mean(epe_all<1)
+            px3 = np.mean(epe_all<3)
+            px5 = np.mean(epe_all<5)
+            print("EPE: %f, 1px: %f, 3px: %f, 5px: %f" % (epe, px1, px3, px5))
+
+    print(f"{val_id}/{len(val_dataset)}")
+    epe_all = np.concatenate(epe_list)
+    epe = np.mean(epe_all)
+    px1 = np.mean(epe_all<1)
+    px3 = np.mean(epe_all<3)
+    px5 = np.mean(epe_all<5)
+    print("EPE: %f, 1px: %f, 3px: %f, 5px: %f" % (epe, px1, px3, px5))
+                    
+    results = np.mean(epe_list)
+
+    return results
 
 @torch.no_grad()
 def validate_kitti(model, iters=6, test_mode=1, batch_size=2):
@@ -786,6 +871,11 @@ if __name__ == '__main__':
                         help='Maximum number of evaluated examples')
     parser.add_argument('--bs', dest='batch_size', default=2, type=int, 
                         help='Batch size')
+    parser.add_argument('--blurk', dest='blur_kernel', default=5, type=int, 
+                        help='Gaussian blur kernel size')
+    # Only if blur_sigma > 0 (regardless of blur_kernel), Gaussian blur will be applied.
+    parser.add_argument('--blurs', dest='blur_sigma', default=-1, type=int, 
+                        help='Gaussian blur sigma')
 
     # Ablations
     parser.add_argument('--replace', default=False, action='store_true',
@@ -820,13 +910,9 @@ if __name__ == '__main__':
     parser.add_argument('--interpos', dest='inter_pos_code_type', type=str, 
                         choices=['lsinu', 'bias'], default='bias')
     parser.add_argument('--interposw', dest='inter_pos_code_weight', type=float, default=0.5)
-    parser.add_argument('--perturbinterposw', dest='perturb_inter_posw_range', type=float, default=0.,
-                        help='The range of added random noise to pos_embed_weight during training')
     parser.add_argument('--intrapos', dest='intra_pos_code_type', type=str, 
                         choices=['lsinu', 'bias'], default='bias')
     parser.add_argument('--intraposw', dest='intra_pos_code_weight', type=float, default=1.0)
-    parser.add_argument('--perturbintraposw', dest='perturb_intra_posw_range', type=float, default=0.,
-                        help='The range of added random noise to pos_embed_weight during training')
     
     args = parser.parse_args()
 
@@ -868,16 +954,23 @@ if __name__ == '__main__':
         exit(0)
     # create_kitti_submission_vis(model)
 
+    if args.blur_sigma > 0:
+        print(f"Blur kernel size: {args.blur_kernel}, sigma: {args.blur_sigma}".format(args.blur_kernel))
+        blur_params = { 'kernel': args.blur_kernel, 'sigma': args.blur_sigma }
+    else:
+        blur_params = None
+
     with torch.no_grad():
         if args.dataset == 'chairs':
             validate_chairs(model.module, iters=args.iters, test_mode=args.test_mode)
 
         elif args.dataset == 'things':
             validate_things(model.module, iters=args.iters, test_mode=args.test_mode, 
-                            max_val_count=args.max_val_count)
+                            max_val_count=args.max_val_count, blur_params=blur_params)
 
         elif args.dataset == 'sintel':
-            validate_sintel(model.module, iters=args.iters, test_mode=args.test_mode)
+            validate_sintel(model.module, iters=args.iters, test_mode=args.test_mode, 
+                            max_val_count=args.max_val_count, blur_params=blur_params)
 
         elif args.dataset == 'sintel_occ':
             validate_sintel_occ(model.module, iters=args.iters, test_mode=args.test_mode)

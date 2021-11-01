@@ -26,6 +26,8 @@
 Things:
 12 Validation (frames_cleanpass) EPE: 2.775100, 1px: 0.829758, 3px: 0.908874, 5px: 0.930992
 12 Validation (frames_finalpass) EPE: 2.579073, 1px: 0.826992, 3px: 0.908164, 5px: 0.931145
+Valid (frames_cleanpass) EPE: 2.7636, 1px: 0.8298, 3px: 0.9089, 5px: 0.9310, 0-3 0.37, 3-5 0.43, 5-10 0.50, 10-inf 3.61
+Valid (frames_finalpass) EPE: 2.5685, 1px: 0.8271, 3px: 0.9082, 5px: 0.9313, 0-3 0.38, 3-5 0.42, 5-10 0.49, 10-inf 3.35
 
 env CUDA_VISIBLE_DEVICES=0,3 python train.py --name craft-things --stage things --validation sintel --output results/things/craft --restore_ckpt results/chairs/craft/craft-chairs.pth --num_steps 120000 --lr 0.000125 --image_size 400 720 --wdecay 0.0001 --gpus 0 1 --batch_size 6 --val_freq 10000 --print_freq 100 --mixed_precision --setrans --craft --corrnorm global --f2trans
 Time: 09171438

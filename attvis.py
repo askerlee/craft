@@ -75,8 +75,6 @@ if __name__ == '__main__':
                         help='Do not use biases in the QK projections in the inter-frame attention')
     parser.add_argument('--interpos', dest='inter_pos_embed_weight', type=float, default=0.5)
     parser.add_argument('--intrapos', dest='intra_pos_embed_weight', type=float, default=1.0)
-    parser.add_argument('--perturbpew', dest='perturb_pew_range', type=float, default=0.,
-                        help='The range of added random noise to pos_embed_weight during training')
     
     parser.add_argument('--savecorr', default=False, action='store_true')
     parser.add_argument('--corrsource', type=str, default=None)
