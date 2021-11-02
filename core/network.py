@@ -74,13 +74,14 @@ class CRAFT(nn.Module):
             if args.f2trans_do_halfchan:
                 self.f2_trans_config.in_feat_dim = 128
                 self.f2_trans_config.feat_dim  = 128
+                self.f2_trans_config.has_input_skip = False
             else:
                 self.f2_trans_config.in_feat_dim = 256
                 self.f2_trans_config.feat_dim  = 256
-
-            # No FFN but has input skip. To simply aggregate similar features.
+                self.f2_trans_config.has_input_skip = True
+            # No FFN. f2trans simply aggregates similar features.
             self.f2_trans_config.has_FFN = False
-            self.f2_trans_config.has_input_skip = False
+            
             # Not tying QK performs slightly better.
             self.f2_trans_config.tie_qk_scheme = None
             self.f2_trans_config.qk_have_bias  = False
