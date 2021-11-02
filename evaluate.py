@@ -365,7 +365,7 @@ def validate_sintel(model, iters=6, test_mode=1, blur_params=None, max_val_count
     results = {}
     mag_endpoints = [3, 5, 10, np.inf]
     
-    for dstype in ['final', 'clean']:
+    for dstype in ['clean', 'final']:
         val_dataset = datasets.MpiSintel(split='training', aug_params=None, dstype=dstype)
         print(f'Dataset length {len(val_dataset)}')
         val_count = 0
@@ -373,7 +373,7 @@ def validate_sintel(model, iters=6, test_mode=1, blur_params=None, max_val_count
             max_val_count = len(val_dataset)
 
         epe_list = {}
-        segs_len  = []
+        segs_len = []
         epe_seg  = []
         mags_seg = {}
         mags_err = {}
