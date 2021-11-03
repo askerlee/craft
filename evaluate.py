@@ -831,7 +831,7 @@ def save_checkpoint(cp_path, model, optimizer_state, lr_scheduler_state, logger)
     print(f"{cp_path} saved")
 
 @torch.no_grad()
-def gen_flow(model, image1_path, image2_path, output_path='output', test_mode=1):
+def gen_flow(model, model_name, image1_path, image2_path, output_path='output', test_mode=1):
     """ Generate flow given two images """
     model.eval()
 
@@ -861,7 +861,7 @@ def gen_flow(model, image1_path, image2_path, output_path='output', test_mode=1)
     _, image1_name = os.path.split(image1_path)
     # split file name into file name and extension
     image1_name_noext, _ = os.path.splitext(image1_name)
-    output_filename = os.path.join(output_path, image1_name_noext)
+    output_filename = os.path.join(output_path, image1_name_noext + f"-{model_name}.png")
     frame_utils.writeFlowKITTI(output_filename, flow)
 
     print(f"Generated flow {output_filename}.")
@@ -904,7 +904,7 @@ if __name__ == '__main__':
     parser.add_argument('--dataset', help="dataset for evaluation")
     parser.add_argument('--img1', type=str, default=None, help="first image for evaluation")
     parser.add_argument('--img2', type=str, default=None, help="second image for evaluation")
-    parser.add_argument('--output', help="output directory")
+    parser.add_argument('--output', type=str, default="output", help="output directory")
 
     parser.add_argument('--iters', type=int, default=12)
     parser.add_argument('--num_heads', default=1, type=int,
@@ -994,11 +994,13 @@ if __name__ == '__main__':
         
     model.cuda()
     model.eval()
+    
 
     if args.img1 is not None:
-        gen_flow(model, args.img1, args.img2, output_path=args.output)
+        model_name = os.path.split(args.model)[-1].split(".")[0]
+        gen_flow(model, model_name, args.img1, args.img2, output_path=args.output)
         exit(0)
-        
+
     if args.dataset == 'sintel' and args.submit:
         create_sintel_submission(model, warm_start=True)
         exit(0)
