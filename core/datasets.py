@@ -94,6 +94,7 @@ class FlowDataset(data.Dataset):
             img1 = np.tile(img1[...,None], (1, 1, 3))
             img2 = np.tile(img2[...,None], (1, 1, 3))
         else:
+            # Remove alpha? 
             img1 = img1[..., :3]
             img2 = img2[..., :3]
 

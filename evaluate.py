@@ -830,6 +830,42 @@ def save_checkpoint(cp_path, model, optimizer_state, lr_scheduler_state, logger)
     torch.save(save_state, cp_path)
     print(f"{cp_path} saved")
 
+@torch.no_grad()
+def gen_flow(model, image1_path, image2_path, output_path='output', test_mode=1):
+    """ Generate flow given two images """
+    model.eval()
+
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+
+    image1 = cv2.imread(image1_path)
+    image2 = cv2.imread(image2_path)
+    # grayscale images
+    if len(image1.shape) == 2:
+        image1 = np.tile(image1[...,None], (1, 1, 3))
+        image2 = np.tile(image2[...,None], (1, 1, 3))
+    else:
+        image1 = image1[..., :3]
+        image2 = image2[..., :3]
+
+    image1 = torch.from_numpy(image1).permute(2, 0, 1).float()
+    image2 = torch.from_numpy(image2).permute(2, 0, 1).float()
+        
+    padder = InputPadder(image1.shape, mode='kitti')
+    image1, image2 = padder.pad(image1[None].to(f'cuda:{model.device_ids[0]}'), image2[None].to(f'cuda:{model.device_ids[0]}'))
+
+    _, flow_pr = model.module(image1, image2, iters=24, test_mode=test_mode)
+    flow = padder.unpad(flow_pr[0]).permute(1, 2, 0).cpu().numpy()
+
+    # split image1_path into path and file name
+    _, image1_name = os.path.split(image1_path)
+    # split file name into file name and extension
+    image1_name_noext, _ = os.path.splitext(image1_name)
+    output_filename = os.path.join(output_path, image1_name_noext)
+    frame_utils.writeFlowKITTI(output_filename, flow)
+
+    print(f"Generated flow {output_filename}.")
+
 def fix_checkpoint(args, model):
     checkpoint = torch.load(args.model, map_location='cuda')
 
@@ -866,6 +902,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', help="restore checkpoint")
     parser.add_argument('--dataset', help="dataset for evaluation")
+    parser.add_argument('--img1', type=str, default=None, help="first image for evaluation")
+    parser.add_argument('--img2', type=str, default=None, help="second image for evaluation")
+    parser.add_argument('--output', help="output directory")
+
     parser.add_argument('--iters', type=int, default=12)
     parser.add_argument('--num_heads', default=1, type=int,
                         help='number of heads in attention and aggregation')
@@ -955,6 +995,10 @@ if __name__ == '__main__':
     model.cuda()
     model.eval()
 
+    if args.img1 is not None:
+        gen_flow(model, args.img1, args.img2, output_path=args.output)
+        exit(0)
+        
     if args.dataset == 'sintel' and args.submit:
         create_sintel_submission(model, warm_start=True)
         exit(0)
