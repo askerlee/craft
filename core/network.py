@@ -163,14 +163,7 @@ class CRAFT(nn.Module):
             fmap1, fmap2 = self.fnet([image1, image2])
 
             if self.args.f2trans:
-                # only do self-attention on half of the channels. The other half goes through intact.
-                if self.f2trans_do_halfchan:
-                    fmap2a, fmap2b = torch.split(fmap2, [128, 128], dim=1)
-                    fmap2a = self.f2_trans(fmap2a)
-                    fmap2b = self.fmap2b_norm(fmap2b)
-                    fmap2  = torch.cat([fmap2a, fmap2b], dim=1)
-                else:
-                    fmap2  = self.f2_trans(fmap2)
+                fmap2  = self.f2_trans(fmap2)
 
         # fmap1, fmap2: [1, 256, 55, 128]. 1/8 size of the original image.
         # correlation matrix: 7040*7040 (55*128=7040).

@@ -573,11 +573,12 @@ class SelfAttVisPosTrans(nn.Module):
         if self.do_half_attn:
             assert not self.out_attn_only
             # Half of the input channels will pass through without transformation. So no need to do input skip.
-            self.has_input_skip = False 
+            self.config.has_input_skip = False 
             self.config.in_feat_dim = config.in_feat_dim // 2
             self.config.feat_dim    = config.feat_dim    // 2
             self.half2_dropout = nn.Dropout(config.hidden_dropout_prob)
-            self.half2_norm    = nn.LayerNorm(self.config.feat_dim)
+            # Could adjust the impact of non-transformed upstream features
+            self.half2_norm    = nn.LayerNorm(self.config.feat_dim, elementwise_affine=True)
 
         self.setrans = CrossAttFeatTrans(self.config, name)
         self.vispos_encoder = SETransInputFeatEncoder(self.config)
