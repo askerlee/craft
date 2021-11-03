@@ -59,7 +59,7 @@ class SETransConfig(object):
         self.mid_type      = 'shared'           # shared, private, or none.
         self.trans_output_type  = 'private'     # shared or private.
         self.act_fun = F.gelu
-        
+
         self.attn_clip = 100
         self.attn_diag_cycles = 800
         self.base_initializer_range = 0.02
@@ -84,6 +84,7 @@ class SETransConfig(object):
         self.out_attn_probs_only    = False
         # When out_attn_scores_only, dropout is not applied to attention scores.
         self.out_attn_scores_only   = False
+        self.do_half_attn = False
         
     def set_backbone_type(self, args):
         if self.try_assign(args, 'backbone_type'):
@@ -111,7 +112,7 @@ class SETransConfig(object):
                               'pos_code_type', 'ablate_multihead', 'attn_clip', 'attn_diag_cycles', 
                               'tie_qk_scheme', 'feattrans_lin1_idbias_scale', 'qk_have_bias', 'v_has_bias',
                               # out_attn_probs_only/out_attn_scores_only are only True for the optical flow correlation block.
-                              'out_attn_probs_only', 'out_attn_scores_only',
+                              'out_attn_probs_only', 'out_attn_scores_only', 'do_half_attn'
                               'in_feat_dim', 'pos_bias_radius')
         
         if self.try_assign(args, 'out_feat_dim'):
@@ -566,28 +567,53 @@ class CrossAttFeatTrans(SETransInitWeights):
 class SelfAttVisPosTrans(nn.Module):
     def __init__(self, config, name):
         nn.Module.__init__(self)
-        self.config = config
+        self.config = copy.copy(config)
+        self.out_attn_only = config.out_attn_scores_only or config.out_attn_probs_only
+        self.do_half_attn  = config.do_half_attn
+        if self.do_half_attn:
+            assert not self.out_attn_only
+            # Half of the input channels will pass through without transformation. So no need to do input skip.
+            self.has_input_skip = False 
+            self.config.in_feat_dim = config.in_feat_dim // 2
+            self.config.feat_dim    = config.feat_dim    // 2
+            self.half2_dropout = nn.Dropout(config.hidden_dropout_prob)
+            self.half2_norm    = nn.LayerNorm(self.config.feat_dim)
+
         self.setrans = CrossAttFeatTrans(self.config, name)
         self.vispos_encoder = SETransInputFeatEncoder(self.config)
-        self.out_attn_only = config.out_attn_scores_only or config.out_attn_probs_only
-        
+
     def forward(self, x):
-        coords = gen_all_indices(x.shape[2:], device=x.device)
-        coords = coords.unsqueeze(0).repeat(x.shape[0], 1, 1, 1)
+        if self.do_half_attn:
+            x1, x2 = torch.split(x, x.size(1) // 2, dim=1)
+        else:
+            x1 = x
+        coords = gen_all_indices(x1.shape[2:], device=x.device)
+        coords = coords.unsqueeze(0).repeat(x1.shape[0], 1, 1, 1)
         
-        x_vispos, pos_biases = self.vispos_encoder(x, coords, return_pos_biases=True)
+        x1_vispos, pos_biases = self.vispos_encoder(x1, coords, return_pos_biases=True)
         # if out_attn_scores_only/out_attn_probs_only, 
-        # x_trans is an attention matrix in the shape of (query unit number, key unit number)
+        # then x_trans is an attention matrix in the shape of (query unit number, key unit number)
         # otherwise, output features are in the same shape as the query features.
         # key features are recombined to get new query features by matmul(attention_probs, V(key features))
         #             frame1 frame2
         # corr: [1, 1, 7040, 7040]
         # x_vispos: [B0, num_voxels, 256]
         # Here key_feat is omitted (None), i.e., key_feat = query_feat = x_vispos.
-        x_trans = self.setrans(x_vispos, pos_biases=pos_biases)
+        x1_trans = self.setrans(x1_vispos, pos_biases=pos_biases)
+
         if not self.out_attn_only:
-            x_trans = x_trans.permute(0, 2, 1).reshape(x.shape)
-            
+            x1_trans_shape = x1_trans.shape
+            x1_trans = x1_trans.permute(0, 2, 1).reshape(x1.shape)
+
+            if self.do_half_attn:
+                x2 = x2.permute(0, 2, 3, 1).reshape(x1_trans_shape)
+                x2_drop     = self.half2_dropout(x2)
+                x2_normed   = self.half2_norm(x2_drop)
+                x2_normed   = x2_normed.permute(0, 2, 1).reshape(x1.shape)
+                x_trans     = torch.cat([x1_trans, x2_normed], dim=1)
+            else:
+                x_trans     = x1_trans
+
         return x_trans
 
 # =================================== SETrans BackBone Components ==============================#

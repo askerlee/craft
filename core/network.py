@@ -70,17 +70,11 @@ class CRAFT(nn.Module):
             # except that the feature dimension is doubled, and not out_attn_probs_only.
             self.f2_trans_config = SETransConfig()
             self.f2_trans_config.update_config(args)
-            self.f2trans_do_halfchan = args.f2trans_do_halfchan
-            if args.f2trans_do_halfchan:
-                self.f2_trans_config.in_feat_dim = 128
-                self.f2_trans_config.feat_dim  = 128
-                self.f2_trans_config.has_input_skip = False
-                self.fmap2b_norm = nn.Sequential(nn.Dropout(self.f2_trans_config.hidden_dropout_prob),
-                                                 nn.LayerNorm(128, eps=1e-12, elementwise_affine=True))
-            else:
-                self.f2_trans_config.in_feat_dim = 256
-                self.f2_trans_config.feat_dim  = 256
-                self.f2_trans_config.has_input_skip = True
+            self.f2_trans_config.do_half_attn = args.f2trans_do_half_chan
+            self.f2_trans_config.in_feat_dim = 256
+            self.f2_trans_config.feat_dim  = 256
+            # if do_half_attn, has_input_skip will be changed to False within SelfAttVisPosTrans.__init__().
+            self.f2_trans_config.has_input_skip = True
             # No FFN. f2trans simply aggregates similar features.
             self.f2_trans_config.has_FFN = False
             
