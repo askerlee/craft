@@ -451,6 +451,7 @@ def validate_sintel(model, iters=6, test_mode=1, blur_params=None, max_val_count
 
                 print(f"{val_count}/{max_val_count}: EPE {mean_epe:.4f}, "
                       f"1px {px1:.4f}, 3px {px3:.4f}, 5px {px5:.4f}", end='')
+
                 prev_mag_endpoint = 0
                 for mag_endpoint in mag_endpoints:
                     print(f", {prev_mag_endpoint}-{mag_endpoint} {mags_err[mag_endpoint]:.2f}", end='')
@@ -687,10 +688,16 @@ def validate_viper(model, iters=6, test_mode=1, batch_size=2, max_val_count=500)
 
     val_loader  = data.DataLoader(val_dataset, batch_size=batch_size,
                                   pin_memory=False, shuffle=False, num_workers=8, drop_last=False)
+
                                    
     out_list, epe_list = {}, {}
     out_seg,  epe_seg  = [], []
-    mag3_seg, mag5_seg, mag10_seg, mag10p_seg = [], [], [], []
+    mag_endpoints = [3, 5, 10, np.inf]
+    segs_len = []
+    mags_seg = {}
+    mags_err = {}
+    mags_segs_err = {}
+    mags_segs_len = {}
 
     if test_mode == 1:
         its = [0]
@@ -738,19 +745,20 @@ def validate_viper(model, iters=6, test_mode=1, batch_size=2, max_val_count=500)
             epe_list[it].append(epe[val].view(-1).numpy())
             out_list[it].append(out[val].view(-1).numpy())
 
-            epe_seg.append(epe[val].view(-1).numpy())
-            out_seg.append(out[val].view(-1).numpy())
+        epe_seg.append(epe[val].view(-1).numpy())
+        out_seg.append(out[val].view(-1).numpy())
+        mag = torch.sum(flow_gt**2, dim=0).sqrt()
 
-        mag3    = (mag <= 3)
-        mag5    = (mag > 3) & (mag <= 5)
-        mag10   = (mag > 5) & (mag <= 10)
-        mag10p  = (mag > 10)
-        mag3_seg.append(mag3[val].view(-1).numpy())
-        mag5_seg.append(mag5[val].view(-1).numpy())
-        mag10_seg.append(mag10[val].view(-1).numpy())
-        mag10p_seg.append(mag10p[val].view(-1).numpy())
+        prev_mag_endpoint = 0
+        for mag_endpoint in mag_endpoints:
+            mags_seg.setdefault(mag_endpoint, [])
+            mag_in_range = (mag >= prev_mag_endpoint) & (mag < mag_endpoint)
+            mags_seg[mag_endpoint].append(mag_in_range.view(-1)[val].numpy())
+            prev_mag_endpoint = mag_endpoint
 
         val_count += len(image1)
+        segs_len.append(len(image1))
+
         if val_count % 100 == 0 or val_count >= max_val_count:
             epe_seg     = np.concatenate(epe_seg)
             out_seg     = np.concatenate(out_seg)
@@ -759,35 +767,30 @@ def validate_viper(model, iters=6, test_mode=1, batch_size=2, max_val_count=500)
             px3 = np.mean(epe_seg < 3)
             px5 = np.mean(epe_seg < 5)
 
-            mag3_seg    = np.concatenate(mag3_seg)
-            if mag3_seg.sum() > 0:
-                mag3_err    = np.mean(epe_seg[mag3_seg])
-            else:
-                mag3_err    = 0
-            mag5_seg    = np.concatenate(mag5_seg)
-            if mag5_seg.sum() > 0:
-                mag5_err    = np.mean(epe_seg[mag5_seg])
-            else:
-                mag5_err    = 0
-            mag10_seg   = np.concatenate(mag10_seg)
-            if mag10_seg.sum() > 0:
-                mag10_err   = np.mean(epe_seg[mag10_seg])
-            else:
-                mag10_err   = 0
-            mag10p_seg  = np.concatenate(mag10p_seg)
-            if mag10p_seg.sum() > 0:
-                mag10p_err  = np.mean(epe_seg[mag10p_seg])
-            else:
-                mag10p_err  = 0
+            print(f"{val_count}/{max_val_count}: EPE {mean_epe:.4f}, "
+                    f"1px {px1:.4f}, 3px {px3:.4f}, 5px {px5:.4f}", end='')
+                    
+            for mag_endpoint in mag_endpoints:
+                mag_seg = np.concatenate(mags_seg[mag_endpoint])
+                if mag_seg.sum() == 0:
+                    mag_err = 0
+                else:
+                    mag_err = np.mean(epe_seg[mag_seg])
+                mags_err[mag_endpoint] = mag_err
+                mags_segs_err.setdefault(mag_endpoint, [])
+                mags_segs_err[mag_endpoint].append(mags_err[mag_endpoint])
+                mags_segs_len.setdefault(mag_endpoint, [])
+                mags_segs_len[mag_endpoint].append(mag_seg.sum().item())
 
-            f1  = 100 * np.mean(out_seg)
-            print(f"{val_count}/{max_val_count}: EPE {mean_epe:.4f}, F1 {f1:.4f}, "
-                  f"1px {px1:.4f}, 3px {px3:.4f}, 5px {px5:.4f}, "
-                  f"gt<=3 {mag3_err:.2f}, 3-5 {mag5_err:.2f}, 5-10 {mag10_err:.2f}, >10 {mag10p_err:.2f}")
+            prev_mag_endpoint = 0
+            for mag_endpoint in mag_endpoints:
+                print(f", {prev_mag_endpoint}-{mag_endpoint} {mags_err[mag_endpoint]:.2f}", end='')
+                prev_mag_endpoint = mag_endpoint
+            print()
 
             epe_seg = []
             out_seg = []
-            mag3_seg, mag5_seg, mag10_seg, mag10p_seg = [], [], [], []
+            mags_seg = {}
 
         # The validation data is too big. Just evaluate some.
         if val_count >= max_val_count:
@@ -804,6 +807,18 @@ def validate_viper(model, iters=6, test_mode=1, batch_size=2, max_val_count=500)
 
         f1 = 100 * np.mean(out_all)
         print("Iter %d, Valid EPE: %.4f, F1: %.4f, 1px: %.4f, 3px: %.4f, 5px: %.4f" % (it, epe, f1, px1, px3, px5))
+
+    for mag_endpoint in mag_endpoints:
+        mag_errs = np.array(mags_segs_err[mag_endpoint])
+        mag_lens = np.array(mags_segs_len[mag_endpoint])
+        mag_err = np.sum(mag_errs * mag_lens) / np.sum(mag_lens)
+        mags_err[mag_endpoint] = mag_err
+
+    prev_mag_endpoint = 0
+    for mag_endpoint in mag_endpoints:
+        print(f", {prev_mag_endpoint}-{mag_endpoint} {mags_err[mag_endpoint]:.2f}", end='')
+        prev_mag_endpoint = mag_endpoint
+    print()
 
     return {'epe': epe, 'f1': f1}
         
