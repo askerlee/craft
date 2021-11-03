@@ -635,19 +635,17 @@ def validate_hd1k(model, iters=6, test_mode=1):
     return results
 
 @torch.no_grad()
-def validate_kitti(model, iters=6, test_mode=1, batch_size=2):
+def validate_kitti(model, iters=6, test_mode=1):
     """ Peform validation using the KITTI-2015 (train) split """
     model.eval()
     val_dataset = datasets.KITTI(split='training')
-    val_loader  = data.DataLoader(val_dataset, batch_size=batch_size,
-                                  pin_memory=True, shuffle=False, num_workers=8, drop_last=False)
-                                  
+
     out_list, epe_list = [], []
-    
-    for data_blob in iter(val_loader):
-        image1, image2, flow_gt, valid_gt = data_blob
-        image1 = image1.cuda()
-        image2 = image2.cuda()
+
+    for val_id in range(len(val_dataset)):
+        image1, image2, flow_gt, valid_gt = val_dataset[val_id]
+        image1 = image1[None].cuda()
+        image2 = image2[None].cuda()
 
         padder = InputPadder(image1.shape, mode='kitti')
         image1, image2 = padder.pad(image1, image2)

@@ -2,26 +2,26 @@
  1 Iter 0, Valid (final) EPE: 1.794304, 1px: 0.867805, 3px: 0.932239, 5px: 0.951429
  2 Iter 0, Valid (clean) EPE: 0.973811, 1px: 0.912845, 3px: 0.963797, 5px: 0.975196
  2 Iter 0, Valid (final) EPE: 1.701124, 1px: 0.872298, 3px: 0.936499, 5px: 0.954502
- 4 Iter 0, Valid (clean) EPE: 0.853958, 1px: 0.917335, 3px: 0.965966, 5px: 0.977250
- 4 Iter 0, Valid (final) EPE: 1.539728, 1px: 0.877648, 3px: 0.939855, 5px: 0.957907
- 5 Iter 0, Valid (clean) EPE: 0.868076, 1px: 0.918634, 3px: 0.966553, 5px: 0.977411
- 5 Iter 0, Valid (final) EPE: 1.455896, 1px: 0.878247, 3px: 0.940434, 5px: 0.958632
- 6 Iter 0, Valid (clean) EPE: 0.763191, 1px: 0.921118, 3px: 0.967853, 5px: 0.978676
- 6 Iter 0, Valid (final) EPE: 1.323779, 1px: 0.883561, 3px: 0.944119, 5px: 0.961160
- 7 Iter 0, Valid (clean) EPE: 0.727674, 1px: 0.921590, 3px: 0.968203, 5px: 0.978779
- 8 Iter 0, Valid (final) EPE: 1.335593, 1px: 0.883658, 3px: 0.944607, 5px: 0.961838
- 9 Iter 0, Valid (clean) EPE: 0.728330, 1px: 0.923299, 3px: 0.968556, 5px: 0.978902
- 9 Iter 0, Valid (final) EPE: 1.245573, 1px: 0.885345, 3px: 0.945407, 5px: 0.962472
-10 Iter 0, Valid (clean) EPE: 0.699176, 1px: 0.924382, 3px: 0.969487, 5px: 0.979873
-10 Iter 0, Valid (final) EPE: 1.208962, 1px: 0.886401, 3px: 0.946302, 5px: 0.963366
-11 Iter 0, Valid (clean) EPE: 0.649465, 1px: 0.925667, 3px: 0.970343, 5px: 0.980521
-11 Iter 0, Valid (final) EPE: 1.161875, 1px: 0.888072, 3px: 0.947315, 5px: 0.964022
-13 Iter 0, Valid (clean) EPE: 0.637841, 1px: 0.926908, 3px: 0.970813, 5px: 0.980898
-13 Iter 0, Valid (final) EPE: 1.114646, 1px: 0.889340, 3px: 0.948190, 5px: 0.965231
-14 Iter 0, Valid (clean) EPE: 0.628630, 1px: 0.927545, 3px: 0.970693, 5px: 0.980791
-14 Iter 0, Valid (final) EPE: 1.104008, 1px: 0.891254, 3px: 0.949229, 5px: 0.965557
-15 Iter 0, Valid (clean) EPE: 0.616718, 1px: 0.927966, 3px: 0.971143, 5px: 0.981255
-15 Iter 0, Valid (final) EPE: 1.088529, 1px: 0.891742, 3px: 0.949729, 5px: 0.965914
+ 3 Iter 0, Valid (clean) EPE: 0.853958, 1px: 0.917335, 3px: 0.965966, 5px: 0.977250
+ 3 Iter 0, Valid (final) EPE: 1.539728, 1px: 0.877648, 3px: 0.939855, 5px: 0.957907
+ 4 Iter 0, Valid (clean) EPE: 0.868076, 1px: 0.918634, 3px: 0.966553, 5px: 0.977411
+ 4 Iter 0, Valid (final) EPE: 1.455896, 1px: 0.878247, 3px: 0.940434, 5px: 0.958632
+ 5 Iter 0, Valid (clean) EPE: 0.763191, 1px: 0.921118, 3px: 0.967853, 5px: 0.978676
+ 5 Iter 0, Valid (final) EPE: 1.323779, 1px: 0.883561, 3px: 0.944119, 5px: 0.961160
+ 6 Iter 0, Valid (clean) EPE: 0.727674, 1px: 0.921590, 3px: 0.968203, 5px: 0.978779
+ 6 Iter 0, Valid (final) EPE: 1.335593, 1px: 0.883658, 3px: 0.944607, 5px: 0.961838
+ 7 Iter 0, Valid (clean) EPE: 0.728330, 1px: 0.923299, 3px: 0.968556, 5px: 0.978902
+ 7 Iter 0, Valid (final) EPE: 1.245573, 1px: 0.885345, 3px: 0.945407, 5px: 0.962472
+ 8 Iter 0, Valid (clean) EPE: 0.699176, 1px: 0.924382, 3px: 0.969487, 5px: 0.979873
+ 8 Iter 0, Valid (final) EPE: 1.208962, 1px: 0.886401, 3px: 0.946302, 5px: 0.963366
+ 9 Iter 0, Valid (clean) EPE: 0.649465, 1px: 0.925667, 3px: 0.970343, 5px: 0.980521
+ 9 Iter 0, Valid (final) EPE: 1.161875, 1px: 0.888072, 3px: 0.947315, 5px: 0.964022
+10 Iter 0, Valid (clean) EPE: 0.637841, 1px: 0.926908, 3px: 0.970813, 5px: 0.980898
+10 Iter 0, Valid (final) EPE: 1.114646, 1px: 0.889340, 3px: 0.948190, 5px: 0.965231
+11 Iter 0, Valid (clean) EPE: 0.628630, 1px: 0.927545, 3px: 0.970693, 5px: 0.980791
+11 Iter 0, Valid (final) EPE: 1.104008, 1px: 0.891254, 3px: 0.949229, 5px: 0.965557
+12 Iter 0, Valid (clean) EPE: 0.616718, 1px: 0.927966, 3px: 0.971143, 5px: 0.981255
+12 Iter 0, Valid (final) EPE: 1.088529, 1px: 0.891742, 3px: 0.949729, 5px: 0.965914
 
 python train.py --name craft-sintel --stage sintel --validation sintel --output results/sintel/craft --restore_ckpt results/things/craft/craft-things.pth --num_steps 120000 --lr 0.000125 --image_size 368 768 --wdecay 0.00001 --gamma 0.85 --gpus 0 1 --batch_size 6 --val_freq 10000 --print_freq 100 --mixed_precision --setrans --corrnorm global --f2trans --craft
 Time: 11021235
