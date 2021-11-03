@@ -359,6 +359,7 @@ class ExpandedFeatTrans(nn.Module):
             self.first_linear.weight.data[:self.feat_dim, :self.feat_dim] = \
                 self.first_linear.weight.data[:self.feat_dim, :self.feat_dim] * 0.5 + identity_weight
 
+    # input_feat is usually key_feat.
     # input_feat: [3, 4416, 128]. attention_probs: [3, 4, 4416, 4416]. 
     def forward(self, input_feat, attention_probs):
         # input_feat: [B, U2, 1792], mm_first_feat: [B, Units, 1792*4]
@@ -582,6 +583,7 @@ class SelfAttVisPosTrans(nn.Module):
         #             frame1 frame2
         # corr: [1, 1, 7040, 7040]
         # x_vispos: [B0, num_voxels, 256]
+        # Here key_feat is omitted (None), i.e., key_feat = query_feat = x_vispos.
         x_trans = self.setrans(x_vispos, pos_biases=pos_biases)
         if not self.out_attn_only:
             x_trans = x_trans.permute(0, 2, 1).reshape(x.shape)

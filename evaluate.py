@@ -831,7 +831,7 @@ def save_checkpoint(cp_path, model, optimizer_state, lr_scheduler_state, logger)
     print(f"{cp_path} saved")
 
 @torch.no_grad()
-def gen_flow(model, model_name, image1_path, image2_path, output_path='output', test_mode=1):
+def gen_flow(model, model_name, iters, image1_path, image2_path, output_path='output', test_mode=1):
     """ Generate flow given two images """
     model.eval()
 
@@ -854,14 +854,14 @@ def gen_flow(model, model_name, image1_path, image2_path, output_path='output', 
     padder = InputPadder(image1.shape, mode='kitti')
     image1, image2 = padder.pad(image1[None].to(f'cuda:{model.device_ids[0]}'), image2[None].to(f'cuda:{model.device_ids[0]}'))
 
-    _, flow_pr = model.module(image1, image2, iters=24, test_mode=test_mode)
+    _, flow_pr = model.module(image1, image2, iters=iters, test_mode=test_mode)
     flow = padder.unpad(flow_pr[0]).permute(1, 2, 0).cpu().numpy()
 
     # split image1_path into path and file name
     _, image1_name = os.path.split(image1_path)
     # split file name into file name and extension
     image1_name_noext, _ = os.path.splitext(image1_name)
-    output_filename = os.path.join(output_path, image1_name_noext + f"-{model_name}.png")
+    output_filename = os.path.join(output_path, image1_name_noext + f"-{model_name}-{iters}.png")
     frame_utils.writeFlowKITTI(output_filename, flow)
 
     print(f"Generated flow {output_filename}.")
@@ -998,7 +998,13 @@ if __name__ == '__main__':
 
     if args.img1 is not None:
         model_name = os.path.split(args.model)[-1].split(".")[0]
-        gen_flow(model, model_name, args.img1, args.img2, output_path=args.output)
+        if 'craft' in model_name:
+            if args.f2trans_do_halfchan:
+                model_name = model_name.replace("craft", "craft-half")
+            else:
+                model_name = model_name.replace("craft", "craft-base")
+
+        gen_flow(model, model_name, args.iters, args.img1, args.img2, args.output)
         exit(0)
 
     if args.dataset == 'sintel' and args.submit:

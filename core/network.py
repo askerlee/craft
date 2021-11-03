@@ -75,6 +75,8 @@ class CRAFT(nn.Module):
                 self.f2_trans_config.in_feat_dim = 128
                 self.f2_trans_config.feat_dim  = 128
                 self.f2_trans_config.has_input_skip = False
+                self.fmap2b_norm = nn.Sequential(nn.Dropout(self.f2_trans_config.hidden_dropout_prob),
+                                                 nn.LayerNorm(128, eps=1e-12, elementwise_affine=True))
             else:
                 self.f2_trans_config.in_feat_dim = 256
                 self.f2_trans_config.feat_dim  = 256
@@ -171,6 +173,7 @@ class CRAFT(nn.Module):
                 if self.f2trans_do_halfchan:
                     fmap2a, fmap2b = torch.split(fmap2, [128, 128], dim=1)
                     fmap2a = self.f2_trans(fmap2a)
+                    fmap2b = self.fmap2b_norm(fmap2b)
                     fmap2  = torch.cat([fmap2a, fmap2b], dim=1)
                 else:
                     fmap2  = self.f2_trans(fmap2)
