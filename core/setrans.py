@@ -572,6 +572,7 @@ class SelfAttVisPosTrans(nn.Module):
         self.do_half_attn  = config.do_half_attn
         if self.do_half_attn:
             assert not self.out_attn_only
+            print("Do half-channel self-attention")
             # Half of the input channels will pass through without transformation. So no need to do input skip.
             self.config.has_input_skip = False 
             self.config.in_feat_dim = config.in_feat_dim // 2
