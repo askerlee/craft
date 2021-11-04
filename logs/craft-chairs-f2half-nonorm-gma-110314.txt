@@ -1,3 +1,9 @@
+1 Validation Chairs EPE: 1.854999
+2 Validation Chairs EPE: 1.465019
+3 Validation Chairs EPE: 1.266136
+4 Validation Chairs EPE: 1.118734
+5 Validation Chairs EPE: 1.000393
+
 python train.py --name craft-chairs --stage chairs --validation chairs --output results/chairs/craft --num_steps 120000 --lr 0.00025 --image_size 368 496 --wdecay 0.0001 --gpus 0 1 --batch_size 8 --val_freq 10000 --print_freq 100 --mixed_precision --corrnorm global --f2trans --craft --f2half
 Time: 11031507
 Args:

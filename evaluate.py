@@ -944,10 +944,10 @@ if __name__ == '__main__':
     parser.add_argument('--posr', dest='pos_bias_radius', type=int, default=7, 
                         help='The radius of positional biases')
                         
-    parser.add_argument('--f2trans', dest='f2trans', action='store_true', 
-                        help='Use transformer on frame 2 features')
-    parser.add_argument('--f2half', dest='f2trans_do_half_chan', action='store_true', 
-                        help='Use half channel of frame 2 features for transformer self-attention')                        
+    parser.add_argument('--f2', dest='f2trans', type=str, 
+                        choices=['none', 'full', 'half'], default='none',
+                        help='Whether to use transformer on frame 2 features. '
+                             'Half: do self-attention only on half of the channels')
     parser.add_argument('--f2posw', dest='f2_pos_code_weight', type=float, default=0.5)
                             
     parser.add_argument('--setrans', dest='setrans', action='store_true', 
@@ -999,10 +999,7 @@ if __name__ == '__main__':
     if args.img1 is not None:
         model_name = os.path.split(args.model)[-1].split(".")[0]
         if 'craft' in model_name:
-            if args.f2trans_do_halfchan:
-                model_name = model_name.replace("craft", "craft-half")
-            else:
-                model_name = model_name.replace("craft", "craft-base")
+            model_name = model_name.replace("craft", f"craft-f2{args.f2trans}")
 
         gen_flow(model, model_name, args.iters, args.img1, args.img2, args.output)
         exit(0)

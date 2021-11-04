@@ -70,7 +70,7 @@ class CRAFT(nn.Module):
             # except that the feature dimension is doubled, and not out_attn_probs_only.
             self.f2_trans_config = SETransConfig()
             self.f2_trans_config.update_config(args)
-            self.f2_trans_config.do_half_attn = args.f2trans_do_half_chan
+            self.f2_trans_config.do_half_attn = (args.f2trans == 'half')
             self.f2_trans_config.in_feat_dim = 256
             self.f2_trans_config.feat_dim  = 256
             # if do_half_attn, has_input_skip will be changed to False within SelfAttVisPosTrans.__init__().
@@ -161,7 +161,6 @@ class CRAFT(nn.Module):
         # run the feature network
         with autocast(enabled=self.args.mixed_precision):
             fmap1, fmap2 = self.fnet([image1, image2])
-
             if self.args.f2trans:
                 fmap2  = self.f2_trans(fmap2)
 
