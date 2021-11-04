@@ -113,7 +113,6 @@ def readDispKITTI(filename):
     return flow, valid
     
 def writeFlowKITTI(filename, uv):
-    breakpoint()
     uv = 64.0 * uv + 2**15  # (uv + 512) * 64. uv: [-256, 256]
     valid = np.ones([uv.shape[0], uv.shape[1], 1])
     uv = np.concatenate([uv, valid], axis=-1).astype(np.uint16)
