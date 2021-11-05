@@ -862,8 +862,11 @@ def gen_flow(model, model_name, iters, image1_path, image2_path, output_path='ou
     # split file name into file name and extension
     image1_name_noext, _ = os.path.splitext(image1_name)
     output_filename = os.path.join(output_path, image1_name_noext + f"-{model_name}-{iters}.png")
-    frame_utils.writeFlowKITTI(output_filename, flow)
-
+    #frame_utils.writeFlowKITTI(output_filename, flow)
+    flow_img = flow_viz.flow_to_image(flow)
+    image = Image.fromarray(flow_img)
+    image.save(output_filename)
+    
     print(f"Generated flow {output_filename}.")
 
 def fix_checkpoint(args, model):

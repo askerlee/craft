@@ -35,6 +35,14 @@ Occ epe: 6.982630, Noc epe: 0.594633
 Validation (albedo) EPE: 0.754527, 1px: 0.932266, 3px: 0.970382, 5px: 0.979584
 Occ epe: 6.260431, Noc epe: 0.320749
 
+142.183 validate_sintel_occ:
+Validation (clean) EPE: 0.616808, 1px: 0.930142, 3px: 0.971977, 5px: 0.981584
+Occ epe: 4.768497, Noc epe: 0.289725
+Validation (final) EPE: 1.061215, 1px: 0.894441, 3px: 0.951235, 5px: 0.967126
+Occ epe: 6.985445, Noc epe: 0.594484
+Validation (albedo) EPE: 0.754668, 1px: 0.932264, 3px: 0.970382, 5px: 0.979584
+Occ epe: 6.259564, Noc epe: 0.320976
+
 Things:
 12 Validation (frames_cleanpass) EPE: 3.444200, 1px: 0.821986, 3px: 0.899740, 5px: 0.921739
 12 Validation (frames_finalpass) EPE: 3.430202, 1px: 0.818995, 3px: 0.899011, 5px: 0.921611
