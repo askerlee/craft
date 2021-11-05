@@ -65,7 +65,7 @@ class CRAFT(nn.Module):
         self.fnet = BasicEncoder(output_dim=256,         norm_fn='instance', dropout=args.dropout)
         self.cnet = BasicEncoder(output_dim=hdim + cdim, norm_fn='batch',    dropout=args.dropout)
 
-        if args.f2trans:
+        if args.f2trans != 'none':
             # f2_trans has the same configuration as GMA att, 
             # except that the feature dimension is doubled, and not out_attn_probs_only.
             self.f2_trans_config = SETransConfig()
@@ -161,7 +161,7 @@ class CRAFT(nn.Module):
         # run the feature network
         with autocast(enabled=self.args.mixed_precision):
             fmap1, fmap2 = self.fnet([image1, image2])
-            if self.args.f2trans:
+            if self.args.f2trans != 'none':
                 fmap2  = self.f2_trans(fmap2)
 
         # fmap1, fmap2: [1, 256, 55, 128]. 1/8 size of the original image.
