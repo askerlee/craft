@@ -185,7 +185,6 @@ def main(args):
     train_loader = datasets.fetch_dataloader(args)
     optimizer, scheduler = fetch_optimizer(args, model)
 
-    scaler = GradScaler(enabled=args.mixed_precision)
     logger = Logger(scheduler, args)
 
     if args.restore_ckpt is not None:
@@ -195,7 +194,7 @@ def main(args):
         model.module.freeze_bn()
 
     while logger.total_steps <= args.num_steps:
-        train(model, train_loader, optimizer, scheduler, logger, scaler, args)
+        train(model, train_loader, optimizer, scheduler, logger, args)
         if logger.total_steps >= args.num_steps:
             plot_train(logger, args)
             plot_val(logger, args)
@@ -206,7 +205,10 @@ def main(args):
     return PATH
 
 
-def train(model, train_loader, optimizer, scheduler, logger, scaler, args):
+def train(model, train_loader, optimizer, scheduler, logger, args):
+    # Recreate scaler every epoch.
+    scaler = GradScaler(enabled=args.mixed_precision)
+
     for i_batch, data_blob in enumerate(train_loader):
         tic = time.time()
         image1, image2, flow, valid = [x.cuda() for x in data_blob]
