@@ -866,7 +866,7 @@ def gen_flow(model, model_name, iters, image1_path, image2_path, output_path='ou
     flow_img = flow_viz.flow_to_image(flow)
     image = Image.fromarray(flow_img)
     image.save(output_filename)
-    
+
     print(f"Generated flow {output_filename}.")
 
 def fix_checkpoint(args, model):
@@ -921,6 +921,7 @@ if __name__ == '__main__':
     parser.add_argument('--model_name')
     parser.add_argument('--fix', action='store_true', help='Fix loaded checkpoint')
     parser.add_argument('--submit', action='store_true', help='Make a sintel/kitti submission')
+    parser.add_argument('--vis', action='store_true', help='Make visualizaton')
     parser.add_argument('--test_mode', default=1, type=int, 
                         help='Test mode (1: normal, 2: evaluate performance of every iteration)')
     parser.add_argument('--maxval', dest='max_val_count', default=-1, type=int, 
@@ -1011,7 +1012,11 @@ if __name__ == '__main__':
         create_sintel_submission(model, warm_start=True)
         exit(0)
         # create_sintel_submission_vis(model, warm_start=True)
-        
+
+    if args.dataset == 'sintel' and args.vis:
+        create_sintel_submission_vis(model, warm_start=True)
+        exit(0)
+
     if args.dataset == 'kitti' and args.submit:
         create_kitti_submission(model)
         exit(0)
