@@ -616,6 +616,9 @@ class SelfAttVisPosTrans(nn.Module):
             else:
                 x_trans     = x1_trans
 
+        else:
+            x_trans = x1_trans
+            
         return x_trans
 
 # =================================== SETrans BackBone Components ==============================#

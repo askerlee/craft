@@ -9,6 +9,7 @@
  9 Validation Chairs EPE: 0.837342
 10 Validation Chairs EPE: 0.822749
 11 Validation Chairs EPE: 0.801635
+12 Validation Chairs EPE: 0.763819
 
 python train.py --name craft-chairs --stage chairs --validation chairs --output results/chairs/craft-half-gma --num_steps 120000 --lr 0.00025 --image_size 368 496 --wdecay 0.0001 --gpus 0 1 --batch_size 8 --val_freq 10000 --print_freq 100 --mixed_precision --corrnorm global --f2trans --craft --f2half
 Time: 11040040

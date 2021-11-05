@@ -24,10 +24,8 @@
 12 Validation (final) EPE: 2.716823, 1px: 0.851417, 3px: 0.917403, 5px: 0.936692
 
 Things:
-12 Validation (frames_cleanpass) EPE: 3.120568, 1px: 0.826808, 3px: 0.903707, 5px: 0.925521
-12 Validation (frames_finalpass) EPE: 2.802268, 1px: 0.824609, 3px: 0.904123, 5px: 0.926467
-Valid (frames_cleanpass) EPE: 3.1427, 1px: 0.8273, 3px: 0.9043, 5px: 0.9260, 0-3 0.38, 3-5 0.43, 5-10 0.50, 10-inf 4.13
-Valid (frames_finalpass) EPE: 2.8037, 1px: 0.8255, 3px: 0.9048, 5px: 0.9270, 0-3 0.38, 3-5 0.42, 5-10 0.48, 10-inf 3.67
+12 Valid (frames_cleanpass) EPE: 3.1427, 1px: 0.8273, 3px: 0.9043, 5px: 0.9260, 0-3 0.38, 3-5 0.43, 5-10 0.50, 10-inf 4.13
+12 Valid (frames_finalpass) EPE: 2.8037, 1px: 0.8255, 3px: 0.9048, 5px: 0.9270, 0-3 0.38, 3-5 0.42, 5-10 0.48, 10-inf 3.67
 
 python3.8 train.py --name gma-things --stage things --validation sintel --output results/things/gma --restore_ckpt checkpoints/gma-chairs.pth --num_steps 120000 --lr 0.000125 --image_size 400 720 --wdecay 0.0001 --gpus 0 1 --batch_size 6 --val_freq 10000 --print_freq 100 --mixed_precision
 
