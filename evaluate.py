@@ -40,10 +40,10 @@ def create_sintel_submission(model, warm_start=False, output_path='sintel_submis
     for dstype in ['clean', 'final']:
         test_dataset = datasets.MpiSintel(split='test', aug_params=None, dstype=dstype)
 
-        flow_prev, sequence_prev = None, None
+        flow_prev, scene_prev = None, None
         for test_id in range(len(test_dataset)):
-            image1, image2, (sequence, frame) = test_dataset[test_id]
-            if sequence != sequence_prev:
+            image1, image2, (scene, frame) = test_dataset[test_id]
+            if scene != scene_prev:
                 flow_prev = None
 
             padder = InputPadder(image1.shape)
@@ -55,28 +55,28 @@ def create_sintel_submission(model, warm_start=False, output_path='sintel_submis
             if warm_start:
                 flow_prev = forward_interpolate(flow_low[0])[None].cuda()
 
-            output_dir = os.path.join(output_path, dstype, sequence)
+            output_dir = os.path.join(output_path, dstype, scene)
             output_file = os.path.join(output_dir, 'frame%04d.flo' % (frame+1))
 
             if not os.path.exists(output_dir):
                 os.makedirs(output_dir)
 
             frame_utils.writeFlow(output_file, flow)
-            sequence_prev = sequence
+            scene_prev = scene
 
     print("Created sintel submission.")
 
 @torch.no_grad()
-def create_sintel_submission_vis(model, warm_start=False, output_path='sintel_submission', test_mode=1):
+def create_sintel_submission_vis(model_name, model, warm_start=False, output_path='sintel_submission', test_mode=1):
     """ Create submission for the Sintel leaderboard """
     model.eval()
     for dstype in ['clean', 'final']:
         test_dataset = datasets.MpiSintel(split='test', aug_params=None, dstype=dstype)
 
-        flow_prev, sequence_prev = None, None
+        flow_prev, scene_prev = None, None
         for test_id in range(len(test_dataset)):
-            image1, image2, (sequence, frame) = test_dataset[test_id]
-            if sequence != sequence_prev:
+            image1, image2, (scene, frame_id) = test_dataset[test_id]
+            if scene != scene_prev:
                 flow_prev = None
 
             padder = InputPadder(image1.shape)
@@ -87,30 +87,27 @@ def create_sintel_submission_vis(model, warm_start=False, output_path='sintel_su
 
             # Visualizations
             flow_img = flow_viz.flow_to_image(flow)
-            image = Image.fromarray(flow_img)
-            if not os.path.exists(f'vis_test/RAFT/{dstype}/'):
-                os.makedirs(f'vis_test/RAFT/{dstype}/flow')
+            flow_image = Image.fromarray(flow_img)
+            if not os.path.exists(f'vis_test/{model_name}/{dstype}/{scene}'):
+                os.makedirs(f'vis_test/{model_name}/{dstype}/{scene}')
 
-            if not os.path.exists(f'vis_test/ours/{dstype}/'):
-                os.makedirs(f'vis_test/ours/{dstype}/flow')
-
-            if not os.path.exists(f'vis_test/gt/{dstype}/'):
-                os.makedirs(f'vis_test/gt/{dstype}/image')
+            #if not os.path.exists(f'vis_test/gt/{dstype}/{scene}'):
+            #    os.makedirs(f'vis_test/gt/{dstype}/{scene}')
 
             # image.save(f'vis_test/ours/{dstype}/flow/{test_id}.png')
-            image.save(f'vis_test/RAFT/{dstype}/flow/{test_id}.png')
-            imageio.imwrite(f'vis_test/gt/{dstype}/image/{test_id}.png', image1[0].cpu().permute(1, 2, 0).numpy())
+            flow_image.save(f'vis_test/{model_name}/{dstype}/{scene}/frame_{frame_id+1:04d}.png')
+            #imageio.imwrite(f'vis_test/gt/{dstype}/{scene}/{frame_id+1}.png', image1[0].cpu().permute(1, 2, 0).numpy())
             if warm_start:
                 flow_prev = forward_interpolate(flow_low[0])[None].cuda()
 
-            output_dir = os.path.join(output_path, dstype, sequence)
-            output_file = os.path.join(output_dir, 'frame%04d.flo' % (frame+1))
+            output_dir = os.path.join(output_path, dstype, scene)
+            output_file = os.path.join(output_dir, 'frame%04d.flo' % (frame_id+1))
 
             if not os.path.exists(output_dir):
                 os.makedirs(output_dir)
 
             frame_utils.writeFlow(output_file, flow)
-            sequence_prev = sequence
+            scene_prev = scene
 
     print("Created sintel submission.")
 
@@ -137,13 +134,15 @@ def create_kitti_submission(model, output_path='kitti_submission', test_mode=1):
     print("Created KITTI submission.")
 
 @torch.no_grad()
-def create_kitti_submission_vis(model, output_path='kitti_submission', test_mode=1):
+def create_kitti_submission_vis(model_name, model, output_path='kitti_submission', test_mode=1):
     """ Create submission for the KITTI leaderboard """
     model.eval()
     test_dataset = datasets.KITTI(split='testing', aug_params=None)
 
     if not os.path.exists(output_path):
         os.makedirs(output_path)
+    if not os.path.exists(f'vis_kitti/{model_name}'):
+        os.makedirs(f'vis_kitti/{model_name}')
 
     for test_id in range(len(test_dataset)):
         image1, image2, (frame_id, ) = test_dataset[test_id]
@@ -158,14 +157,8 @@ def create_kitti_submission_vis(model, output_path='kitti_submission', test_mode
 
         # Visualizations
         flow_img = flow_viz.flow_to_image(flow)
-        image = Image.fromarray(flow_img)
-        if not os.path.exists(f'vis_kitti'):
-            os.makedirs(f'vis_kitti/flow')
-            os.makedirs(f'vis_kitti/image')
-
-        image.save(f'vis_kitti/flow/{test_id}.png')
-        imageio.imwrite(f'vis_kitti/image/{test_id}_0.png', image1[0].cpu().permute(1, 2, 0).numpy())
-        imageio.imwrite(f'vis_kitti/image/{test_id}_1.png', image2[0].cpu().permute(1, 2, 0).numpy())
+        flow_image = Image.fromarray(flow_img)
+        flow_image.save(f'vis_kitti/{model_name}/{frame_id}')
 
     print("Created KITTI submission.")
 
@@ -921,7 +914,7 @@ if __name__ == '__main__':
     parser.add_argument('--model_name')
     parser.add_argument('--fix', action='store_true', help='Fix loaded checkpoint')
     parser.add_argument('--submit', action='store_true', help='Make a sintel/kitti submission')
-    parser.add_argument('--vis', action='store_true', help='Make visualizaton')
+    parser.add_argument('--vis', action='store_true', help='Make a sintel/kitti visualizaton')
     parser.add_argument('--test_mode', default=1, type=int, 
                         help='Test mode (1: normal, 2: evaluate performance of every iteration)')
     parser.add_argument('--maxval', dest='max_val_count', default=-1, type=int, 
@@ -998,13 +991,12 @@ if __name__ == '__main__':
         
     model.cuda()
     model.eval()
-    
+
+    model_name = os.path.split(args.model)[-1].split(".")[0]
+    if 'craft' in model_name:
+        model_name = model_name.replace("craft", f"craft-f2{args.f2trans}")
 
     if args.img1 is not None:
-        model_name = os.path.split(args.model)[-1].split(".")[0]
-        if 'craft' in model_name:
-            model_name = model_name.replace("craft", f"craft-f2{args.f2trans}")
-
         gen_flow(model, model_name, args.iters, args.img1, args.img2, args.output)
         exit(0)
 
@@ -1014,13 +1006,17 @@ if __name__ == '__main__':
         # create_sintel_submission_vis(model, warm_start=True)
 
     if args.dataset == 'sintel' and args.vis:
-        create_sintel_submission_vis(model, warm_start=True)
+        create_sintel_submission_vis(model_name, model, warm_start=True)
         exit(0)
 
     if args.dataset == 'kitti' and args.submit:
         create_kitti_submission(model)
         exit(0)
-    
+
+    if args.dataset == 'kitti' and args.vis:
+        create_kitti_submission_vis(model_name, model)
+        exit(0)
+
     if args.dataset == 'viper' and args.submit:
         create_viper_submission(model)
         exit(0)

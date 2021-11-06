@@ -157,6 +157,8 @@ class MpiSintel(FlowDataset):
             image_list = sorted(glob(osp.join(image_root, scene, '*.png')))
             for i in range(len(image_list)-1):
                 self.image_list += [ [image_list[i], image_list[i+1]] ]
+                # i: frame_id, the sequence number of the image.
+                # The first image in this folder is numbered 0.
                 self.extra_info += [ (scene, i) ] # scene and frame_id
 
             if split != 'test':
