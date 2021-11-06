@@ -93,7 +93,8 @@ class Attention(nn.Module):
             sim = sim_content + self.pos_embed_weight * sim_pos
             
         else:
-            # sim: [8, 1, 46, 62, 46, 62]
+            # q, k: [B, 1, 46, 62, 128]
+            # sim:  [B, 1, 46, 62, 46, 62]
             sim = einsum('b h x y d, b h u v d -> b h x y u v', q, k)
 
         sim = rearrange(sim, 'b h x y u v -> b h (x y) (u v)')

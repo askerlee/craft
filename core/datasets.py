@@ -15,7 +15,7 @@ import re
 from utils import frame_utils
 from utils.augmentor import FlowAugmentor, SparseFlowAugmentor
 
-# sparse is always False.
+# sparse: sparse (kitti .png) format of flow data
 class FlowDataset(data.Dataset):
     def __init__(self, aug_params=None, sparse=False):
         self.augmentor = None
@@ -293,6 +293,70 @@ class Autoflow(FlowDataset):
 class VIPER(FlowDataset):
     def __init__(self, aug_params=None, split='training', root='datasets/viper/', filetype='jpg'):
         super(VIPER, self).__init__(aug_params, sparse=True)
+        scene_count = len(os.listdir(root))
+        split_map = { 'training': 'train', 'validation': 'val', 'test': 'test' }
+        split = split_map[split]
+        split_img_root  = osp.join(root, filetype, split, 'img')
+        split_flow_root = osp.join(root, filetype, split, 'flow')
+        skip_count = 0
+        if split == 'test':
+            # 001_00001, 001_00076, ...
+            TEST_FRAMES = open(osp.join(root, "test_frames.txt"))
+            test_frames_dict = {}
+            for frame_trunk in TEST_FRAMES:
+                frame_trunk = frame_trunk.strip()
+                test_frames_dict[frame_trunk] = 1
+            print("{} test frame names loaded".format(len(test_frames_dict)))
+            self.is_test = True
+            
+        for i, scene in enumerate(os.listdir(split_img_root)):
+            # scene: 001, 002, ...
+            # dir: viper/train/img/001
+            # img0_name: 001_00001.png, 001_00010.png, ...
+            for img0_name in sorted(os.listdir(osp.join(split_img_root, scene))):
+                matches = re.match(r"(\d{3})_(\d{5}).(jpg|png)", img0_name)
+                if not matches:
+                    breakpoint()
+                scene0   = matches.group(1)
+                img0_idx = matches.group(2)
+                suffix   = matches.group(3)
+                assert scene == scene0
+                # img0_trunk: img0_name without suffix.
+                img0_trunk  = f"{scene}_{img0_idx}"
+                if (split == 'train' or split == 'val') and img0_idx[-1] == '0' \
+                  or \
+                  split == 'test' and img0_trunk in test_frames_dict:
+                    img1_idx    = "{:05d}".format(int(img0_idx) + 1)
+                    img1_name   = f"{scene}_{img1_idx}.{suffix}"
+                    flow_name   = img0_name[:-3] + "png"
+                    image0_path = osp.join(split_img_root,  scene, img0_name)
+                    image1_path = osp.join(split_img_root,  scene, img1_name)
+                    flow_path   = osp.join(split_flow_root, scene, flow_name)
+                    # Sometimes image1 is missing. Skip this pair.
+                    if not os.path.isfile(image1_path):
+                        # In the test set, image1 should always be there.
+                        if split == 'test':
+                            breakpoint()
+                        skip_count += 1
+                        continue
+                    # if both image0_path and image1_path exist, then flow_path should exist.
+                    if split != 'test' and not os.path.isfile(flow_path):
+                        skip_count += 1
+                        continue
+                # This file is not considered as the first frame. Skip.
+                else:
+                    skip_count += 1
+                    continue
+                        
+                self.image_list += [ [image0_path, image1_path] ]
+                self.flow_list  += [ flow_path ]
+                self.extra_info += [ [img0_trunk] ]
+        print(f"{skip_count} files skipped")
+
+class SlowFlow(FlowDataset):
+    def __init__(self, aug_params=None, split='test', root='datasets/slowflow/', filetype='png', 
+                 blur_level=100):
+        super(SlowFlow, self).__init__(aug_params, sparse=False)
         scene_count = len(os.listdir(root))
         split_map = { 'training': 'train', 'validation': 'val', 'test': 'test' }
         split = split_map[split]

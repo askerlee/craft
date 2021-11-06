@@ -427,7 +427,7 @@ class CrossAttFeatTrans(SETransInitWeights):
 
         self.out_attn_scores_only   = config.out_attn_scores_only
         self.out_attn_probs_only    = config.out_attn_probs_only
-        self.ablate_multihead   = config.ablate_multihead
+        self.ablate_multihead       = config.ablate_multihead
 
         if self.out_attn_scores_only or self.out_attn_probs_only:
             self.out_trans  = None
@@ -533,6 +533,7 @@ class CrossAttFeatTrans(SETransInitWeights):
                 self.max_attn    = 0
                 self.clamp_count = 0
 
+        if pos_biases is not None:
             #[B0, 8, U1, U2] = [B0, 8, U1, U2]  + [1, 1, U1, U2].
             attention_scores = attention_scores + self.pos_code_weight * pos_biases
 
