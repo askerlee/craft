@@ -207,11 +207,17 @@ def validate_chairs(model, iters=6, test_mode=1):
 
 
 @torch.no_grad()
-def validate_things(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1):
+def validate_things(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1, verbose=True):
     """ Perform evaluation on the FlyingThings (test) split """
     model.eval()
     results = {}
     mag_endpoints = [3, 5, 10, np.inf]
+    if xy_shift is not None:
+        x_shift, y_shift = xy_shift
+        print(f"Apply x,y shift {x_shift},{y_shift}")
+    else:
+        x_shift, y_shift = (0, 0)
+    offset_tensor = torch.tensor([y_shift, x_shift], dtype=float).reshape(2, 1, 1)
 
     for dstype in ['frames_cleanpass', 'frames_finalpass']:
         epe_list = {}
@@ -247,6 +253,8 @@ def validate_things(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1
             image1 = image1[None].cuda()
             image2 = image2[None].cuda()
 
+            image1, val_mask = shift_pixels(image1, xy_shift)
+
             # if GaussianBlur is not None:
             #     image1 = GaussianBlur(image1)
             #     image2 = GaussianBlur(image2)
@@ -262,12 +270,13 @@ def validate_things(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1
             
             for it, flow_pr in enumerate(flow_prs):
                 flow = padder.unpad(flow_pr[0]).cpu()
-                epe = torch.sum((flow - flow_gt)**2, dim=0).sqrt()
+                flow += offset_tensor
+                epe = torch.sum((flow - flow_gt)**2, dim=0)[val_mask].sqrt()
                 epe_list.setdefault(it, [])
                 epe_list[it].append(epe.view(-1).numpy())
 
             epe_seg.append(epe.view(-1).numpy())
-            mag = torch.sum(flow_gt**2, dim=0).sqrt()
+            mag = torch.sum(flow_gt**2, dim=0)[val_mask].sqrt()
 
             prev_mag_endpoint = 0
             for mag_endpoint in mag_endpoints:
@@ -279,7 +288,7 @@ def validate_things(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1
             val_count += len(image1)
             segs_len.append(len(image1))
 
-            if val_count % 100 == 0 or val_count >= max_val_count:
+            if verbose and (val_count % 100 == 0 or val_count >= max_val_count):
                 epe_seg     = np.concatenate(epe_seg)
                 mean_epe    = np.mean(epe_seg)
                 px1 = np.mean(epe_seg < 1)
@@ -341,7 +350,7 @@ def validate_things(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1
 
 
 @torch.no_grad()
-def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1):
+def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1, verbose=True):
     """ Peform validation using the Sintel (train) split """
     model.eval()
     results = {}
@@ -351,6 +360,7 @@ def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1
         print(f"Apply x,y shift {x_shift},{y_shift}")
     else:
         x_shift, y_shift = (0, 0)
+    offset_tensor = torch.tensor([y_shift, x_shift], dtype=float).reshape(2, 1, 1)
     
     for dstype in ['clean', 'final']:
         val_dataset = datasets.MpiSintel(split='training', aug_params=None, dstype=dstype)
@@ -391,7 +401,6 @@ def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1
 
             # Shift image1 pixels along x and y axes.
             image1, val_mask = shift_pixels(image1, xy_shift)
-            offset_tensor = torch.tensor([y_shift, x_shift], dtype=flow_gt.dtype).reshape(2, 1, 1)
 
             padder = InputPadder(image1.shape)
             image1, image2 = padder.pad(image1, image2)
@@ -422,7 +431,7 @@ def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1
             val_count += len(image1)
             segs_len.append(len(image1))
 
-            if val_count % 100 == 0 or val_count >= max_val_count:
+            if verbose and (val_count % 100 == 0 or val_count >= max_val_count):
                 epe_seg     = np.concatenate(epe_seg)
                 mean_epe    = np.mean(epe_seg)
                 px1 = np.mean(epe_seg < 1)
@@ -461,7 +470,7 @@ def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1
             px3 = np.mean(epe_all<3)
             px5 = np.mean(epe_all<5)
 
-            print("Iter %d, Valid (%s) EPE: %f, 1px: %f, 3px: %f, 5px: %f" % (it, dstype, epe, px1, px3, px5))
+            print("Iter %d, Valid (%s) EPE: %f, 1px: %f, 3px: %f, 5px: %f" % (it, dstype, epe, px1, px3, px5), end='')
 
         for mag_endpoint in mag_endpoints:
             mag_errs = np.array(mags_segs_err[mag_endpoint])
@@ -667,7 +676,7 @@ def validate_kitti(model, iters=6, test_mode=1):
 
 # Set max_val_count=-1 to evaluate the whole dataset.
 @torch.no_grad()
-def validate_viper(model, iters=6, test_mode=1, batch_size=2, max_val_count=500):
+def validate_viper(model, iters=6, test_mode=1, batch_size=2, max_val_count=500, verbose=True):
     """ Peform validation using the VIPER validation split """
     model.eval()
     # original size: (1080, 1920).
@@ -749,7 +758,7 @@ def validate_viper(model, iters=6, test_mode=1, batch_size=2, max_val_count=500)
         val_count += len(image1)
         segs_len.append(len(image1))
 
-        if val_count % 100 == 0 or val_count >= max_val_count:
+        if verbose and val_count % 100 == 0 or val_count >= max_val_count:
             epe_seg     = np.concatenate(epe_seg)
             out_seg     = np.concatenate(out_seg)
             mean_epe    = np.mean(epe_seg)
@@ -796,7 +805,7 @@ def validate_viper(model, iters=6, test_mode=1, batch_size=2, max_val_count=500)
         px5 = np.mean(epe_all<5)
 
         f1 = 100 * np.mean(out_all)
-        print("Iter %d, Valid EPE: %.4f, F1: %.4f, 1px: %.4f, 3px: %.4f, 5px: %.4f" % (it, epe, f1, px1, px3, px5))
+        print("Iter %d, Valid EPE: %.4f, F1: %.4f, 1px: %.4f, 3px: %.4f, 5px: %.4f" % (it, epe, f1, px1, px3, px5), end='')
 
     for mag_endpoint in mag_endpoints:
         mag_errs = np.array(mags_segs_err[mag_endpoint])
@@ -815,11 +824,13 @@ def validate_viper(model, iters=6, test_mode=1, batch_size=2, max_val_count=500)
 # Set max_val_count=-1 to evaluate the whole dataset.
 @torch.no_grad()
 def validate_slowflow(model, iters=6, test_mode=1, xy_shift=None, 
-                      blur_mag=100, blur_num_frames=0):
+                      blur_set=(100, 0), verbose=True):
     """ Peform validation using the VIPER validation split """
     model.eval()
+
+    blur_magnitude, blur_num_frames = blur_set
     val_dataset = datasets.SlowFlow(split='test', aug_params=None,
-                                    blur_mag=blur_mag, blur_num_frames=blur_num_frames)
+                                    blur_mag=blur_magnitude, blur_num_frames=blur_num_frames)
     scale = 0.5
     scale_tensor = torch.tensor([scale, scale]).reshape(2, 1, 1)
 
@@ -848,7 +859,8 @@ def validate_slowflow(model, iters=6, test_mode=1, xy_shift=None,
         print(f"Apply x,y shift {x_shift},{y_shift}")
     else:
         x_shift, y_shift = (0, 0)
-        
+    offset_tensor = torch.tensor([y_shift, x_shift], dtype=float).reshape(2, 1, 1)
+
     for val_id in range(len(val_dataset)):
         image1, image2, flow_gt, _, (scene, img1_trunk) = val_dataset[val_id]
         image1 = image1[None].cuda()
@@ -873,7 +885,6 @@ def validate_slowflow(model, iters=6, test_mode=1, xy_shift=None,
         # if test_mode == 1: a tensor of [1, 2, H, W].
         if test_mode == 1:
             flow_prs = [ flow_prs ]
-        offset_tensor = torch.tensor([y_shift, x_shift], dtype=flow_gt.dtype).reshape(2, 1, 1)
 
         for it, flow_pr in enumerate(flow_prs):
             flow = padder.unpad(flow_pr[0]).cpu()
@@ -905,7 +916,7 @@ def validate_slowflow(model, iters=6, test_mode=1, xy_shift=None,
         val_count += len(image1)
         segs_len.append(len(image1))
 
-        if prev_scene and scene != prev_scene or val_count >= max_val_count:
+        if verbose and prev_scene and (scene != prev_scene or val_count >= max_val_count):
             epe_seg     = np.concatenate(epe_seg)
             out_seg     = np.concatenate(out_seg)
             mean_epe    = np.mean(epe_seg)
@@ -954,7 +965,7 @@ def validate_slowflow(model, iters=6, test_mode=1, xy_shift=None,
         px5 = np.mean(epe_all<5)
 
         f1 = 100 * np.mean(out_all)
-        print("Iter %d, Valid EPE: %.4f, F1: %.4f, 1px: %.4f, 3px: %.4f, 5px: %.4f" % (it, epe, f1, px1, px3, px5))
+        print("Iter %d, Valid EPE: %.4f, F1: %.4f, 1px: %.4f, 3px: %.4f, 5px: %.4f" % (it, epe, f1, px1, px3, px5), end='')
 
     for mag_endpoint in mag_endpoints:
         mag_errs = np.array(mags_segs_err[mag_endpoint])
@@ -1055,7 +1066,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', help="restore checkpoint")
     parser.add_argument('--dataset', help="dataset for evaluation")
-    parser.add_argument('--sfgroup', type=str, help="slowflow group for evaluation, e.g. 300,3")
+    parser.add_argument('--slowset', type=str, help="slowflow set for evaluation, e.g. 300,3")
     parser.add_argument('--img1', type=str, default=None, help="first image for evaluation")
     parser.add_argument('--img2', type=str, default=None, help="second image for evaluation")
     parser.add_argument('--output', type=str, default="output", help="output directory")
@@ -1080,8 +1091,11 @@ if __name__ == '__main__':
     parser.add_argument('--bs', dest='batch_size', default=2, type=int, 
                         help='Batch size')
 
-    parser.add_argument('--shift', dest='xy_shift', default=None, type=str, 
-                        help='Shift image1 pixels along x,y')
+    parser.add_argument('--xshifts', dest='x_shifts', default=None, type=str, 
+                        help='Shift image1 pixels along x with these offsets')
+    parser.add_argument('--yshifts', dest='y_shifts', default=None, type=str, 
+                        help='Shift image1 pixels along y with these offsets')
+
     """     parser.add_argument('--blurk', dest='blur_kernel', default=5, type=int, 
                             help='Gaussian blur kernel size')
         # Only if blur_sigma > 0 (regardless of blur_kernel), Gaussian blur will be applied.
@@ -1157,12 +1171,17 @@ if __name__ == '__main__':
     if 'craft' in model_name:
         model_name = model_name.replace("craft", f"craft-f2{args.f2trans}")
 
-    if args.xy_shift is not None:
-        shift_x, shift_y = args.xy_shift.split(",")
-        shift_x = int(shift_x)
-        shift_y = int(shift_y)
-        args.xy_shift = (shift_x, shift_y)
-        model_name += f"-shift{shift_x},{shift_y}"
+    if args.x_shifts and args.y_shifts:
+        x_shifts = [int(x) for x in args.x_shifts.split(',')]
+        y_shifts = [int(y) for y in args.y_shifts.split(',')]
+        args.xy_shifts = list(zip(x_shifts, y_shifts))
+    else:
+        args.xy_shifts = [(0, 0)]
+
+    if len(args.xy_shifts) == 1:
+        verbose = True
+    else:
+        verbose = False
 
     if args.img1 is not None:
         gen_flow(model, model_name, args.iters, args.img1, args.img2, args.output)
@@ -1187,37 +1206,38 @@ if __name__ == '__main__':
         else:
             blur_params = None """
 
-    with torch.no_grad():
-        if args.dataset == 'chairs':
-            validate_chairs(model.module, iters=args.iters, test_mode=args.test_mode)
+    for xy_shift in args.xy_shifts:
+        with torch.no_grad():
+            if args.dataset == 'chairs':
+                validate_chairs(model.module, iters=args.iters, test_mode=args.test_mode)
 
-        elif args.dataset == 'things':
-            validate_things(model.module, iters=args.iters, test_mode=args.test_mode, 
-                            max_val_count=args.max_val_count)
+            elif args.dataset == 'things':
+                validate_things(model.module, iters=args.iters, test_mode=args.test_mode, 
+                                max_val_count=args.max_val_count, xy_shift=xy_shift, verbose=verbose)
 
-        elif args.dataset == 'sintel':
-            validate_sintel(model.module, iters=args.iters, test_mode=args.test_mode, 
-                            max_val_count=args.max_val_count, xy_shift=args.xy_shift)
+            elif args.dataset == 'sintel':
+                validate_sintel(model.module, iters=args.iters, test_mode=args.test_mode, 
+                                max_val_count=args.max_val_count, xy_shift=xy_shift, verbose=verbose)
 
-        elif args.dataset == 'sintel_occ':
-            validate_sintel_occ(model.module, iters=args.iters, test_mode=args.test_mode)
+            elif args.dataset == 'sintel_occ':
+                validate_sintel_occ(model.module, iters=args.iters, test_mode=args.test_mode)
 
-        elif args.dataset == 'kitti':
-            validate_kitti(model.module, iters=args.iters, test_mode=args.test_mode)
+            elif args.dataset == 'kitti':
+                validate_kitti(model.module, iters=args.iters, test_mode=args.test_mode)
 
-        elif args.dataset == 'viper':
-            validate_viper(model.module, iters=args.iters, test_mode=args.test_mode, 
-                           max_val_count=args.max_val_count, batch_size=args.batch_size)
+            elif args.dataset == 'viper':
+                validate_viper(model.module, iters=args.iters, test_mode=args.test_mode, 
+                            max_val_count=args.max_val_count, batch_size=args.batch_size)
 
-        elif args.dataset == 'slowflow':
-            sf_blur_mag, sf_blur_num_frames = args.sfgroup.split(",")
-            sf_blur_mag = int(sf_blur_mag)
-            sf_blur_num_frames = int(sf_blur_num_frames)
-            validate_slowflow(model.module, iters=args.iters, test_mode=args.test_mode,
-                              xy_shift=args.xy_shift,
-                              blur_mag=sf_blur_mag, 
-                              blur_num_frames=sf_blur_num_frames)
+            elif args.dataset == 'slowflow':
+                sf_blur_mag, sf_blur_num_frames = args.slowset.split(",")
+                sf_blur_mag = int(sf_blur_mag)
+                sf_blur_num_frames = int(sf_blur_num_frames)
+                validate_slowflow(model.module, iters=args.iters, test_mode=args.test_mode,
+                                  xy_shift=xy_shift,
+                                  blur_set=(sf_blur_mag, sf_blur_num_frames),
+                                  verbose=verbose)
 
-        elif args.dataset == 'hd1k':
-            validate_hd1k(model.module, iters=args.iters, test_mode=args.test_mode)
+            elif args.dataset == 'hd1k':
+                validate_hd1k(model.module, iters=args.iters, test_mode=args.test_mode)
 
