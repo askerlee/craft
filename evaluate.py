@@ -207,7 +207,7 @@ def validate_chairs(model, iters=6, test_mode=1):
 
 
 @torch.no_grad()
-def validate_things(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1, verbose=True):
+def validate_things(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1, verbose=False):
     """ Perform evaluation on the FlyingThings (test) split """
     model.eval()
     results = {}
@@ -217,7 +217,7 @@ def validate_things(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1
         print(f"Apply x,y shift {x_shift},{y_shift}")
     else:
         x_shift, y_shift = (0, 0)
-    offset_tensor = torch.tensor([y_shift, x_shift], dtype=float).reshape(2, 1, 1)
+    offset_tensor = torch.tensor([x_shift, y_shift], dtype=torch.float32).reshape(2, 1, 1)
 
     for dstype in ['frames_cleanpass', 'frames_finalpass']:
         epe_list = {}
@@ -350,7 +350,7 @@ def validate_things(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1
 
 
 @torch.no_grad()
-def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1, verbose=True):
+def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1, verbose=False):
     """ Peform validation using the Sintel (train) split """
     model.eval()
     results = {}
@@ -360,7 +360,7 @@ def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1
         print(f"Apply x,y shift {x_shift},{y_shift}")
     else:
         x_shift, y_shift = (0, 0)
-    offset_tensor = torch.tensor([y_shift, x_shift], dtype=float).reshape(2, 1, 1)
+    offset_tensor = torch.tensor([x_shift, y_shift], dtype=torch.float32).reshape(2, 1, 1)
     
     for dstype in ['clean', 'final']:
         val_dataset = datasets.MpiSintel(split='training', aug_params=None, dstype=dstype)
@@ -676,7 +676,7 @@ def validate_kitti(model, iters=6, test_mode=1):
 
 # Set max_val_count=-1 to evaluate the whole dataset.
 @torch.no_grad()
-def validate_viper(model, iters=6, test_mode=1, batch_size=2, max_val_count=500, verbose=True):
+def validate_viper(model, iters=6, test_mode=1, batch_size=2, max_val_count=500, verbose=False):
     """ Peform validation using the VIPER validation split """
     model.eval()
     # original size: (1080, 1920).
@@ -824,7 +824,7 @@ def validate_viper(model, iters=6, test_mode=1, batch_size=2, max_val_count=500,
 # Set max_val_count=-1 to evaluate the whole dataset.
 @torch.no_grad()
 def validate_slowflow(model, iters=6, test_mode=1, xy_shift=None, 
-                      blur_set=(100, 0), verbose=True):
+                      blur_set=(100, 0), verbose=False):
     """ Peform validation using the VIPER validation split """
     model.eval()
 
@@ -859,7 +859,7 @@ def validate_slowflow(model, iters=6, test_mode=1, xy_shift=None,
         print(f"Apply x,y shift {x_shift},{y_shift}")
     else:
         x_shift, y_shift = (0, 0)
-    offset_tensor = torch.tensor([y_shift, x_shift], dtype=float).reshape(2, 1, 1)
+    offset_tensor = torch.tensor([x_shift, y_shift], dtype=torch.float32).reshape(2, 1, 1)
 
     for val_id in range(len(val_dataset)):
         image1, image2, flow_gt, _, (scene, img1_trunk) = val_dataset[val_id]
@@ -1070,6 +1070,7 @@ if __name__ == '__main__':
     parser.add_argument('--img1', type=str, default=None, help="first image for evaluation")
     parser.add_argument('--img2', type=str, default=None, help="second image for evaluation")
     parser.add_argument('--output', type=str, default="output", help="output directory")
+    parser.add_argument('--verbose', action='store_true', help="print stats every 100 iterations")
 
     parser.add_argument('--iters', type=int, default=12)
     parser.add_argument('--num_heads', default=1, type=int,
@@ -1178,11 +1179,6 @@ if __name__ == '__main__':
     else:
         args.xy_shifts = [(0, 0)]
 
-    if len(args.xy_shifts) == 1:
-        verbose = True
-    else:
-        verbose = False
-
     if args.img1 is not None:
         gen_flow(model, model_name, args.iters, args.img1, args.img2, args.output)
         exit(0)
@@ -1213,11 +1209,11 @@ if __name__ == '__main__':
 
             elif args.dataset == 'things':
                 validate_things(model.module, iters=args.iters, test_mode=args.test_mode, 
-                                max_val_count=args.max_val_count, xy_shift=xy_shift, verbose=verbose)
+                                max_val_count=args.max_val_count, xy_shift=xy_shift, verbose=args.verbose)
 
             elif args.dataset == 'sintel':
                 validate_sintel(model.module, iters=args.iters, test_mode=args.test_mode, 
-                                max_val_count=args.max_val_count, xy_shift=xy_shift, verbose=verbose)
+                                max_val_count=args.max_val_count, xy_shift=xy_shift, verbose=args.verbose)
 
             elif args.dataset == 'sintel_occ':
                 validate_sintel_occ(model.module, iters=args.iters, test_mode=args.test_mode)
@@ -1236,7 +1232,7 @@ if __name__ == '__main__':
                 validate_slowflow(model.module, iters=args.iters, test_mode=args.test_mode,
                                   xy_shift=xy_shift,
                                   blur_set=(sf_blur_mag, sf_blur_num_frames),
-                                  verbose=verbose)
+                                  verbose=args.verbose)
 
             elif args.dataset == 'hd1k':
                 validate_hd1k(model.module, iters=args.iters, test_mode=args.test_mode)
