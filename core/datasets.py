@@ -153,7 +153,7 @@ class MpiSintel(FlowDataset):
         if split == 'test':
             self.is_test = True
 
-        for scene in os.listdir(image_root):
+        for scene in sorted(os.listdir(image_root)):
             image_list = sorted(glob(osp.join(image_root, scene, '*.png')))
             for i in range(len(image_list)-1):
                 self.image_list += [ [image_list[i], image_list[i+1]] ]
@@ -278,7 +278,7 @@ class Autoflow(FlowDataset):
         scene_count = len(os.listdir(root))
         training_size = int(scene_count * 0.9)
         
-        for i, scene in enumerate(os.listdir(root)):
+        for i, scene in enumerate(sorted(os.listdir(root))):
             if split == 'training' and i <= training_size or \
                split == 'test'     and i > training_size:
                 image0_path = osp.join(root, scene, 'im0.png')
@@ -308,7 +308,7 @@ class VIPER(FlowDataset):
             print("{} test frame names loaded".format(len(test_frames_dict)))
             self.is_test = True
             
-        for i, scene in enumerate(os.listdir(split_img_root)):
+        for i, scene in enumerate(sorted(os.listdir(split_img_root))):
             # scene: 001, 002, ...
             # dir: viper/train/img/001
             # img0_name: 001_00001.png, 001_00010.png, ...
@@ -362,7 +362,7 @@ class SlowFlow(FlowDataset):
         flow_root = osp.join(root, str(blur_mag), 'flow')
         skip_count = 0
 
-        for i, scene in enumerate(os.listdir(sequence_root)):
+        for i, scene in enumerate(sorted(os.listdir(sequence_root))):
             # scene: Animals, Ball...
             # img0_name: seq5_0000000.png, seq5_0000001.png, ...
             for img0_name in sorted(os.listdir(osp.join(sequence_root, scene))):
