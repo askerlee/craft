@@ -167,7 +167,7 @@ def validate_chairs(model, iters=6, test_mode=1):
 
     val_dataset = datasets.FlyingChairs(split='validation')
     for val_id in range(len(val_dataset)):
-        image1, image2, flow_gt, _ = val_dataset[val_id]
+        image1, image2, flow_gt, _, _ = val_dataset[val_id]
         image1 = image1[None].cuda()
         image2 = image2[None].cuda()
 
@@ -217,7 +217,7 @@ def validate_things(model, iters=6, test_mode=1, blur_params=None, max_val_count
         #     GaussianBlur = None
 
         for val_id in range(len(val_dataset)):
-            image1, image2, flow_gt, _ = val_dataset[val_id]
+            image1, image2, flow_gt, _, _ = val_dataset[val_id]
             image1 = image1[None].cuda()
             image2 = image2[None].cuda()
 
@@ -350,7 +350,7 @@ def validate_sintel(model, iters=6, test_mode=1, blur_params=None, max_val_count
         #     GaussianBlur = None
 
         for val_id in range(len(val_dataset)):
-            image1, image2, flow_gt, _ = val_dataset[val_id]
+            image1, image2, flow_gt, _, _ = val_dataset[val_id]
             image1 = image1[None].cuda()
             image2 = image2[None].cuda()
 
@@ -551,7 +551,7 @@ def validate_hd1k(model, iters=6, test_mode=1):
     epe_list = []
     
     for val_id in range(len(val_dataset)):
-        image1, image2, flow_gt, _ = val_dataset[val_id]
+        image1, image2, flow_gt, _, _ = val_dataset[val_id]
         image1 = image1[None].cuda()
         image2 = image2[None].cuda()
 
@@ -599,7 +599,7 @@ def validate_kitti(model, iters=6, test_mode=1):
     out_list, epe_list = [], []
 
     for val_id in range(len(val_dataset)):
-        image1, image2, flow_gt, valid_gt = val_dataset[val_id]
+        image1, image2, flow_gt, valid_gt, _ = val_dataset[val_id]
         image1 = image1[None].cuda()
         image2 = image2[None].cuda()
 
@@ -669,7 +669,7 @@ def validate_viper(model, iters=6, test_mode=1, batch_size=2, max_val_count=500)
             print(f"Evaluate first {max_val_count} of {len(val_dataset)}")
             
     for data_blob in iter(val_loader):
-        image1, image2, flow_gt, valid_gt = data_blob
+        image1, image2, flow_gt, valid_gt, _ = data_blob
         image1 = image1.cuda()
         image2 = image2.cuda()
         
@@ -775,7 +775,152 @@ def validate_viper(model, iters=6, test_mode=1, batch_size=2, max_val_count=500)
     print()
 
     return {'epe': epe, 'f1': f1}
+
+# Set max_val_count=-1 to evaluate the whole dataset.
+@torch.no_grad()
+def validate_slowflow(model, iters=6, test_mode=1, blur_mag=100, blur_num_frames=0):
+    """ Peform validation using the VIPER validation split """
+    model.eval()
+    val_dataset = datasets.SlowFlow(split='test', aug_params=None,
+                                    blur_mag=blur_mag, blur_num_frames=blur_num_frames)
+    scale = 0.5
+    scale_tensor = torch.tensor([scale, scale]).unsqueeze(1).unsqueeze(2)
+
+    out_list, epe_list = {}, {}
+    out_seg,  epe_seg  = [], []
+    mag_endpoints = [3, 5, 10, np.inf]
+    segs_len = []
+    mags_seg = {}
+    mags_err = {}
+    mags_segs_err = {}
+    mags_segs_len = {}
+
+    if test_mode == 1:
+        its = [0]
+    elif test_mode == 2:
+        its = range(iters)
+    elif test_mode == 0:
+        breakpoint()
+    
+    val_count = 0
+    max_val_count = len(val_dataset)
+    prev_scene = None
+
+    for val_id in range(len(val_dataset)):
+        image1, image2, flow_gt, _, (scene, img1_trunk) = val_dataset[val_id]
+        image1 = image1[None].cuda()
+        image2 = image2[None].cuda()
         
+        # To reduce RAM use, scale images to half size.
+        image1 = F.interpolate(image1, scale_factor=scale, mode='bilinear', align_corners=False)
+        image2 = F.interpolate(image2, scale_factor=scale, mode='bilinear', align_corners=False)
+        flow_gt = F.interpolate(flow_gt.unsqueeze(0), scale_factor=scale, mode='bilinear', align_corners=False)
+        flow_gt = flow_gt.squeeze(0) * scale_tensor
+
+        # Make images divideable by 8.
+        padder = InputPadder(image1.shape, mode='kitti')
+        image1, image2 = padder.pad(image1, image2)
+
+        _, flow_prs = model(image1, image2, iters=iters, test_mode=test_mode)
+        
+        # if test_mode == 2: list of 12 tensors, each is [1, 2, H, W].
+        # if test_mode == 1: a tensor of [1, 2, H, W].
+        if test_mode == 1:
+            flow_prs = [ flow_prs ]
+
+        for it, flow_pr in enumerate(flow_prs):
+            flow = padder.unpad(flow_pr[0]).cpu()
+            epe = torch.sum((flow - flow_gt)**2, dim=0).sqrt()
+            mag = torch.sum(flow_gt**2, dim=0).sqrt()
+            epe = epe.view(-1)
+            mag = mag.view(-1)
+
+            out = ((epe > 3.0) & ((epe/mag) > 0.05)).float()
+                        
+            epe_list.setdefault(it, [])
+            out_list.setdefault(it, [])
+            epe_list[it].append(epe.view(-1).numpy())
+            out_list[it].append(out.view(-1).numpy())
+
+        epe_seg.append(epe.view(-1).numpy())
+        out_seg.append(out.view(-1).numpy())
+        mag = torch.sum(flow_gt**2, dim=0).sqrt()
+
+        prev_mag_endpoint = 0
+        for mag_endpoint in mag_endpoints:
+            mags_seg.setdefault(mag_endpoint, [])
+            mag_in_range = (mag >= prev_mag_endpoint) & (mag < mag_endpoint)
+            mags_seg[mag_endpoint].append(mag_in_range.view(-1).numpy())
+            prev_mag_endpoint = mag_endpoint
+
+        val_count += len(image1)
+        segs_len.append(len(image1))
+
+        if prev_scene and scene != prev_scene or val_count >= max_val_count:
+            epe_seg     = np.concatenate(epe_seg)
+            out_seg     = np.concatenate(out_seg)
+            mean_epe    = np.mean(epe_seg)
+            px1 = np.mean(epe_seg < 1)
+            px3 = np.mean(epe_seg < 3)
+            px5 = np.mean(epe_seg < 5)
+
+            seg_scene = prev_scene if (scene != prev_scene) else scene
+            print(f"{seg_scene} {val_count}/{max_val_count}: EPE {mean_epe:.4f}, "
+                  f"1px {px1:.4f}, 3px {px3:.4f}, 5px {px5:.4f}", end='')
+                    
+            for mag_endpoint in mag_endpoints:
+                mag_seg = np.concatenate(mags_seg[mag_endpoint])
+                if mag_seg.sum() == 0:
+                    mag_err = 0
+                else:
+                    mag_err = np.mean(epe_seg[mag_seg])
+                mags_err[mag_endpoint] = mag_err
+                mags_segs_err.setdefault(mag_endpoint, [])
+                mags_segs_err[mag_endpoint].append(mags_err[mag_endpoint])
+                mags_segs_len.setdefault(mag_endpoint, [])
+                mags_segs_len[mag_endpoint].append(mag_seg.sum().item())
+
+            prev_mag_endpoint = 0
+            for mag_endpoint in mag_endpoints:
+                print(f", {prev_mag_endpoint}-{mag_endpoint} {mags_err[mag_endpoint]:.2f}", end='')
+                prev_mag_endpoint = mag_endpoint
+            print()
+
+            epe_seg = []
+            out_seg = []
+            mags_seg = {}
+
+        prev_scene = scene
+        # The validation data is too big. Just evaluate some.
+        if val_count >= max_val_count:
+            break
+                                                       
+    for it in its:
+        epe_all = np.concatenate(epe_list[it])
+        out_all = np.concatenate(out_list[it])
+        
+        epe = np.mean(epe_all)
+        px1 = np.mean(epe_all<1)
+        px3 = np.mean(epe_all<3)
+        px5 = np.mean(epe_all<5)
+
+        f1 = 100 * np.mean(out_all)
+        print("Iter %d, Valid EPE: %.4f, F1: %.4f, 1px: %.4f, 3px: %.4f, 5px: %.4f" % (it, epe, f1, px1, px3, px5))
+
+    for mag_endpoint in mag_endpoints:
+        mag_errs = np.array(mags_segs_err[mag_endpoint])
+        mag_lens = np.array(mags_segs_len[mag_endpoint])
+        mag_err = np.sum(mag_errs * mag_lens) / np.sum(mag_lens)
+        mags_err[mag_endpoint] = mag_err
+
+    prev_mag_endpoint = 0
+    for mag_endpoint in mag_endpoints:
+        print(f", {prev_mag_endpoint}-{mag_endpoint} {mags_err[mag_endpoint]:.2f}", end='')
+        prev_mag_endpoint = mag_endpoint
+    print()
+
+    return {'epe': epe, 'f1': f1}
+
 def save_checkpoint(cp_path, model, optimizer_state, lr_scheduler_state, logger):
     save_state = { 'model':        model.state_dict(),
                    'optimizer':    optimizer_state,
@@ -861,6 +1006,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', help="restore checkpoint")
     parser.add_argument('--dataset', help="dataset for evaluation")
+    parser.add_argument('--sfgroup', type=str, help="slowflow group for evaluation, e.g. 300,3")
     parser.add_argument('--img1', type=str, default=None, help="first image for evaluation")
     parser.add_argument('--img2', type=str, default=None, help="second image for evaluation")
     parser.add_argument('--output', type=str, default="output", help="output directory")
@@ -1003,6 +1149,13 @@ if __name__ == '__main__':
         elif args.dataset == 'viper':
             validate_viper(model.module, iters=args.iters, test_mode=args.test_mode, 
                            max_val_count=args.max_val_count, batch_size=args.batch_size)
+
+        elif args.dataset == 'slowflow':
+            sf_blur_mag, sf_blur_num_frames = args.sfgroup.split(",")
+            sf_blur_mag = int(sf_blur_mag)
+            sf_blur_num_frames = int(sf_blur_num_frames)
+            validate_slowflow(model.module, iters=args.iters, test_mode=args.test_mode,
+                             blur_mag=sf_blur_mag, blur_num_frames=sf_blur_num_frames)
 
         elif args.dataset == 'hd1k':
             validate_hd1k(model.module, iters=args.iters, test_mode=args.test_mode)

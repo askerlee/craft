@@ -1,3 +1,8 @@
+Val, without pos_biases (buggy):
+Valid EPE: 0.8918, F1: 2.5999, 1px: 0.8935, 3px: 0.9623, 5px: 0.9770, 0-3 0.29, 3-5 0.53, 5-10 0.63, 10-inf 1.63
+Val, with pos_biases:
+Valid EPE: 0.8759, F1: 2.5389, 1px: 0.8961, 3px: 0.9640, 5px: 0.9782, 0-3 0.29, 3-5 0.53, 5-10 0.63, 10-inf 1.59
+
 (venv) li_shaohua@DGXA100 ~/craft (main) [0|SIGINT]> python train.py --name craft-viper --stage viper --validation viper --output results/viper/craft --restore_ckpt results/sintel/craft/craft-sintel.pth --num_steps 50000 --lr 0.000125 --image_size 288 960 --wdecay 0.00001 --gamma 0.85 --gpus 0 1 --batch_size 6 --val_freq 10000 --print_freq 100 --mixed_precision --setrans --corrnorm global --f2trans --craft
 Time: 10251714
 Args:

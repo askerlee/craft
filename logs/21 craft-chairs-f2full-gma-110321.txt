@@ -62,10 +62,6 @@ train.py:227: FutureWarning: Non-finite norm encountered in torch.nn.utils.clip_
 [  2500,  0.0001099]     0.5106,     0.7561,     0.8229,     6.1157,    10h59m
 [  2600,  0.0001139]     0.4999,     0.7485,     0.8163,     6.6845,    10h56m
 [  2700,  0.0001179]     0.5348,     0.7684,     0.8293,     6.2356,    10h57m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [  2800,  0.0001219]     0.5606,     0.7804,     0.8399,     5.6417,    10h56m
 [  2900,  0.0001259]     0.5563,     0.7809,     0.8414,     5.7433,    10h54m
 [  3000,  0.0001299]     0.5753,     0.7875,     0.8448,     5.6479,    10h51m
@@ -94,10 +90,6 @@ train.py:227: FutureWarning: Non-finite norm encountered in torch.nn.utils.clip_
 [  5300,  0.0002218]     0.6775,     0.8448,     0.8844,     4.8274,    10h39m
 [  5400,  0.0002258]     0.6684,     0.8451,     0.8884,     4.3673,    10h38m
 [  5500,  0.0002298]     0.6856,     0.8556,     0.8956,     4.1077,    10h36m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [  5600,  0.0002338]     0.6771,     0.8496,     0.8902,     4.2426,    10h35m
 [  5700,  0.0002378]     0.6766,     0.8479,     0.8872,     4.4897,    10h38m
 [  5800,  0.0002418]     0.6781,     0.8483,     0.8901,     4.1630,    10h33m
@@ -126,10 +118,6 @@ train.py:227: FutureWarning: Non-finite norm encountered in torch.nn.utils.clip_
 [  8100,  0.0002454]     0.7211,     0.8729,     0.9064,     3.9005,    10h21m
 [  8200,  0.0002452]     0.7416,     0.8855,     0.9177,     3.2453,    10h20m
 [  8300,  0.0002450]     0.7308,     0.8807,     0.9127,     3.4250,    10h20m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [  8400,  0.0002448]     0.7328,     0.8860,     0.9167,     3.3892,    10h21m
 [  8500,  0.0002445]     0.7234,     0.8796,     0.9111,     4.3530,    10h21m
 [  8600,  0.0002443]     0.7301,     0.8786,     0.9115,     3.3082,    10h19m
@@ -160,10 +148,6 @@ Validation Chairs EPE: 2.066573
 [ 10900,  0.0002393]     0.7510,     0.8946,     0.9238,     2.8724,    10h04m
 [ 11000,  0.0002391]     0.7577,     0.9001,     0.9291,     2.7695,    10h05m
 [ 11100,  0.0002388]     0.7614,     0.9035,     0.9321,     2.7011,    10h04m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 11200,  0.0002386]     0.7533,     0.8942,     0.9231,     3.1640,    10h06m
 [ 11300,  0.0002384]     0.7680,     0.9057,     0.9325,     2.9117,    10h05m
 [ 11400,  0.0002382]     0.7640,     0.9028,     0.9299,     2.8659,    10h04m
@@ -191,10 +175,6 @@ Validation Chairs EPE: 2.066573
 [ 13600,  0.0002334]     0.7618,     0.9034,     0.9306,     2.6143,    09h57m
 [ 13700,  0.0002331]     0.7707,     0.9069,     0.9326,     2.6224,    09h54m
 [ 13800,  0.0002329]     0.7676,     0.9084,     0.9353,     2.5745,    09h53m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 13900,  0.0002327]     0.7686,     0.9077,     0.9338,     2.6157,    09h54m
 [ 14000,  0.0002325]     0.7703,     0.9094,     0.9356,     2.4623,    09h53m
 [ 14100,  0.0002323]     0.7867,     0.9159,     0.9397,     2.2742,    09h54m
@@ -223,10 +203,6 @@ Validation Chairs EPE: 2.066573
 [ 16400,  0.0002272]     0.7802,     0.9178,     0.9432,     2.2985,    09h37m
 [ 16500,  0.0002270]     0.7800,     0.9137,     0.9383,     2.5591,    09h37m
 [ 16600,  0.0002268]     0.7893,     0.9218,     0.9442,     2.5078,    09h35m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 16700,  0.0002266]     0.7644,     0.9079,     0.9349,     2.4261,    09h35m
 [ 16800,  0.0002263]     0.7832,     0.9167,     0.9406,     2.2944,    09h36m
 [ 16900,  0.0002261]     0.7944,     0.9223,     0.9448,     2.2558,    09h34m
@@ -255,10 +231,6 @@ Validation Chairs EPE: 2.066573
 [ 19200,  0.0002211]     0.7943,     0.9256,     0.9478,     2.0734,    09h23m
 [ 19300,  0.0002209]     0.8003,     0.9264,     0.9479,     2.3790,    09h23m
 [ 19400,  0.0002206]     0.7881,     0.9231,     0.9460,     2.3505,    09h22m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 19500,  0.0002204]     0.8006,     0.9278,     0.9493,     2.0551,    09h20m
 [ 19600,  0.0002202]     0.7940,     0.9232,     0.9452,     2.3484,    09h21m
 [ 19700,  0.0002200]     0.7989,     0.9231,     0.9449,     2.2350,    09h21m
@@ -289,10 +261,6 @@ Validation Chairs EPE: 1.376917
 [ 22000,  0.0002150]     0.7928,     0.9239,     0.9462,     2.2632,    09h08m
 [ 22100,  0.0002147]     0.8061,     0.9291,     0.9496,     2.1581,    09h04m
 [ 22200,  0.0002145]     0.8015,     0.9263,     0.9471,     2.3878,    09h04m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 22300,  0.0002143]     0.7914,     0.9227,     0.9451,     2.6815,    09h06m
 [ 22400,  0.0002141]     0.7982,     0.9285,     0.9499,     1.9862,    09h05m
 [ 22500,  0.0002139]     0.8024,     0.9286,     0.9491,     2.2884,    09h03m
@@ -321,10 +289,6 @@ Validation Chairs EPE: 1.376917
 [ 24800,  0.0002088]     0.8173,     0.9368,     0.9553,     1.9103,    08h52m
 [ 24900,  0.0002086]     0.8064,     0.9323,     0.9525,     2.0393,    08h51m
 [ 25000,  0.0002084]     0.8059,     0.9325,     0.9530,     1.9163,    08h48m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 25100,  0.0002082]     0.8076,     0.9333,     0.9535,     2.0522,    08h49m
 [ 25200,  0.0002079]     0.7995,     0.9259,     0.9463,     2.8470,    08h51m
 [ 25300,  0.0002077]     0.8048,     0.9304,     0.9519,     1.9211,    08h48m
@@ -352,10 +316,6 @@ Validation Chairs EPE: 1.376917
 [ 27500,  0.0002029]     0.8110,     0.9341,     0.9544,     1.8894,    08h37m
 [ 27600,  0.0002027]     0.8097,     0.9350,     0.9535,     2.0737,    08h35m
 [ 27700,  0.0002025]     0.8116,     0.9321,     0.9512,     1.9368,    08h35m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 27800,  0.0002022]     0.8095,     0.9317,     0.9521,     1.9712,    08h34m
 [ 27900,  0.0002020]     0.8090,     0.9283,     0.9493,     2.0421,    08h32m
 [ 28000,  0.0002018]     0.8176,     0.9354,     0.9536,     2.0534,    08h35m
@@ -386,10 +346,6 @@ Validation Chairs EPE: 1.194246
 [ 30300,  0.0001968]     0.8108,     0.9352,     0.9541,     2.3242,    08h22m
 [ 30400,  0.0001965]     0.8277,     0.9433,     0.9600,     1.6052,    08h19m
 [ 30500,  0.0001963]     0.8170,     0.9363,     0.9549,     2.0053,    08h18m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 30600,  0.0001961]     0.8113,     0.9375,     0.9566,     2.0159,    08h19m
 [ 30700,  0.0001959]     0.8159,     0.9341,     0.9526,     1.9413,    08h18m
 [ 30800,  0.0001957]     0.8141,     0.9362,     0.9543,     1.9884,    08h18m
@@ -418,10 +374,6 @@ Validation Chairs EPE: 1.194246
 [ 33100,  0.0001906]     0.8202,     0.9393,     0.9567,     1.8794,    08h06m
 [ 33200,  0.0001904]     0.8275,     0.9390,     0.9553,     2.0496,    08h03m
 [ 33300,  0.0001902]     0.8228,     0.9384,     0.9566,     1.7262,    08h05m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 33400,  0.0001900]     0.8220,     0.9390,     0.9570,     1.8169,    08h04m
 [ 33500,  0.0001898]     0.8245,     0.9409,     0.9573,     2.0777,    08h05m
 [ 33600,  0.0001895]     0.8369,     0.9450,     0.9609,     1.8170,    08h04m
@@ -450,10 +402,6 @@ Validation Chairs EPE: 1.194246
 [ 35900,  0.0001845]     0.8330,     0.9434,     0.9603,     1.6687,    07h49m
 [ 36000,  0.0001843]     0.8314,     0.9411,     0.9581,     1.7425,    07h49m
 [ 36100,  0.0001841]     0.8211,     0.9371,     0.9546,     1.9104,    07h49m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 36200,  0.0001838]     0.8344,     0.9431,     0.9591,     1.7882,    07h49m
 [ 36300,  0.0001836]     0.8362,     0.9439,     0.9603,     1.8861,    07h49m
 [ 36400,  0.0001834]     0.8251,     0.9424,     0.9587,     1.7884,    07h49m
@@ -482,10 +430,6 @@ Validation Chairs EPE: 1.194246
 [ 38700,  0.0001784]     0.8371,     0.9458,     0.9616,     1.6602,    07h36m
 [ 38800,  0.0001781]     0.8411,     0.9459,     0.9609,     1.6653,    07h33m
 [ 38900,  0.0001779]     0.8274,     0.9414,     0.9584,     1.6253,    07h34m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 39000,  0.0001777]     0.8284,     0.9442,     0.9601,     1.7990,    07h34m
 [ 39100,  0.0001775]     0.8352,     0.9457,     0.9607,     1.6516,    07h32m
 [ 39200,  0.0001773]     0.8321,     0.9413,     0.9578,     1.7215,    07h31m
@@ -515,10 +459,6 @@ Validation Chairs EPE: 1.073961
 [ 41400,  0.0001724]     0.8328,     0.9409,     0.9578,     1.7006,    07h19m
 [ 41500,  0.0001722]     0.8342,     0.9424,     0.9594,     1.5222,    07h18m
 [ 41600,  0.0001720]     0.8316,     0.9422,     0.9584,     2.0307,    07h18m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 41700,  0.0001718]     0.8281,     0.9439,     0.9602,     1.6452,    07h16m
 [ 41800,  0.0001716]     0.8420,     0.9463,     0.9615,     1.6942,    07h19m
 [ 41900,  0.0001713]     0.8308,     0.9438,     0.9598,     1.7509,    07h19m
@@ -547,10 +487,6 @@ Validation Chairs EPE: 1.073961
 [ 44200,  0.0001663]     0.8347,     0.9448,     0.9605,     1.7623,    07h03m
 [ 44300,  0.0001661]     0.8465,     0.9495,     0.9637,     1.5428,    07h03m
 [ 44400,  0.0001659]     0.8348,     0.9418,     0.9574,     1.8803,    07h02m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 44500,  0.0001657]     0.8437,     0.9488,     0.9634,     1.4233,    07h03m
 [ 44600,  0.0001654]     0.8427,     0.9475,     0.9625,     1.6031,    07h02m
 [ 44700,  0.0001652]     0.8426,     0.9480,     0.9630,     1.5478,    07h00m
@@ -579,10 +515,6 @@ Validation Chairs EPE: 1.073961
 [ 47000,  0.0001602]     0.8429,     0.9481,     0.9640,     1.4966,    06h48m
 [ 47100,  0.0001600]     0.8399,     0.9479,     0.9630,     1.5419,    06h46m
 [ 47200,  0.0001597]     0.8430,     0.9465,     0.9615,     1.6067,    06h47m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 47300,  0.0001595]     0.8456,     0.9501,     0.9642,     1.5422,    06h46m
 [ 47400,  0.0001593]     0.8401,     0.9481,     0.9628,     1.7063,    06h47m
 [ 47500,  0.0001591]     0.8396,     0.9448,     0.9601,     1.7553,    06h46m
@@ -613,10 +545,6 @@ Validation Chairs EPE: 1.073961
 [ 50000,  0.0001536]     0.8360,     0.9445,     0.9598,     1.8185,    06h31m
 results/chairs/craft-gma/50000_craft-chairs.pth saved
 Validation Chairs EPE: 1.024154
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 50100,  0.0001534]     0.8525,     0.9524,     0.9664,     1.4592,    06h31m
 [ 50200,  0.0001532]     0.8497,     0.9483,     0.9631,     1.5774,    06h29m
 [ 50300,  0.0001529]     0.8476,     0.9484,     0.9633,     1.6612,    06h30m
@@ -645,10 +573,6 @@ Validation Chairs EPE: 1.024154
 [ 52600,  0.0001479]     0.8505,     0.9499,     0.9634,     1.5938,    06h15m
 [ 52700,  0.0001477]     0.8476,     0.9485,     0.9629,     1.5261,    06h16m
 [ 52800,  0.0001475]     0.8493,     0.9502,     0.9651,     1.6025,    06h14m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 52900,  0.0001472]     0.8556,     0.9527,     0.9658,     1.4578,    06h16m
 [ 53000,  0.0001470]     0.8525,     0.9501,     0.9650,     1.7966,    06h15m
 [ 53100,  0.0001468]     0.8534,     0.9525,     0.9655,     1.5679,    06h14m
@@ -676,10 +600,6 @@ Validation Chairs EPE: 1.024154
 [ 55300,  0.0001420]     0.8554,     0.9530,     0.9664,     1.4156,    06h01m
 [ 55400,  0.0001418]     0.8464,     0.9476,     0.9617,     1.4761,    06h02m
 [ 55500,  0.0001415]     0.8543,     0.9482,     0.9622,     1.6653,    06h01m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 55600,  0.0001413]     0.8439,     0.9478,     0.9619,     1.6572,    06h01m
 [ 55700,  0.0001411]     0.8648,     0.9541,     0.9667,     1.4169,    06h01m
 [ 55800,  0.0001409]     0.8549,     0.9527,     0.9666,     1.3531,    05h59m
@@ -708,10 +628,6 @@ Validation Chairs EPE: 1.024154
 [ 58100,  0.0001359]     0.8551,     0.9510,     0.9639,     1.5707,    05h47m
 [ 58200,  0.0001356]     0.8511,     0.9501,     0.9645,     1.5148,    05h44m
 [ 58300,  0.0001354]     0.8610,     0.9540,     0.9670,     1.4901,    05h44m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 58400,  0.0001352]     0.8560,     0.9490,     0.9622,     1.5594,    05h45m
 [ 58500,  0.0001350]     0.8598,     0.9534,     0.9666,     1.4931,    05h44m
 [ 58600,  0.0001348]     0.8543,     0.9506,     0.9644,     1.4598,    05h44m
@@ -742,10 +658,6 @@ Validation Chairs EPE: 0.944866
 [ 60900,  0.0001297]     0.8518,     0.9519,     0.9655,     1.5486,    05h29m
 [ 61000,  0.0001295]     0.8526,     0.9499,     0.9639,     1.5560,    05h28m
 [ 61100,  0.0001293]     0.8659,     0.9543,     0.9665,     1.4495,    05h28m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 61200,  0.0001291]     0.8593,     0.9531,     0.9660,     1.4768,    05h28m
 [ 61300,  0.0001288]     0.8605,     0.9552,     0.9676,     1.6214,    05h27m
 [ 61400,  0.0001286]     0.8553,     0.9527,     0.9661,     1.6031,    05h27m
@@ -774,10 +686,6 @@ Validation Chairs EPE: 0.944866
 [ 63700,  0.0001236]     0.8512,     0.9503,     0.9640,     1.4335,    05h13m
 [ 63800,  0.0001234]     0.8506,     0.9489,     0.9628,     1.9068,    05h13m
 [ 63900,  0.0001231]     0.8558,     0.9549,     0.9680,     1.4484,    05h13m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 64000,  0.0001229]     0.8634,     0.9547,     0.9679,     1.4302,    05h13m
 [ 64100,  0.0001227]     0.8638,     0.9560,     0.9689,     1.3349,    05h12m
 [ 64200,  0.0001225]     0.8603,     0.9521,     0.9654,     1.4338,    05h10m
@@ -805,10 +713,6 @@ Validation Chairs EPE: 0.944866
 [ 66400,  0.0001177]     0.8635,     0.9550,     0.9683,     1.4768,    04h58m
 [ 66500,  0.0001174]     0.8653,     0.9572,     0.9691,     1.2478,    04h57m
 [ 66600,  0.0001172]     0.8644,     0.9504,     0.9633,     1.4850,    04h57m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 66700,  0.0001170]     0.8606,     0.9543,     0.9668,     1.4346,    04h57m
 [ 66800,  0.0001168]     0.8587,     0.9541,     0.9673,     1.3280,    04h56m
 [ 66900,  0.0001166]     0.8664,     0.9545,     0.9681,     1.3283,    04h55m
@@ -837,10 +741,6 @@ Validation Chairs EPE: 0.944866
 [ 69200,  0.0001115]     0.8686,     0.9580,     0.9695,     1.3433,    04h42m
 [ 69300,  0.0001113]     0.8659,     0.9550,     0.9683,     1.2727,    04h42m
 [ 69400,  0.0001111]     0.8545,     0.9492,     0.9624,     1.6704,    04h42m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 69500,  0.0001109]     0.8647,     0.9556,     0.9680,     1.3857,    04h41m
 [ 69600,  0.0001107]     0.8653,     0.9577,     0.9694,     1.2352,    04h41m
 [ 69700,  0.0001104]     0.8668,     0.9564,     0.9684,     1.2428,    04h41m
@@ -871,10 +771,6 @@ Validation Chairs EPE: 0.899917
 [ 72000,  0.0001054]     0.8660,     0.9542,     0.9666,     1.4056,    04h27m
 [ 72100,  0.0001052]     0.8631,     0.9552,     0.9679,     1.4964,    04h27m
 [ 72200,  0.0001050]     0.8609,     0.9518,     0.9648,     1.4992,    04h26m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 72300,  0.0001047]     0.8578,     0.9528,     0.9663,     1.3346,    04h27m
 [ 72400,  0.0001045]     0.8706,     0.9567,     0.9687,     1.2823,    04h26m
 [ 72500,  0.0001043]     0.8603,     0.9538,     0.9659,     1.5943,    04h26m
@@ -903,10 +799,6 @@ Validation Chairs EPE: 0.899917
 [ 74800,  0.0000993]     0.8645,     0.9547,     0.9669,     1.3034,    04h12m
 [ 74900,  0.0000990]     0.8737,     0.9609,     0.9716,     1.2943,    04h11m
 [ 75000,  0.0000988]     0.8677,     0.9575,     0.9693,     1.4356,    04h11m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 75100,  0.0000986]     0.8674,     0.9552,     0.9677,     1.2712,    04h11m
 [ 75200,  0.0000984]     0.8685,     0.9569,     0.9693,     1.2639,    04h10m
 [ 75300,  0.0000982]     0.8720,     0.9575,     0.9691,     1.2723,    04h09m
@@ -935,10 +827,6 @@ Validation Chairs EPE: 0.899917
 [ 77600,  0.0000931]     0.8675,     0.9604,     0.9718,     1.1925,    03h56m
 [ 77700,  0.0000929]     0.8692,     0.9559,     0.9682,     1.4306,    03h55m
 [ 77800,  0.0000927]     0.8680,     0.9547,     0.9671,     1.3468,    03h54m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 77900,  0.0000925]     0.8617,     0.9570,     0.9691,     1.3832,    03h55m
 [ 78000,  0.0000922]     0.8667,     0.9567,     0.9685,     1.4012,    03h56m
 [ 78100,  0.0000920]     0.8672,     0.9560,     0.9676,     1.4717,    03h53m
@@ -968,10 +856,6 @@ Validation Chairs EPE: 0.843018
 [ 80300,  0.0000872]     0.8723,     0.9573,     0.9687,     1.3354,    03h43m
 [ 80400,  0.0000870]     0.8736,     0.9565,     0.9679,     1.3533,    03h41m
 [ 80500,  0.0000868]     0.8595,     0.9557,     0.9679,     1.3169,    03h40m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 80600,  0.0000866]     0.8609,     0.9550,     0.9676,     1.2963,    03h39m
 [ 80700,  0.0000863]     0.8676,     0.9577,     0.9695,     1.4202,    03h39m
 [ 80800,  0.0000861]     0.8705,     0.9557,     0.9679,     1.3195,    03h38m
@@ -1000,10 +884,6 @@ Validation Chairs EPE: 0.843018
 [ 83100,  0.0000811]     0.8759,     0.9577,     0.9696,     1.2214,    03h25m
 [ 83200,  0.0000809]     0.8694,     0.9566,     0.9688,     1.3290,    03h25m
 [ 83300,  0.0000806]     0.8666,     0.9545,     0.9668,     1.4916,    03h24m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 83400,  0.0000804]     0.8750,     0.9562,     0.9687,     1.5005,    03h23m
 [ 83500,  0.0000802]     0.8707,     0.9557,     0.9669,     1.6787,    03h23m
 [ 83600,  0.0000800]     0.8653,     0.9558,     0.9680,     1.2508,    03h23m
@@ -1032,10 +912,6 @@ Validation Chairs EPE: 0.843018
 [ 85900,  0.0000749]     0.8740,     0.9614,     0.9724,     1.2716,    03h11m
 [ 86000,  0.0000747]     0.8764,     0.9593,     0.9705,     1.2262,    03h09m
 [ 86100,  0.0000745]     0.8760,     0.9583,     0.9702,     1.2076,    03h09m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 86200,  0.0000743]     0.8746,     0.9572,     0.9693,     1.3491,    03h08m
 [ 86300,  0.0000741]     0.8759,     0.9576,     0.9686,     1.2939,    03h08m
 [ 86400,  0.0000738]     0.8722,     0.9592,     0.9710,     1.1655,    03h08m
@@ -1064,10 +940,6 @@ Validation Chairs EPE: 0.843018
 [ 88700,  0.0000688]     0.8730,     0.9569,     0.9684,     1.2585,    02h54m
 [ 88800,  0.0000686]     0.8717,     0.9585,     0.9696,     1.3419,    02h53m
 [ 88900,  0.0000684]     0.8737,     0.9592,     0.9703,     1.1975,    02h53m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 89000,  0.0000681]     0.8647,     0.9575,     0.9692,     1.2396,    02h52m
 [ 89100,  0.0000679]     0.8769,     0.9598,     0.9710,     1.1768,    02h52m
 [ 89200,  0.0000677]     0.8828,     0.9613,     0.9716,     1.3805,    02h52m
@@ -1098,10 +970,6 @@ Validation Chairs EPE: 0.819561
 [ 91500,  0.0000627]     0.8736,     0.9584,     0.9694,     1.2628,    02h39m
 [ 91600,  0.0000624]     0.8824,     0.9596,     0.9707,     1.1542,    02h38m
 [ 91700,  0.0000622]     0.8752,     0.9595,     0.9702,     1.2348,    02h37m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 91800,  0.0000620]     0.8715,     0.9556,     0.9669,     1.3542,    02h37m
 [ 91900,  0.0000618]     0.8679,     0.9572,     0.9693,     1.2065,    02h37m
 [ 92000,  0.0000616]     0.8739,     0.9582,     0.9697,     1.2255,    02h36m
@@ -1129,10 +997,6 @@ Validation Chairs EPE: 0.819561
 [ 94200,  0.0000568]     0.8874,     0.9649,     0.9746,     1.0412,    02h24m
 [ 94300,  0.0000565]     0.8757,     0.9578,     0.9690,     1.2135,    02h23m
 [ 94400,  0.0000563]     0.8853,     0.9610,     0.9713,     1.2208,    02h22m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 94500,  0.0000561]     0.8696,     0.9586,     0.9695,     1.4033,    02h22m
 [ 94600,  0.0000559]     0.8838,     0.9627,     0.9735,     1.0689,    02h21m
 [ 94700,  0.0000557]     0.8785,     0.9627,     0.9732,     1.0273,    02h21m
@@ -1161,10 +1025,6 @@ Validation Chairs EPE: 0.819561
 [ 97000,  0.0000506]     0.8835,     0.9609,     0.9717,     1.1508,    02h08m
 [ 97100,  0.0000504]     0.8779,     0.9607,     0.9715,     1.2722,    02h08m
 [ 97200,  0.0000502]     0.8762,     0.9594,     0.9701,     1.3064,    02h06m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 97300,  0.0000500]     0.8737,     0.9564,     0.9683,     1.2818,    02h06m
 [ 97400,  0.0000497]     0.8786,     0.9610,     0.9714,     1.1350,    02h06m
 [ 97500,  0.0000495]     0.8781,     0.9603,     0.9712,     1.2140,    02h05m
@@ -1195,10 +1055,6 @@ Validation Chairs EPE: 0.819561
 [100000,  0.0000440]     0.8889,     0.9643,     0.9745,     1.0421,    01h51m
 results/chairs/craft-gma/100000_craft-chairs.pth saved
 Validation Chairs EPE: 0.792052
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [100100,  0.0000438]     0.8773,     0.9584,     0.9706,     1.3903,    01h51m
 [100200,  0.0000436]     0.8881,     0.9637,     0.9738,     1.1317,    01h50m
 [100300,  0.0000434]     0.8786,     0.9602,     0.9710,     1.2739,    01h50m
@@ -1227,10 +1083,6 @@ Validation Chairs EPE: 0.792052
 [102600,  0.0000383]     0.8792,     0.9585,     0.9685,     1.2947,    01h37m
 [102700,  0.0000381]     0.8824,     0.9607,     0.9713,     1.1276,    01h36m
 [102800,  0.0000379]     0.8890,     0.9627,     0.9720,     1.2498,    01h36m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [102900,  0.0000377]     0.8781,     0.9599,     0.9714,     1.2930,    01h35m
 [103000,  0.0000375]     0.8893,     0.9619,     0.9719,     1.1437,    01h34m
 [103100,  0.0000373]     0.8837,     0.9612,     0.9715,     1.1481,    01h34m
@@ -1259,10 +1111,6 @@ Validation Chairs EPE: 0.792052
 [105400,  0.0000322]     0.8834,     0.9618,     0.9724,     1.1315,    01h21m
 [105500,  0.0000320]     0.8828,     0.9605,     0.9712,     1.1837,    01h21m
 [105600,  0.0000318]     0.8796,     0.9600,     0.9705,     1.1835,    01h20m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [105700,  0.0000316]     0.8816,     0.9631,     0.9734,     1.1335,    01h20m
 [105800,  0.0000313]     0.8839,     0.9605,     0.9708,     1.1566,    01h19m
 [105900,  0.0000311]     0.8843,     0.9631,     0.9730,     1.1867,    01h18m
@@ -1290,10 +1138,6 @@ Validation Chairs EPE: 0.792052
 [108100,  0.0000263]     0.8893,     0.9638,     0.9739,     1.0648,    01h06m
 [108200,  0.0000261]     0.8848,     0.9623,     0.9727,     1.1401,    01h06m
 [108300,  0.0000259]     0.8790,     0.9611,     0.9723,     1.1457,    01h05m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [108400,  0.0000256]     0.8741,     0.9625,     0.9734,     1.2462,    01h04m
 [108500,  0.0000254]     0.8847,     0.9632,     0.9730,     1.1523,    01h04m
 [108600,  0.0000252]     0.8832,     0.9622,     0.9727,     1.1461,    01h03m
@@ -1324,10 +1168,6 @@ Validation Chairs EPE: 0.778728
 [110900,  0.0000202]     0.8864,     0.9623,     0.9728,     1.1274,    00h50m
 [111000,  0.0000199]     0.8918,     0.9649,     0.9749,     1.0388,    00h50m
 [111100,  0.0000197]     0.8815,     0.9572,     0.9683,     1.2143,    00h49m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [111200,  0.0000195]     0.8868,     0.9623,     0.9732,     1.1424,    00h49m
 [111300,  0.0000193]     0.8833,     0.9610,     0.9711,     1.1593,    00h48m
 [111400,  0.0000191]     0.8841,     0.9617,     0.9718,     1.1617,    00h48m
@@ -1356,10 +1196,6 @@ Validation Chairs EPE: 0.778728
 [113700,  0.0000140]     0.8859,     0.9641,     0.9741,     1.1200,    00h35m
 [113800,  0.0000138]     0.8926,     0.9644,     0.9745,     0.9881,    00h34m
 [113900,  0.0000136]     0.8834,     0.9615,     0.9720,     1.1810,    00h34m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [114000,  0.0000134]     0.8844,     0.9628,     0.9734,     1.1215,    00h33m
 [114100,  0.0000131]     0.8856,     0.9621,     0.9725,     1.1326,    00h32m
 [114200,  0.0000129]     0.8823,     0.9619,     0.9718,     1.1785,    00h32m
@@ -1388,10 +1224,6 @@ Validation Chairs EPE: 0.778728
 [116500,  0.0000079]     0.8858,     0.9614,     0.9720,     1.0818,    00h19m
 [116600,  0.0000077]     0.8928,     0.9648,     0.9745,     1.0359,    00h18m
 [116700,  0.0000075]     0.8859,     0.9628,     0.9731,     1.0987,    00h18m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [116800,  0.0000072]     0.8883,     0.9625,     0.9725,     1.0774,    00h17m
 [116900,  0.0000070]     0.8873,     0.9638,     0.9741,     1.1274,    00h17m
 [117000,  0.0000068]     0.8834,     0.9613,     0.9717,     1.2574,    00h16m
@@ -1419,10 +1251,6 @@ Validation Chairs EPE: 0.778728
 [119200,  0.0000020]     0.8900,     0.9608,     0.9711,     1.3478,    00h04m
 [119300,  0.0000018]     0.8893,     0.9623,     0.9730,     1.1522,    00h03m
 [119400,  0.0000015]     0.8852,     0.9614,     0.9716,     1.1005,    00h03m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [119500,  0.0000013]     0.8894,     0.9638,     0.9739,     1.0968,    00h02m
 [119600,  0.0000011]     0.8816,     0.9588,     0.9694,     1.2930,    00h02m
 [119700,  0.0000009]     0.8860,     0.9620,     0.9724,     1.1590,    00h01m

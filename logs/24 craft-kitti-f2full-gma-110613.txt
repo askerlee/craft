@@ -4,6 +4,13 @@
 4 Validation KITTI: 0.603422, 1.400566
 5 Validation KITTI: 0.580705, 1.368621
 
+Fix pos_biases bug:
+1 Validation KITTI: 0.829127, 2.403160
+2 Validation KITTI: 0.714312, 2.030423
+3 Validation KITTI: 0.635338, 1.509763
+4 Validation KITTI: 0.601726, 1.377737
+5 Validation KITTI: 0.578998, 1.357546
+
 python train.py --name craft-kitti --stage kitti --validation kitti --output results/kitti/craft-f2full-gma --restore_ckpt results/sintel/craft-f2full-gma/craft-sintel.pth --num_steps 50000 --lr 0.000125 --image_size 288 960 --wdecay 0.00001 --gamma 0.85 --gpus 0 1 --batch_size 6 --val_freq 10000 --print_freq 100 --mixed_precision --corrnorm global --craft --f2 full 
 Time: 11061336
 Args:

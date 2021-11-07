@@ -24,8 +24,8 @@
 12 Validation (final) EPE: 1.065938, 1px: 0.893737, 3px: 0.951249, 5px: 0.967230
 
 validate_sintel:
-(clean) EPE: 0.607844, 1px: 0.929505, 3px: 0.971988, 5px: 0.981925, 0-3 0.11, 3-5 0.22, 5-10 0.34, 10-inf 1.58
-(final) EPE: 1.066055, 1px: 0.893766, 3px: 0.951289, 5px: 0.967212, 0-3 0.13, 3-5 0.48, 5-10 0.47, 10-inf 2.88
+12  Valid (clean) EPE: 0.607844, 1px: 0.929505, 3px: 0.971988, 5px: 0.981925, 0-3 0.11, 3-5 0.22, 5-10 0.34, 10-inf 1.58
+12  Valid (final) EPE: 1.066055, 1px: 0.893766, 3px: 0.951289, 5px: 0.967212, 0-3 0.13, 3-5 0.48, 5-10 0.47, 10-inf 2.88
 
 validate_sintel_occ:
 Validation (clean) EPE: 0.607844, 1px: 0.929505, 3px: 0.971988, 5px: 0.981925
@@ -35,7 +35,7 @@ Occ epe: 7.134056, Noc epe: 0.588001
 Validation (albedo) EPE: 0.696081, 1px: 0.932492, 3px: 0.971359, 5px: 0.980616
 Occ epe: 5.740865, Noc epe: 0.298632
 
-143.182 validate_sintel_occ:
+With pos_biases bug, validate_sintel_occ:
 Validation (clean) EPE: 0.623948, 1px: 0.928594, 3px: 0.971451, 5px: 0.981419
 Occ epe: 4.826123, Noc epe: 0.292882
 Validation (final) EPE: 1.102279, 1px: 0.892747, 3px: 0.950565, 5px: 0.966533

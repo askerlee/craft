@@ -5,6 +5,9 @@
 5 Valid EPE: 0.7742, F1: 2.7772, 1px: 0.8862, 3px: 0.9607, 5px: 0.9764
 6 Valid EPE: 0.8694, F1: 2.4922, 1px: 0.8990, 3px: 0.9643, 5px: 0.9781
 
+Val:
+Valid EPE: 0.8666, F1: 2.4847, 1px: 0.8992, 3px: 0.9643, 5px: 0.9781, 0-3 0.27, 3-5 0.50, 5-10 0.60, 10-inf 1.60
+
 (venv) li_shaohua@DGXA100 ~/craft (main)> python train.py --name gma-viper --stage viper --validation viper --output results/viper/gma --restore_ckpt checkpoints/gma-sintel.pth --num_steps 50000 --lr 0.000125 --image_size 288 960 --wdecay 0.00001 --gamma 0.85 --gpus 0 1 --batch_size 6 --val_freq 10000 --print_freq 100 --mixed_precision
 Time: 10291346
 Args:
