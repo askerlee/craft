@@ -11,6 +11,7 @@ import imageio
 import cv2
 
 from network import CRAFT
+from raft import RAFT
 import network
 # back-compatible with older checkpoints.
 network.RAFTER = CRAFT
@@ -1077,6 +1078,13 @@ if __name__ == '__main__':
     parser.add_argument('--output', type=str, default="output", help="output directory")
     parser.add_argument('--verbose', action='store_true', help="print stats every 100 iterations")
 
+    parser.add_argument('--craft', dest='craft', action='store_true', 
+                        help='use craft (Cross-Attentional Flow Transformer)')
+    parser.add_argument('--setrans', dest='setrans', action='store_true', 
+                        help='use setrans (Squeeze-Expansion Transformer)')
+    parser.add_argument('--raft', action='store_true', 
+                        help='use raft')
+                         
     parser.add_argument('--iters', type=int, default=12)
     parser.add_argument('--num_heads', default=1, type=int,
                         help='number of heads in attention and aggregation')
@@ -1128,15 +1136,11 @@ if __name__ == '__main__':
                              'Half: do self-attention only on half of the channels')
     parser.add_argument('--f2posw', dest='f2_pos_code_weight', type=float, default=0.5)
                             
-    parser.add_argument('--setrans', dest='setrans', action='store_true', 
-                        help='use setrans (Squeeze-Expansion Transformer)')
     parser.add_argument('--intermodes', dest='inter_num_modes', type=int, default=4, 
                         help='Number of modes in inter-frame attention')
     parser.add_argument('--intramodes', dest='intra_num_modes', type=int, default=4, 
                         help='Number of modes in intra-frame attention')
-    parser.add_argument('--craft', dest='craft', action='store_true', 
-                        help='use craft (Cross-Attentional Flow Transformer)')
-    # In inter-frame attention, having QK biases performs slightly better.
+   # In inter-frame attention, having QK biases performs slightly better.
     parser.add_argument('--interqknobias', dest='inter_qk_have_bias', action='store_false', 
                         help='Do not use biases in the QK projections in the inter-frame attention')
                         
