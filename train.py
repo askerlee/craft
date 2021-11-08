@@ -18,7 +18,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 from network import CRAFT
-
+from raft import RAFT
 from utils import flow_viz
 import datasets
 import evaluate
@@ -175,7 +175,10 @@ def load_checkpoint(args, model, optimizer, lr_scheduler, logger):
         
 def main(args):
 
-    model = nn.DataParallel(CRAFT(args), device_ids=args.gpus)
+    if args.raft:
+        model = nn.DataParallel(RAFT(args), device_ids=args.gpus)
+    else:    
+        model = nn.DataParallel(CRAFT(args), device_ids=args.gpus)
 
     print(f"Parameter Count: {count_parameters(model)}")
 
@@ -303,9 +306,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--name', default='craft', help="name your experiment")
     parser.add_argument('--stage', help="determines which dataset to use for training")
-    parser.add_argument('--autoflow',   dest='use_autoflow', action='store_true', 
-                        help='Use autoflow training data')
-    
+
+    parser.add_argument('--craft', dest='craft', action='store_true', 
+                        help='use craft (Cross-Attentional Flow Transformer)')
+    parser.add_argument('--setrans', dest='setrans', action='store_true', 
+                        help='use setrans (Squeeze-Expansion Transformer) as the intra-frame attention')
+    parser.add_argument('--raft', action='store_true', 
+                        help='use raft')
+
     parser.add_argument('--validation', type=str, nargs='+')
     parser.add_argument('--restore_ckpt', help="restore checkpoint")
     parser.add_argument('--loadopt',   dest='load_optimizer_state', action='store_true', 
@@ -313,6 +321,8 @@ if __name__ == '__main__':
     parser.add_argument('--loadsched', dest='load_scheduler_state', action='store_true', 
                         help='Load scheduler state from checkpoint (default: not load)')
     
+    parser.add_argument('--autoflow',   dest='use_autoflow', action='store_true', 
+                        help='Use autoflow training data')
     parser.add_argument('--small', action='store_true', help='use small model')
     parser.add_argument('--output', type=str, default='checkpoints', 
                         help='output directory to save checkpoints and plots')
@@ -362,14 +372,10 @@ if __name__ == '__main__':
                              'Half: do self-attention only on half of the channels')                        
     parser.add_argument('--f2posw', dest='f2_pos_code_weight', type=float, default=0.5)
 
-    parser.add_argument('--setrans', dest='setrans', action='store_true', 
-                        help='use setrans (Squeeze-Expansion Transformer) as the intra-frame attention')
     parser.add_argument('--intermodes', dest='inter_num_modes', type=int, default=4, 
                         help='Number of modes in inter-frame attention')
     parser.add_argument('--intramodes', dest='intra_num_modes', type=int, default=4, 
                         help='Number of modes in intra-frame attention')
-    parser.add_argument('--craft', dest='craft', action='store_true', 
-                        help='use craft (Cross-Attentional Flow Transformer)')
     # In inter-frame attention, having QK biases performs slightly better.
     parser.add_argument('--interqknobias', dest='inter_qk_have_bias', action='store_false', 
                         help='Do not use biases in the QK projections in the inter-frame attention')

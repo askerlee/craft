@@ -834,6 +834,7 @@ def validate_slowflow(model, iters=6, test_mode=1, xy_shift=None,
     blur_magnitude, blur_num_frames = blur_set
     val_dataset = datasets.SlowFlow(split='test', aug_params=None,
                                     blur_mag=blur_magnitude, blur_num_frames=blur_num_frames)
+    # slowflow images are 1024x768, or 1280x576. Scale them to half size to fit in RAM.
     scale = 0.5
     scale_tensor = torch.tensor([scale, scale]).reshape(2, 1, 1)
 
