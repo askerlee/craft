@@ -91,23 +91,24 @@ class BasicUpdateBlock(nn.Module):
         self.args = args
         self.encoder = BasicMotionEncoder(args)
         self.gru = SepConvGRU(hidden_dim=hidden_dim, input_dim=128+hidden_dim)
-        self.flow_head = FlowHead(hidden_dim, hidden_dim=256)
+        self.flow_head = FlowHead(input_dim=hidden_dim, hidden_dim=256)
 
         self.mask = nn.Sequential(
             nn.Conv2d(128, 256, 3, padding=1),
             nn.ReLU(inplace=True),
             nn.Conv2d(256, 64*9, 1, padding=0))
 
-    def forward(self, net, inp, corr, flow, upsample=True):
+    def forward(self, net_feat, inp_feat, corr, flow, upsample=True):
+        # motion_features: (256+2)-dimensional.
         motion_features = self.encoder(flow, corr)
-        inp = torch.cat([inp, motion_features], dim=1)
+        inp_feat = torch.cat([inp_feat, motion_features], dim=1)
 
-        net = self.gru(net, inp)
-        delta_flow = self.flow_head(net)
+        net_feat = self.gru(net_feat, inp_feat)
+        delta_flow = self.flow_head(net_feat)
 
-        # scale mask to balence gradients
-        mask = .25 * self.mask(net)
-        return net, mask, delta_flow
+        # scale mask to balance gradients
+        mask = .25 * self.mask(net_feat)
+        return net_feat, mask, delta_flow
 
 
 class GMAUpdateBlock(nn.Module):

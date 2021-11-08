@@ -323,7 +323,6 @@ if __name__ == '__main__':
     
     parser.add_argument('--autoflow',   dest='use_autoflow', action='store_true', 
                         help='Use autoflow training data')
-    parser.add_argument('--small', action='store_true', help='use small model')
     parser.add_argument('--output', type=str, default='checkpoints', 
                         help='output directory to save checkpoints and plots')
     parser.add_argument('--radius', dest='corr_radius', type=int, default=4)    

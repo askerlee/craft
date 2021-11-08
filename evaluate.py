@@ -6,6 +6,7 @@ import argparse
 import os
 import numpy as np
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 import imageio
 import cv2
@@ -1084,7 +1085,7 @@ if __name__ == '__main__':
                         help='use setrans (Squeeze-Expansion Transformer)')
     parser.add_argument('--raft', action='store_true', 
                         help='use raft')
-                         
+
     parser.add_argument('--iters', type=int, default=12)
     parser.add_argument('--num_heads', default=1, type=int,
                         help='number of heads in attention and aggregation')
@@ -1159,7 +1160,10 @@ if __name__ == '__main__':
         separate_inout_sintel_occ()
         sys.exit()
 
-    model = torch.nn.DataParallel(CRAFT(args))
+    if args.raft:
+        model = nn.DataParallel(RAFT(args))
+    else:    
+        model = nn.DataParallel(CRAFT(args))
     
     if args.fix:
         fix_checkpoint(args, model)
