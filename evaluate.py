@@ -217,6 +217,7 @@ def validate_things(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1
         print(f"Apply x,y shift {x_shift},{y_shift}")
     else:
         x_shift, y_shift = (0, 0)
+    # the format of flow is u, v, i.e., x, y, not y, x.
     offset_tensor = torch.tensor([x_shift, y_shift], dtype=torch.float32).reshape(2, 1, 1)
 
     for dstype in ['frames_cleanpass', 'frames_finalpass']:
@@ -288,7 +289,7 @@ def validate_things(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1
             val_count += len(image1)
             segs_len.append(len(image1))
 
-            if verbose and (val_count % 100 == 0 or val_count >= max_val_count):
+            if val_count % 100 == 0 or val_count >= max_val_count:
                 epe_seg     = np.concatenate(epe_seg)
                 mean_epe    = np.mean(epe_seg)
                 px1 = np.mean(epe_seg < 1)
@@ -307,13 +308,14 @@ def validate_things(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1
                     mags_segs_len.setdefault(mag_endpoint, [])
                     mags_segs_len[mag_endpoint].append(mag_seg.sum().item())
 
-                print(f"{val_count}/{max_val_count}: EPE {mean_epe:.4f}, "
-                      f"1px {px1:.4f}, 3px {px3:.4f}, 5px {px5:.4f}", end='')
-                prev_mag_endpoint = 0
-                for mag_endpoint in mag_endpoints:
-                    print(f", {prev_mag_endpoint}-{mag_endpoint} {mags_err[mag_endpoint]:.2f}", end='')
-                    prev_mag_endpoint = mag_endpoint
-                print()
+                if verbose:
+                    print(f"{val_count}/{max_val_count}: EPE {mean_epe:.4f}, "
+                        f"1px {px1:.4f}, 3px {px3:.4f}, 5px {px5:.4f}", end='')
+                    prev_mag_endpoint = 0
+                    for mag_endpoint in mag_endpoints:
+                        print(f", {prev_mag_endpoint}-{mag_endpoint} {mags_err[mag_endpoint]:.2f}", end='')
+                        prev_mag_endpoint = mag_endpoint
+                    print()
 
                 epe_seg = []
                 mags_seg = {}
@@ -360,6 +362,7 @@ def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1
         print(f"Apply x,y shift {x_shift},{y_shift}")
     else:
         x_shift, y_shift = (0, 0)
+    # the format of flow is u, v, i.e., x, y, not y, x.
     offset_tensor = torch.tensor([x_shift, y_shift], dtype=torch.float32).reshape(2, 1, 1)
     
     for dstype in ['clean', 'final']:
@@ -431,7 +434,7 @@ def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1
             val_count += len(image1)
             segs_len.append(len(image1))
 
-            if verbose and (val_count % 100 == 0 or val_count >= max_val_count):
+            if val_count % 100 == 0 or val_count >= max_val_count:
                 epe_seg     = np.concatenate(epe_seg)
                 mean_epe    = np.mean(epe_seg)
                 px1 = np.mean(epe_seg < 1)
@@ -450,14 +453,14 @@ def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1
                     mags_segs_len.setdefault(mag_endpoint, [])
                     mags_segs_len[mag_endpoint].append(mag_seg.sum().item())
 
-                print(f"{val_count}/{max_val_count}: EPE {mean_epe:.4f}, "
-                      f"1px {px1:.4f}, 3px {px3:.4f}, 5px {px5:.4f}", end='')
-
-                prev_mag_endpoint = 0
-                for mag_endpoint in mag_endpoints:
-                    print(f", {prev_mag_endpoint}-{mag_endpoint} {mags_err[mag_endpoint]:.2f}", end='')
-                    prev_mag_endpoint = mag_endpoint
-                print()
+                if verbose:
+                    print(f"{val_count}/{max_val_count}: EPE {mean_epe:.4f}, "
+                        f"1px {px1:.4f}, 3px {px3:.4f}, 5px {px5:.4f}", end='')
+                    prev_mag_endpoint = 0
+                    for mag_endpoint in mag_endpoints:
+                        print(f", {prev_mag_endpoint}-{mag_endpoint} {mags_err[mag_endpoint]:.2f}", end='')
+                        prev_mag_endpoint = mag_endpoint
+                    print()
 
                 epe_seg = []
                 mags_seg = {}
@@ -758,16 +761,13 @@ def validate_viper(model, iters=6, test_mode=1, batch_size=2, max_val_count=500,
         val_count += len(image1)
         segs_len.append(len(image1))
 
-        if verbose and val_count % 100 == 0 or val_count >= max_val_count:
+        if val_count % 100 == 0 or val_count >= max_val_count:
             epe_seg     = np.concatenate(epe_seg)
             out_seg     = np.concatenate(out_seg)
             mean_epe    = np.mean(epe_seg)
             px1 = np.mean(epe_seg < 1)
             px3 = np.mean(epe_seg < 3)
             px5 = np.mean(epe_seg < 5)
-
-            print(f"{val_count}/{max_val_count}: EPE {mean_epe:.4f}, "
-                    f"1px {px1:.4f}, 3px {px3:.4f}, 5px {px5:.4f}", end='')
                     
             for mag_endpoint in mag_endpoints:
                 mag_seg = np.concatenate(mags_seg[mag_endpoint])
@@ -781,11 +781,14 @@ def validate_viper(model, iters=6, test_mode=1, batch_size=2, max_val_count=500,
                 mags_segs_len.setdefault(mag_endpoint, [])
                 mags_segs_len[mag_endpoint].append(mag_seg.sum().item())
 
-            prev_mag_endpoint = 0
-            for mag_endpoint in mag_endpoints:
-                print(f", {prev_mag_endpoint}-{mag_endpoint} {mags_err[mag_endpoint]:.2f}", end='')
-                prev_mag_endpoint = mag_endpoint
-            print()
+            if verbose:
+                print(f"{val_count}/{max_val_count}: EPE {mean_epe:.4f}, "
+                        f"1px {px1:.4f}, 3px {px3:.4f}, 5px {px5:.4f}", end='')
+                prev_mag_endpoint = 0
+                for mag_endpoint in mag_endpoints:
+                    print(f", {prev_mag_endpoint}-{mag_endpoint} {mags_err[mag_endpoint]:.2f}", end='')
+                    prev_mag_endpoint = mag_endpoint
+                print()
 
             epe_seg = []
             out_seg = []
@@ -859,6 +862,7 @@ def validate_slowflow(model, iters=6, test_mode=1, xy_shift=None,
         print(f"Apply x,y shift {x_shift},{y_shift}")
     else:
         x_shift, y_shift = (0, 0)
+    # the format of flow is u, v, i.e., x, y, not y, x.
     offset_tensor = torch.tensor([x_shift, y_shift], dtype=torch.float32).reshape(2, 1, 1)
 
     for val_id in range(len(val_dataset)):
@@ -916,17 +920,13 @@ def validate_slowflow(model, iters=6, test_mode=1, xy_shift=None,
         val_count += len(image1)
         segs_len.append(len(image1))
 
-        if verbose and prev_scene and (scene != prev_scene or val_count >= max_val_count):
+        if (prev_scene and scene != prev_scene) or val_count >= max_val_count:
             epe_seg     = np.concatenate(epe_seg)
             out_seg     = np.concatenate(out_seg)
             mean_epe    = np.mean(epe_seg)
             px1 = np.mean(epe_seg < 1)
             px3 = np.mean(epe_seg < 3)
             px5 = np.mean(epe_seg < 5)
-
-            seg_scene = prev_scene if (scene != prev_scene) else scene
-            print(f"{seg_scene} {val_count}/{max_val_count}: EPE {mean_epe:.4f}, "
-                  f"1px {px1:.4f}, 3px {px3:.4f}, 5px {px5:.4f}", end='')
                     
             for mag_endpoint in mag_endpoints:
                 mag_seg = np.concatenate(mags_seg[mag_endpoint])
@@ -940,11 +940,15 @@ def validate_slowflow(model, iters=6, test_mode=1, xy_shift=None,
                 mags_segs_len.setdefault(mag_endpoint, [])
                 mags_segs_len[mag_endpoint].append(mag_seg.sum().item())
 
-            prev_mag_endpoint = 0
-            for mag_endpoint in mag_endpoints:
-                print(f", {prev_mag_endpoint}-{mag_endpoint} {mags_err[mag_endpoint]:.2f}", end='')
-                prev_mag_endpoint = mag_endpoint
-            print()
+            if verbose:
+                seg_scene = prev_scene if (scene != prev_scene) else scene
+                print(f"{seg_scene} {val_count}/{max_val_count}: EPE {mean_epe:.4f}, "
+                    f"1px {px1:.4f}, 3px {px3:.4f}, 5px {px5:.4f}", end='')
+                prev_mag_endpoint = 0
+                for mag_endpoint in mag_endpoints:
+                    print(f", {prev_mag_endpoint}-{mag_endpoint} {mags_err[mag_endpoint]:.2f}", end='')
+                    prev_mag_endpoint = mag_endpoint
+                print()
 
             epe_seg = []
             out_seg = []

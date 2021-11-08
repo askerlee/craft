@@ -1,0 +1,70 @@
+Apply x,y shift 40,20
+Dataset length 1041
+Iter 0, Valid (clean) EPE: 4.342684, 1px: 0.646731, 3px: 0.801666, 5px: 0.857708, 0-3 0.89, 3-5 1.84, 5-10 2.80, 10-inf 10.91
+Dataset length 1041
+Iter 0, Valid (final) EPE: 4.551474, 1px: 0.641500, 3px: 0.796997, 5px: 0.852615, 0-3 0.90, 3-5 1.84, 5-10 2.80, 10-inf 11.56
+Apply x,y shift 60,30
+Dataset length 1041
+Iter 0, Valid (clean) EPE: 5.785972, 1px: 0.560687, 3px: 0.741842, 5px: 0.809735, 0-3 1.16, 3-5 2.51, 5-10 3.70, 10-inf 14.58
+Dataset length 1041
+Iter 0, Valid (final) EPE: 5.946593, 1px: 0.556381, 3px: 0.739704, 5px: 0.807180, 0-3 1.17, 3-5 2.49, 5-10 3.70, 10-inf 15.10
+Apply x,y shift 80,40
+Dataset length 1041
+Iter 0, Valid (clean) EPE: 7.067248, 1px: 0.482315, 3px: 0.696574, 5px: 0.767618, 0-3 1.41, 3-5 3.12, 5-10 4.48, 10-inf 17.84
+Dataset length 1041
+Iter 0, Valid (final) EPE: 7.182272, 1px: 0.478782, 3px: 0.695045, 5px: 0.766260, 0-3 1.42, 3-5 3.07, 5-10 4.45, 10-inf 18.23
+Apply x,y shift 100,50
+Dataset length 1041
+Iter 0, Valid (clean) EPE: 8.222754, 1px: 0.411360, 3px: 0.658652, 5px: 0.733674, 0-3 1.66, 3-5 3.68, 5-10 5.16, 10-inf 20.76
+Dataset length 1041
+Iter 0, Valid (final) EPE: 8.252088, 1px: 0.408560, 3px: 0.657586, 5px: 0.732851, 0-3 1.66, 3-5 3.47, 5-10 5.11, 10-inf 20.95
+Apply x,y shift 120,60
+Dataset length 1041
+Iter 0, Valid (clean) EPE: 9.196518, 1px: 0.366779, 3px: 0.626455, 5px: 0.706550, 0-3 1.85, 3-5 4.14, 5-10 5.76, 10-inf 23.20
+Dataset length 1041
+Iter 0, Valid (final) EPE: 9.197027, 1px: 0.364478, 3px: 0.625365, 5px: 0.705562, 0-3 1.85, 3-5 3.91, 5-10 5.68, 10-inf 23.30
+Apply x,y shift 140,70
+Dataset length 1041
+Iter 0, Valid (clean) EPE: 10.094356, 1px: 0.333910, 3px: 0.597454, 5px: 0.682894, 0-3 2.05, 3-5 4.67, 5-10 6.27, 10-inf 25.38
+Dataset length 1041
+Iter 0, Valid (final) EPE: 10.337051, 1px: 0.331638, 3px: 0.595916, 5px: 0.681625, 0-3 2.06, 3-5 4.50, 5-10 6.25, 10-inf 26.20
+Apply x,y shift 160,80
+Dataset length 1041
+Iter 0, Valid (clean) EPE: 11.241659, 1px: 0.307718, 3px: 0.571767, 5px: 0.662063, 0-3 2.22, 3-5 5.09, 5-10 6.73, 10-inf 28.42
+Dataset length 1041
+Iter 0, Valid (final) EPE: 11.563112, 1px: 0.302694, 3px: 0.568903, 5px: 0.659853, 0-3 2.25, 3-5 4.94, 5-10 6.65, 10-inf 29.50
+Apply x,y shift 180,90
+Dataset length 1041
+Iter 0, Valid (clean) EPE: 12.431559, 1px: 0.285107, 3px: 0.546284, 5px: 0.642886, 0-3 2.36, 3-5 5.66, 5-10 7.23, 10-inf 31.57
+Dataset length 1041
+Iter 0, Valid (final) EPE: 12.559853, 1px: 0.280414, 3px: 0.543220, 5px: 0.640742, 0-3 2.38, 3-5 5.37, 5-10 7.03, 10-inf 32.13
+Apply x,y shift 200,100
+Dataset length 1041
+Iter 0, Valid (clean) EPE: 13.669991, 1px: 0.265409, 3px: 0.522900, 5px: 0.626091, 0-3 2.53, 3-5 5.96, 5-10 7.60, 10-inf 34.93
+Dataset length 1041
+Iter 0, Valid (final) EPE: 14.482311, 1px: 0.260161, 3px: 0.519407, 5px: 0.622956, 0-3 2.55, 3-5 6.64, 5-10 7.59, 10-inf 37.30
+Apply x,y shift 220,110
+Dataset length 1041
+Iter 0, Valid (clean) EPE: 17.069189, 1px: 0.247396, 3px: 0.497109, 5px: 0.610563, 0-3 2.64, 3-5 7.05, 5-10 8.36, 10-inf 44.84
+Dataset length 1041
+Iter 0, Valid (final) EPE: 16.680700, 1px: 0.243336, 3px: 0.493872, 5px: 0.607379, 0-3 2.66, 3-5 7.32, 5-10 9.22, 10-inf 43.10
+Apply x,y shift 240,120
+Dataset length 1041
+Iter 0, Valid (clean) EPE: 21.212381, 1px: 0.231115, 3px: 0.469479, 5px: 0.592748, 0-3 2.87, 3-5 7.87, 5-10 12.22, 10-inf 55.51
+Dataset length 1041
+Iter 0, Valid (final) EPE: 21.110628, 1px: 0.224075, 3px: 0.463432, 5px: 0.587472, 0-3 3.14, 3-5 9.10, 5-10 12.58, 10-inf 54.28
+Apply x,y shift 260,130
+Dataset length 1041
+Iter 0, Valid (clean) EPE: 35.261272, 1px: 0.205678, 3px: 0.426765, 5px: 0.558995, 0-3 8.71, 3-5 12.24, 5-10 22.37, 10-inf 85.53
+Dataset length 1041
+Iter 0, Valid (final) EPE: 33.510223, 1px: 0.205108, 3px: 0.426688, 5px: 0.560831, 0-3 6.01, 3-5 13.01, 5-10 24.17, 10-inf 82.79
+Apply x,y shift 280,140
+Dataset length 1041
+Iter 0, Valid (clean) EPE: 65.788353, 1px: 0.167392, 3px: 0.362014, 5px: 0.498693, 0-3 33.29, 3-5 27.98, 5-10 45.33, 10-inf 131.67
+Dataset length 1041
+Iter 0, Valid (final) EPE: 52.766895, 1px: 0.177506, 3px: 0.382709, 5px: 0.524828, 0-3 15.44, 3-5 24.54, 5-10 38.75, 10-inf 119.76
+Apply x,y shift 300,150
+Dataset length 1041
+Iter 0, Valid (clean) EPE: 107.624641, 1px: 0.121467, 3px: 0.291780, 5px: 0.415084, 0-3 62.32, 3-5 62.29, 5-10 101.60, 10-inf 186.25
+Dataset length 1041
+Iter 0, Valid (final) EPE: 83.860954, 1px: 0.130046, 3px: 0.314792, 5px: 0.455804, 0-3 40.34, 3-5 40.07, 5-10 65.22, 10-inf 165.36
