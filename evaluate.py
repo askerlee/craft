@@ -39,8 +39,8 @@ class Logger:
 # mask: a 2D tensor of H*W. 
 # The flow values at mask==True are valid and will be used to compute EPE.
 def shift_pixels(img, flow, xy_shift):
-    x_shift, y_shift = xy_shift
-    mask = torch.ones_like(img)
+    if xy_shift is not None:
+        x_shift, y_shift = xy_shift
     if xy_shift is None or (x_shift == 0 and y_shift == 0):
         mask = torch.ones(img.shape[-2:], dtype=bool, device=img.device)
         return img, flow, mask
