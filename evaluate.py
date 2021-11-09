@@ -1051,7 +1051,6 @@ def gen_flow(model, model_name, iters, image1_path, image2_path, flow_path=None,
     if not os.path.exists(output_path):
         os.makedirs(output_path)
 
-    inv_scale = 1.0 / scale
     if xy_shift is not None:
         x_shift, y_shift = xy_shift
         print(f"Apply x,y shift {x_shift},{y_shift}")
@@ -1068,15 +1067,15 @@ def gen_flow(model, model_name, iters, image1_path, image2_path, flow_path=None,
     image2_name_noext, _ = os.path.splitext(image2_name)
     flow_filepath = os.path.join(output_path, image1_name_noext + f"-{model_name}-{iters}.png")
 
-    image1 = cv2.imread(image1_path)
-    image2 = cv2.imread(image2_path)
+    image1 = frame_utils.read_gen(image1_path)
+    image2 = frame_utils.read_gen(image2_path)
+    image1 = np.array(image1).astype(np.uint8)[..., :3]
+    image2 = np.array(image2).astype(np.uint8)[..., :3]
+
     # grayscale images
     if len(image1.shape) == 2:
         image1 = np.tile(image1[...,None], (1, 1, 3))
         image2 = np.tile(image2[...,None], (1, 1, 3))
-    else:
-        image1 = image1[..., :3]
-        image2 = image2[..., :3]
 
     image1 = torch.from_numpy(image1).permute(2, 0, 1).float()
     image2 = torch.from_numpy(image2).permute(2, 0, 1).float()
@@ -1093,10 +1092,10 @@ def gen_flow(model, model_name, iters, image1_path, image2_path, flow_path=None,
         image1 = image1[0]
         image2 = image2[0]
         scale_image1_path = os.path.join(output_path, image1_name_noext + f'-{scale}.png')
-        cv2.imwrite(scale_image1_path, image1.permute(1, 2, 0).numpy())
+        Image.fromarray(image1.permute(1, 2, 0).numpy().astype(np.uint8)).save(scale_image1_path)
         print(f"Save scaled image1 to {scale_image1_path}")
         scale_image2_path = os.path.join(output_path, image2_name_noext + f'-{scale}.png')
-        cv2.imwrite(scale_image2_path, image2.permute(1, 2, 0).numpy())
+        Image.fromarray(image2.permute(1, 2, 0).numpy().astype(np.uint8)).save(scale_image2_path)
         print(f"Save scaled image2 to {scale_image2_path}")
         
         if flow_gt is not None:
@@ -1113,15 +1112,15 @@ def gen_flow(model, model_name, iters, image1_path, image2_path, flow_path=None,
     if xy_shift is not None:
         image1_np = image1.permute(1, 2, 0).numpy()
         shift_image1_path = os.path.join(output_path, image1_name_noext + f'-{x_shift},{y_shift}.png')
-        cv2.imwrite(shift_image1_path, image1_np)
+        Image.fromarray(image1_np.astype(np.uint8)).save(shift_image1_path)
         print(f"Save shifted image1 to {shift_image1_path}")
 
         if flow_gt is not None:
             shift_flow_gt = shift_flow(flow_gt, xy_shift)
             shift_flow_img = flow_viz.flow_to_image(shift_flow_gt)
             shift_flow_path = os.path.join(output_path, image1_name_noext + f'-{x_shift},{y_shift}-flow.png')
-            cv2.imwrite(shift_flow_path, shift_flow_img[..., ::-1])
-            print(f"Save shifted flow to {shift_flow_path}")
+            Image.fromarray(shift_flow_img).save(shift_flow_path)
+            print(f"Save shifted flow gt to {shift_flow_path}")
             flow_gt = shift_flow_gt
 
     padder = InputPadder(image1.shape, mode='kitti')
@@ -1132,7 +1131,6 @@ def gen_flow(model, model_name, iters, image1_path, image2_path, flow_path=None,
     flow = padder.unpad(flow).permute(1, 2, 0).numpy()
 
     if flow_gt is not None:
-        breakpoint()
         epe = np.sqrt(np.sum((flow - flow_gt)**2, axis=2)[val_mask])
         epe = epe.mean()
         print(f"EPE: {epe:.4f}")
