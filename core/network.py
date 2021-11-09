@@ -40,9 +40,7 @@ class CRAFT(nn.Module):
         if args.corr_radius == -1:
             args.corr_radius = 4
         print("Lookup radius: %d" %args.corr_radius)
-        
-        self.do_corr_global_norm = (args.corr_norm_type == 'global')
-        
+                
         if args.craft:
             self.inter_trans_config = SETransConfig()
             self.inter_trans_config.update_config(args)
@@ -59,7 +57,7 @@ class CRAFT(nn.Module):
             print("Inter-frame trans config:\n{}".format(self.inter_trans_config.__dict__))
             
             self.corr_fn = TransCorrBlock(self.inter_trans_config, radius=self.args.corr_radius,
-                                          do_corr_global_norm=self.do_corr_global_norm)
+                                          do_corr_global_norm=True)
         
         # feature network, context network, and update block
         self.fnet = BasicEncoder(output_dim=256,         norm_fn='instance', dropout=args.dropout)

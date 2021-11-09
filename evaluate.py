@@ -960,7 +960,7 @@ def validate_slowflow(model, iters=6, test_mode=1, xy_shift=None,
 
             if verbose:
                 seg_scene = prev_scene if (scene != prev_scene) else scene
-                print(f"{seg_scene} {val_count}/{max_val_count}: EPE {mean_epe:.4f}, "
+                print(f"{seg_scene} {img1_trunk} {val_count}/{max_val_count}: EPE {mean_epe:.4f}, "
                     f"1px {px1:.4f}, 3px {px3:.4f}, 5px {px5:.4f}", end='')
                 prev_mag_endpoint = 0
                 for mag_endpoint in mag_endpoints:
@@ -1092,7 +1092,7 @@ if __name__ == '__main__':
     parser.add_argument('--img1', type=str, default=None, help="first image for evaluation")
     parser.add_argument('--img2', type=str, default=None, help="second image for evaluation")
     parser.add_argument('--output', type=str, default="output", help="output directory")
-    
+
     parser.add_argument('--verbose', action='store_true', help="print stats every 100 iterations")
     parser.add_argument('--seginterval', dest='seg_interval', 
                         type=int, default=-1, help="print stats every N iterations")
@@ -1143,9 +1143,6 @@ if __name__ == '__main__':
     parser.add_argument('--no_residual', default=False, action='store_true',
                         help='Remove residual connection. Do not add local features with the aggregated features.')
     parser.add_argument('--radius', dest='corr_radius', type=int, default=4)    
-
-    parser.add_argument('--corrnorm', dest='corr_norm_type', type=str, 
-                        choices=['none', 'local', 'global'], default='none')
     parser.add_argument('--posr', dest='pos_bias_radius', type=int, default=7, 
                         help='The radius of positional biases')
                         
@@ -1202,6 +1199,9 @@ if __name__ == '__main__':
     model_name = os.path.split(args.model)[-1].split(".")[0]
     if 'craft' in model_name:
         model_name = model_name.replace("craft", f"craft-f2{args.f2trans}")
+
+    if args.seg_interval > 0:
+        args.verbose = True
 
     if args.x_shifts and args.y_shifts:
         x_shifts = [int(x) for x in args.x_shifts.split(',')]

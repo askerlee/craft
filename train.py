@@ -359,9 +359,6 @@ if __name__ == '__main__':
                         help='(GMA) use position and content-wise attention')
     parser.add_argument('--num_heads', default=1, type=int,
                         help='(GMA) number of heads in attention and aggregation')
-
-    parser.add_argument('--corrnorm', dest='corr_norm_type', type=str, 
-                        choices=['none', 'global'], default='none')
     parser.add_argument('--posr', dest='pos_bias_radius', type=int, default=7, 
                         help='The radius of positional biases')
                         

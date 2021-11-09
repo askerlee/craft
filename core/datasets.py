@@ -323,8 +323,7 @@ class VIPER(FlowDataset):
                 # img0_trunk: img0_name without suffix.
                 img0_trunk  = f"{scene}_{img0_idx}"
                 if (split == 'train' or split == 'val') and img0_idx[-1] == '0' \
-                  or \
-                  split == 'test' and img0_trunk in test_frames_dict:
+                  or split == 'test' and img0_trunk in test_frames_dict:
                     img1_idx    = "{:05d}".format(int(img0_idx) + 1)
                     img1_name   = f"{scene}_{img1_idx}.{suffix}"
                     flow_name   = img0_name[:-3] + "png"
