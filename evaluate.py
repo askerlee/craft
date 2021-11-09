@@ -35,31 +35,61 @@ class Logger:
         self.val_steps_list = []
         self.val_results_dict = {}
 
-# img is a 3D or 4D tensor.
+# img and flow are 3D or 4D tensors.
 # mask: a 2D tensor of H*W. 
 # The flow values at mask==True are valid and will be used to compute EPE.
-def shift_pixels(img, xy_shift):
+def shift_pixels(img, flow, xy_shift):
     x_shift, y_shift = xy_shift
     mask = torch.ones_like(img)
     if xy_shift is None or (x_shift == 0 and y_shift == 0):
         mask = torch.ones(img.shape[-2:], dtype=bool, device=img.device)
-        return img, mask
+        return img, flow, mask
+
     img2 = torch.zeros_like(img)
+    if flow is not None:
+        flow2 = torch.zeros_like(flow)
+    else:
+        flow2 = None
+
     mask = torch.zeros(img.shape[-2:], dtype=bool, device=img.device)
+
     if x_shift > 0 and y_shift > 0:
         img2[..., y_shift:, x_shift:] = img[..., :-y_shift, :-x_shift]
         mask[y_shift:, x_shift:] = True
+        if flow is not None:
+            flow2[..., y_shift:, x_shift:] = flow[..., :-y_shift, :-x_shift]
     if x_shift > 0 and y_shift < 0:
         img2[..., :y_shift, x_shift:] = img[..., -y_shift:, :-x_shift]
         mask[:y_shift, x_shift:] = True
+        if flow is not None:
+            flow2[..., :y_shift, x_shift:] = flow[..., -y_shift:, :-x_shift]
     if x_shift < 0 and y_shift > 0:
         img2[..., y_shift:, :x_shift] = img[..., :-y_shift, -x_shift:]
         mask[y_shift:, :x_shift] = True
+        if flow is not None:
+            flow2[..., y_shift:, :x_shift] = flow[..., :-y_shift, -x_shift:]
     if x_shift < 0 and y_shift < 0:
         img2[..., :y_shift, :x_shift] = img[..., -y_shift:, -x_shift:]
         mask[:y_shift, :x_shift] = True
+        if flow is not None:
+            flow2[..., :y_shift, :x_shift] = flow[..., -y_shift:, -x_shift:]
 
-    return img2, mask
+    return img2, flow2, mask
+
+def shift_flow(flow, xy_shift):
+    x_shift, y_shift = xy_shift
+    if xy_shift is None:
+        return flow
+    flow2 = np.zeros_like(flow)
+    if x_shift > 0 and y_shift > 0:
+        flow2[y_shift:, x_shift:] = flow[:-y_shift, :-x_shift]
+    if x_shift > 0 and y_shift < 0:
+        flow2[:y_shift, x_shift:] = flow[-y_shift:, :-x_shift]
+    if x_shift < 0 and y_shift > 0:
+        flow2[y_shift:, :x_shift] = flow[:-y_shift, -x_shift:]
+    if x_shift < 0 and y_shift < 0:
+        flow2[:y_shift, :x_shift] = flow[-y_shift:, -x_shift:]
+    return flow2
 
 @torch.no_grad()
 def create_sintel_submission_vis(model_name, model, warm_start=False, output_path='sintel_submission',
@@ -259,7 +289,7 @@ def validate_things(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1
             image1 = image1[None].cuda()
             image2 = image2[None].cuda()
 
-            image1, val_mask = shift_pixels(image1, xy_shift)
+            image1, flow_gt, val_mask = shift_pixels(image1, flow_gt, xy_shift)
 
             # if GaussianBlur is not None:
             #     image1 = GaussianBlur(image1)
@@ -411,8 +441,8 @@ def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1
             #     image2 = GaussianBlur(image2)
 
             # Shift image1 pixels along x and y axes.
-            image1, val_mask = shift_pixels(image1, xy_shift)
-
+            image1, flow_gt, val_mask = shift_pixels(image1, flow_gt, xy_shift)
+            
             padder = InputPadder(image1.shape)
             image1, image2 = padder.pad(image1, image2)
 
@@ -893,9 +923,9 @@ def validate_slowflow(model, iters=6, test_mode=1, xy_shift=None,
         flow_gt = F.interpolate(flow_gt.unsqueeze(0), scale_factor=scale, mode='bilinear', align_corners=False)
         flow_gt = flow_gt.squeeze(0) * scale_tensor
 
-        # Shift image1 pixels along x and y axes.
-        image1, val_mask = shift_pixels(image1, xy_shift)
-                
+        # Shift image1 and the groundtruth flow along x and y axes.
+        image1, flow_gt, val_mask = shift_pixels(image1, flow_gt, xy_shift)
+
         # Make images divideable by 8.
         padder = InputPadder(image1.shape, mode='kitti')
         image1, image2 = padder.pad(image1, image2)
@@ -910,7 +940,6 @@ def validate_slowflow(model, iters=6, test_mode=1, xy_shift=None,
         for it, flow_pr in enumerate(flow_prs):
             flow = padder.unpad(flow_pr[0]).cpu()
             flow += offset_tensor
-            # breakpoint()
             epe = torch.sum((flow - flow_gt)**2, dim=0)[val_mask].sqrt()
             epe = epe.view(-1)
 
@@ -1014,12 +1043,30 @@ def save_checkpoint(cp_path, model, optimizer_state, lr_scheduler_state, logger)
     print(f"{cp_path} saved")
 
 @torch.no_grad()
-def gen_flow(model, model_name, iters, image1_path, image2_path, output_path='output', test_mode=1):
+def gen_flow(model, model_name, iters, image1_path, image2_path, flow_path=None, output_path='output', 
+             test_mode=1, scale=1., xy_shift=None):
     """ Generate flow given two images """
     model.eval()
 
     if not os.path.exists(output_path):
         os.makedirs(output_path)
+
+    inv_scale = 1.0 / scale
+    if xy_shift is not None:
+        x_shift, y_shift = xy_shift
+        print(f"Apply x,y shift {x_shift},{y_shift}")
+    else:
+        x_shift, y_shift = (0, 0)
+    # the format of flow is u, v, i.e., x, y, not y, x.
+    offset_tensor = torch.tensor([x_shift, y_shift], dtype=torch.float32).reshape(2, 1, 1)
+
+    # split image1_path into path and file name
+    _, image1_name = os.path.split(image1_path)
+    # split file name into file name and extension
+    image1_name_noext, _ = os.path.splitext(image1_name)
+    _, image2_name = os.path.split(image2_path)
+    image2_name_noext, _ = os.path.splitext(image2_name)
+    flow_filepath = os.path.join(output_path, image1_name_noext + f"-{model_name}-{iters}.png")
 
     image1 = cv2.imread(image1_path)
     image2 = cv2.imread(image2_path)
@@ -1033,24 +1080,69 @@ def gen_flow(model, model_name, iters, image1_path, image2_path, output_path='ou
 
     image1 = torch.from_numpy(image1).permute(2, 0, 1).float()
     image2 = torch.from_numpy(image2).permute(2, 0, 1).float()
+
+    if flow_path:
+        flow_gt = frame_utils.read_gen(flow_path)
+    else:
+        flow_gt = None
+
+    if scale < 1:
+        # Scale down images to reduce RAM use.
+        image1 = F.interpolate(image1[None], scale_factor=scale, mode='bilinear', align_corners=False)
+        image2 = F.interpolate(image2[None], scale_factor=scale, mode='bilinear', align_corners=False)
+        image1 = image1[0]
+        image2 = image2[0]
+        scale_image1_path = os.path.join(output_path, image1_name_noext + f'-{scale}.png')
+        cv2.imwrite(scale_image1_path, image1.permute(1, 2, 0).numpy())
+        print(f"Save scaled image1 to {scale_image1_path}")
+        scale_image2_path = os.path.join(output_path, image2_name_noext + f'-{scale}.png')
+        cv2.imwrite(scale_image2_path, image2.permute(1, 2, 0).numpy())
+        print(f"Save scaled image2 to {scale_image2_path}")
         
+        if flow_gt is not None:
+            flow_gt = cv2.resize(flow_gt, None, fx=scale, fy=scale, interpolation=cv2.INTER_LINEAR)
+            flow_gt = flow_gt * [scale, scale]        
+            flow_gt_img = flow_viz.flow_to_image(flow_gt)
+            scale_flow_path = os.path.join(output_path, image1_name_noext + f'-flow-{scale}.png')
+            cv2.imwrite(scale_flow_path, flow_gt_img[..., ::-1])
+            print(f"Save scaled flow gt to {scale_flow_path}")
+
+    # Shift image1 pixels along x and y axes.
+    image1, _, val_mask = shift_pixels(image1, None, xy_shift)
+
+    if xy_shift is not None:
+        image1_np = image1.permute(1, 2, 0).numpy()
+        shift_image1_path = os.path.join(output_path, image1_name_noext + f'-{x_shift},{y_shift}.png')
+        cv2.imwrite(shift_image1_path, image1_np)
+        print(f"Save shifted image1 to {shift_image1_path}")
+
+        if flow_gt is not None:
+            shift_flow_gt = shift_flow(flow_gt, xy_shift)
+            shift_flow_img = flow_viz.flow_to_image(shift_flow_gt)
+            shift_flow_path = os.path.join(output_path, image1_name_noext + f'-{x_shift},{y_shift}-flow.png')
+            cv2.imwrite(shift_flow_path, shift_flow_img[..., ::-1])
+            print(f"Save shifted flow to {shift_flow_path}")
+            flow_gt = shift_flow_gt
+
     padder = InputPadder(image1.shape, mode='kitti')
     image1, image2 = padder.pad(image1[None].to(f'cuda:{model.device_ids[0]}'), image2[None].to(f'cuda:{model.device_ids[0]}'))
 
     _, flow_pr = model.module(image1, image2, iters=iters, test_mode=test_mode)
-    flow = padder.unpad(flow_pr[0]).permute(1, 2, 0).cpu().numpy()
+    flow = flow_pr[0].cpu() + offset_tensor
+    flow = padder.unpad(flow).permute(1, 2, 0).numpy()
 
-    # split image1_path into path and file name
-    _, image1_name = os.path.split(image1_path)
-    # split file name into file name and extension
-    image1_name_noext, _ = os.path.splitext(image1_name)
-    output_filename = os.path.join(output_path, image1_name_noext + f"-{model_name}-{iters}.png")
+    if flow_gt is not None:
+        breakpoint()
+        epe = np.sqrt(np.sum((flow - flow_gt)**2, axis=2)[val_mask])
+        epe = epe.mean()
+        print(f"EPE: {epe:.4f}")
+
     #frame_utils.writeFlowKITTI(output_filename, flow)
     flow_img = flow_viz.flow_to_image(flow)
     image = Image.fromarray(flow_img)
-    image.save(output_filename)
+    image.save(flow_filepath)
 
-    print(f"Generated flow {output_filename}.")
+    print(f"Generated flow {flow_filepath}.")
 
 def fix_checkpoint(args, model):
     checkpoint = torch.load(args.model, map_location='cuda')
@@ -1091,6 +1183,7 @@ if __name__ == '__main__':
     parser.add_argument('--slowset', type=str, help="slowflow set for evaluation, e.g. 300,3")
     parser.add_argument('--img1', type=str, default=None, help="first image for evaluation")
     parser.add_argument('--img2', type=str, default=None, help="second image for evaluation")
+    parser.add_argument('--flow', type=str, default=None, help="ground truth flow")
     parser.add_argument('--output', type=str, default="output", help="output directory")
 
     parser.add_argument('--verbose', action='store_true', help="print stats every 100 iterations")
@@ -1124,6 +1217,7 @@ if __name__ == '__main__':
     parser.add_argument('--bs', dest='batch_size', default=2, type=int, 
                         help='Batch size')
 
+    parser.add_argument('--scale', dest='scale', default=1, type=float)
     parser.add_argument('--xshifts', dest='x_shifts', default=None, type=str, 
                         help='Shift image1 pixels along x with these offsets')
     parser.add_argument('--yshifts', dest='y_shifts', default=None, type=str, 
@@ -1208,10 +1302,11 @@ if __name__ == '__main__':
         y_shifts = [int(y) for y in args.y_shifts.split(',')]
         args.xy_shifts = list(zip(x_shifts, y_shifts))
     else:
-        args.xy_shifts = [(0, 0)]
+        args.xy_shifts = [None]
 
     if args.img1 is not None:
-        gen_flow(model, model_name, args.iters, args.img1, args.img2, args.output)
+        gen_flow(model, model_name, args.iters, args.img1, args.img2, args.flow, args.output, 
+                 scale=args.scale, xy_shift=args.xy_shifts[0])
         exit(0)
 
     if args.dataset == 'sintel' and (args.submit or args.vis):
