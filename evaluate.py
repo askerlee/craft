@@ -209,10 +209,13 @@ def validate_chairs(model, iters=6, test_mode=1):
 
 
 @torch.no_grad()
-def validate_things(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1, verbose=False):
+def validate_things(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1, 
+                    verbose=False, seg_interval=-1):
     """ Perform evaluation on the FlyingThings (test) split """
     model.eval()
     results = {}
+    if seg_interval == -1:
+        seg_interval = 100
     mag_endpoints = [3, 5, 10, np.inf]
     if xy_shift is not None:
         x_shift, y_shift = xy_shift
@@ -291,7 +294,7 @@ def validate_things(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1
             val_count += len(image1)
             segs_len.append(len(image1))
 
-            if val_count % 100 == 0 or val_count >= max_val_count:
+            if (seg_interval > 0 and val_count % seg_interval == 0) or val_count >= max_val_count:
                 epe_seg     = np.concatenate(epe_seg)
                 mean_epe    = np.mean(epe_seg)
                 px1 = np.mean(epe_seg < 1)
@@ -354,10 +357,13 @@ def validate_things(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1
 
 
 @torch.no_grad()
-def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1, verbose=False):
+def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1, 
+                    verbose=False, seg_interval=-1):
     """ Peform validation using the Sintel (train) split """
     model.eval()
     results = {}
+    if seg_interval == -1:
+        seg_interval = 100
     mag_endpoints = [3, 5, 10, np.inf]
     if xy_shift is not None:
         x_shift, y_shift = xy_shift
@@ -436,7 +442,7 @@ def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1
             val_count += len(image1)
             segs_len.append(len(image1))
 
-            if val_count % 100 == 0 or val_count >= max_val_count:
+            if (seg_interval > 0 and val_count % seg_interval == 0) or val_count >= max_val_count:
                 epe_seg     = np.concatenate(epe_seg)
                 mean_epe    = np.mean(epe_seg)
                 px1 = np.mean(epe_seg < 1)
@@ -593,13 +599,17 @@ def separate_inout_sintel_occ():
         # imageio.imwrite(img_path, in_frame.int().numpy() * 255)
 
 @torch.no_grad()
-def validate_hd1k(model, iters=6, test_mode=1):
+def validate_hd1k(model, iters=6, test_mode=1, seg_interval=-1):
     """ Peform validation using the HD1k data """
     model.eval()
     results = {}
     val_dataset = datasets.HD1K()
+
+    if seg_interval == -1:
+        seg_interval = 100    
     epe_list = []
-    
+    val_count = 0
+
     for val_id in range(len(val_dataset)):
         image1, image2, flow_gt, _, _ = val_dataset[val_id]
         image1 = image1[None].cuda()
@@ -618,8 +628,9 @@ def validate_hd1k(model, iters=6, test_mode=1):
 
         epe = torch.sum((flow - flow_gt)**2, dim=0).sqrt()
         epe_list.append(epe.view(-1).numpy())
+        val_count += len(image1)
 
-        if val_id % 100 == 0:
+        if seg_interval > 0 and val_count % seg_interval == 0:
             print(f"{val_id}/{len(val_dataset)}")
             epe_all = np.concatenate(epe_list)
             epe = np.mean(epe_all)
@@ -681,7 +692,8 @@ def validate_kitti(model, iters=6, test_mode=1):
 
 # Set max_val_count=-1 to evaluate the whole dataset.
 @torch.no_grad()
-def validate_viper(model, iters=6, test_mode=1, batch_size=2, max_val_count=500, verbose=False):
+def validate_viper(model, iters=6, test_mode=1, batch_size=2, max_val_count=500, 
+                   verbose=False, seg_interval=100):
     """ Peform validation using the VIPER validation split """
     model.eval()
     # original size: (1080, 1920).
@@ -696,6 +708,8 @@ def validate_viper(model, iters=6, test_mode=1, batch_size=2, max_val_count=500,
                                    
     out_list, epe_list = {}, {}
     out_seg,  epe_seg  = [], []
+    if seg_interval == -1:
+        seg_interval = 100    
     mag_endpoints = [3, 5, 10, np.inf]
     segs_len = []
     mags_seg = {}
@@ -763,7 +777,7 @@ def validate_viper(model, iters=6, test_mode=1, batch_size=2, max_val_count=500,
         val_count += len(image1)
         segs_len.append(len(image1))
 
-        if val_count % 100 == 0 or val_count >= max_val_count:
+        if (seg_interval > 0 and val_count % seg_interval == 0) or val_count >= max_val_count:
             epe_seg     = np.concatenate(epe_seg)
             out_seg     = np.concatenate(out_seg)
             mean_epe    = np.mean(epe_seg)
@@ -829,7 +843,7 @@ def validate_viper(model, iters=6, test_mode=1, batch_size=2, max_val_count=500,
 # Set max_val_count=-1 to evaluate the whole dataset.
 @torch.no_grad()
 def validate_slowflow(model, iters=6, test_mode=1, xy_shift=None, 
-                      blur_set=(100, 0), verbose=False):
+                      blur_set=(100, 0), verbose=False, seg_interval=-1):
     """ Peform validation using the VIPER validation split """
     model.eval()
 
@@ -841,7 +855,7 @@ def validate_slowflow(model, iters=6, test_mode=1, xy_shift=None,
     scale_tensor = torch.tensor([scale, scale]).reshape(2, 1, 1)
 
     out_list, epe_list = {}, {}
-    out_seg,  epe_seg  = [], []
+    out_seg,  epe_seg  = [], []  
     mag_endpoints = [3, 5, 10, np.inf]
     segs_len = []
     mags_seg = {}
@@ -923,7 +937,8 @@ def validate_slowflow(model, iters=6, test_mode=1, xy_shift=None,
         val_count += len(image1)
         segs_len.append(len(image1))
 
-        if (prev_scene and scene != prev_scene) or val_count >= max_val_count:
+        if (prev_scene and scene != prev_scene) or (seg_interval > 0 and val_count % seg_interval == 0) \
+          or val_count >= max_val_count:
             epe_seg     = np.concatenate(epe_seg)
             out_seg     = np.concatenate(out_seg)
             mean_epe    = np.mean(epe_seg)
@@ -1077,7 +1092,10 @@ if __name__ == '__main__':
     parser.add_argument('--img1', type=str, default=None, help="first image for evaluation")
     parser.add_argument('--img2', type=str, default=None, help="second image for evaluation")
     parser.add_argument('--output', type=str, default="output", help="output directory")
+    
     parser.add_argument('--verbose', action='store_true', help="print stats every 100 iterations")
+    parser.add_argument('--seginterval', dest='seg_interval', 
+                        type=int, default=-1, help="print stats every N iterations")
 
     parser.add_argument('--craft', dest='craft', action='store_true', 
                         help='use craft (Cross-Attentional Flow Transformer)')
@@ -1222,11 +1240,13 @@ if __name__ == '__main__':
 
             elif args.dataset == 'things':
                 validate_things(model.module, iters=args.iters, test_mode=args.test_mode, 
-                                max_val_count=args.max_val_count, xy_shift=xy_shift, verbose=args.verbose)
+                                max_val_count=args.max_val_count, xy_shift=xy_shift, 
+                                verbose=args.verbose, seg_interval=args.seg_interval)
 
             elif args.dataset == 'sintel':
                 validate_sintel(model.module, iters=args.iters, test_mode=args.test_mode, 
-                                max_val_count=args.max_val_count, xy_shift=xy_shift, verbose=args.verbose)
+                                max_val_count=args.max_val_count, xy_shift=xy_shift, 
+                                verbose=args.verbose, seg_interval=args.seg_interval)
 
             elif args.dataset == 'sintel_occ':
                 validate_sintel_occ(model.module, iters=args.iters, test_mode=args.test_mode)
@@ -1236,7 +1256,8 @@ if __name__ == '__main__':
 
             elif args.dataset == 'viper':
                 validate_viper(model.module, iters=args.iters, test_mode=args.test_mode, 
-                            max_val_count=args.max_val_count, batch_size=args.batch_size)
+                            max_val_count=args.max_val_count, batch_size=args.batch_size,
+                            verbose=args.verbose, seg_interval=args.seg_interval)
 
             elif args.dataset == 'slowflow':
                 sf_blur_mag, sf_blur_num_frames = args.slowset.split(",")
@@ -1245,8 +1266,9 @@ if __name__ == '__main__':
                 validate_slowflow(model.module, iters=args.iters, test_mode=args.test_mode,
                                   xy_shift=xy_shift,
                                   blur_set=(sf_blur_mag, sf_blur_num_frames),
-                                  verbose=args.verbose)
+                                  verbose=args.verbose, seg_interval=args.seg_interval)
 
             elif args.dataset == 'hd1k':
-                validate_hd1k(model.module, iters=args.iters, test_mode=args.test_mode)
+                validate_hd1k(model.module, iters=args.iters, test_mode=args.test_mode, 
+                              seg_interval=args.seg_interval)
 

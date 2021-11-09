@@ -515,6 +515,9 @@ class CrossAttFeatTrans(SETransInitWeights):
         attention_scores = torch.matmul(query_layer, key_layer.transpose(-1, -2)) # [B0, 4, U1, 448] [B0, 4, 448, U2]
         attention_scores = attention_scores / math.sqrt(self.attention_mode_dim)  # [B0, 4, U1, U2]
 
+        if self.call_count == 0:
+            print(f"{self.name} query: {list(query_feat.shape)}, attn: {list(attention_scores.shape)}")
+
         with torch.no_grad():
             curr_max_attn = attention_scores.max().item()
             curr_avg_attn = attention_scores.abs().mean().item()
@@ -526,8 +529,8 @@ class CrossAttFeatTrans(SETransInitWeights):
             attention_scores = torch.clamp(attention_scores, -self.attn_clip, self.attn_clip)
             self.clamp_count += 1
         
+        self.call_count += 1
         if self.training:
-            self.call_count += 1
             if self.call_count % self.attn_diag_cycles == 0:
                 print("max-attn: {:.2f}, avg-attn: {:.2f}, clamp-count: {}".format(self.max_attn, curr_avg_attn, self.clamp_count))
                 self.max_attn    = 0
