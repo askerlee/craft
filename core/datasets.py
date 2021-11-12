@@ -31,13 +31,17 @@ class FlowDataset(data.Dataset):
         self.init_seed = False
         self.flow_list = []
         self.image_list = []
-        self.extra_info = []
+        self.extra_info = None
         self.occ_list = None
         self.seg_list = None
         self.seg_inv_list = None
 
     def __getitem__(self, index):
-
+        if self.extra_info is not None:
+            extra_info = self.extra_info[index]
+        else:
+            extra_info = None
+            
         if self.is_test:
             img1 = frame_utils.read_gen(self.image_list[index][0])
             img2 = frame_utils.read_gen(self.image_list[index][1])
@@ -45,7 +49,7 @@ class FlowDataset(data.Dataset):
             img2 = np.array(img2).astype(np.uint8)[..., :3]
             img1 = torch.from_numpy(img1).permute(2, 0, 1).float()
             img2 = torch.from_numpy(img2).permute(2, 0, 1).float()
-            return img1, img2, self.extra_info[index]
+            return img1, img2, extra_info
 
         if not self.init_seed:
             worker_info = torch.utils.data.get_worker_info()
@@ -118,7 +122,7 @@ class FlowDataset(data.Dataset):
         elif self.seg_list is not None and self.seg_inv_list is not None:
             return img1, img2, flow, valid.float(), seg_map, seg_inv
         else:
-            return img1, img2, flow, valid.float(), self.extra_info[index]
+            return img1, img2, flow, valid.float(), extra_info
 
     def __rmul__(self, v):
         self.flow_list = v * self.flow_list
@@ -139,6 +143,7 @@ class MpiSintel(FlowDataset):
         # occ_root = osp.join(root, split, 'occ_plus_out')
         # occ_root = osp.join(root, split, 'in_frame_occ')
         # occ_root = osp.join(root, split, 'out_of_frame')
+        self.extra_info = []
 
         seg_root = osp.join(root, split, 'segmentation')
         seg_inv_root = osp.join(root, split, 'segmentation_invalid')
@@ -153,6 +158,7 @@ class MpiSintel(FlowDataset):
         if split == 'test':
             self.is_test = True
 
+        
         for scene in sorted(os.listdir(image_root)):
             image_list = sorted(glob(osp.join(image_root, scene, '*.png')))
             for i in range(len(image_list)-1):
@@ -238,6 +244,8 @@ class FlyingThings3D(FlowDataset):
 class KITTI(FlowDataset):
     def __init__(self, aug_params=None, split='training', root='datasets/KITTI'):
         super(KITTI, self).__init__(aug_params, sparse=True)
+        self.extra_info = []
+
         if split == 'testing':
             self.is_test = True
 
@@ -277,6 +285,7 @@ class Autoflow(FlowDataset):
         super(Autoflow, self).__init__(aug_params)
         scene_count = len(os.listdir(root))
         training_size = int(scene_count * 0.9)
+        self.extra_info = []
         
         for i, scene in enumerate(sorted(os.listdir(root))):
             if split == 'training' and i <= training_size or \
@@ -298,6 +307,8 @@ class VIPER(FlowDataset):
         split_img_root  = osp.join(root, filetype, split, 'img')
         split_flow_root = osp.join(root, filetype, split, 'flow')
         skip_count = 0
+        self.extra_info = []
+
         if split == 'test':
             # 001_00001, 001_00076, ...
             TEST_FRAMES = open(osp.join(root, "test_frames.txt"))
@@ -360,6 +371,7 @@ class SlowFlow(FlowDataset):
         print(sequence_root)
         flow_root = osp.join(root, str(blur_mag), 'flow')
         skip_count = 0
+        self.extra_info = []
 
         for i, scene in enumerate(sorted(os.listdir(sequence_root))):
             # scene: Animals, Ball...
