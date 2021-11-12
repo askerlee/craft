@@ -40,7 +40,7 @@ class FlowDataset(data.Dataset):
         if self.extra_info is not None:
             extra_info = self.extra_info[index]
         else:
-            extra_info = None
+            extra_info = 0
             
         if self.is_test:
             img1 = frame_utils.read_gen(self.image_list[index][0])
