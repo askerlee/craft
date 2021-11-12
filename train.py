@@ -19,6 +19,7 @@ import torch.optim as optim
 
 from network import CRAFT
 from raft import RAFT
+from craft_nogma import CRAFT_nogma
 from utils import flow_viz
 import datasets
 import evaluate
@@ -174,9 +175,11 @@ def load_checkpoint(args, model, optimizer, lr_scheduler, logger):
         print("Logger NOT loaded.")
         
 def main(args):
-
     if args.raft:
-        model = nn.DataParallel(RAFT(args), device_ids=args.gpus)
+        if args.nogma:
+            model = nn.DataParallel(CRAFT_nogma(args), device_ids=args.gpus)
+        else:
+            model = nn.DataParallel(RAFT(args), device_ids=args.gpus)
     else:    
         model = nn.DataParallel(CRAFT(args), device_ids=args.gpus)
 
@@ -311,8 +314,8 @@ if __name__ == '__main__':
                         help='use craft (Cross-Attentional Flow Transformer)')
     parser.add_argument('--setrans', dest='setrans', action='store_true', 
                         help='use setrans (Squeeze-Expansion Transformer) as the intra-frame attention')
-    parser.add_argument('--raft', action='store_true', 
-                        help='use raft')
+    parser.add_argument('--raft', action='store_true', help='use raft')
+    parser.add_argument('--nogma', action='store_true', help='(ablation) Do not use GMA')
 
     parser.add_argument('--validation', type=str, nargs='+')
     parser.add_argument('--restore_ckpt', help="restore checkpoint")

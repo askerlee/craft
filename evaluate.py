@@ -13,6 +13,7 @@ import cv2
 
 from network import CRAFT
 from raft import RAFT
+from craft_nogma import CRAFT_nogma
 import network
 # back-compatible with older checkpoints.
 network.RAFTER = CRAFT
@@ -93,11 +94,13 @@ def shift_flow(flow, xy_shift):
 
 @torch.no_grad()
 def create_sintel_submission_vis(model_name, model, warm_start=False, output_path='sintel_submission',
-                                 test_mode=1, do_vis=False):
+                                 test_mode=1, do_vis=False, split='test'):
     """ Create submission for the Sintel leaderboard """
     model.eval()
     for dstype in ['clean', 'final']:
-        test_dataset = datasets.MpiSintel(split='test', aug_params=None, dstype=dstype)
+        test_dataset = datasets.MpiSintel(split=split, aug_params=None, dstype=dstype)
+        # If split==training, we manually set test_dataset to test mode.
+        test_dataset.is_test = True
 
         flow_prev, scene_prev = None, None
         for test_id in range(len(test_dataset)):
@@ -115,14 +118,14 @@ def create_sintel_submission_vis(model_name, model, warm_start=False, output_pat
             if do_vis:
                 flow_img = flow_viz.flow_to_image(flow)
                 flow_image = Image.fromarray(flow_img)
-                if not os.path.exists(f'vis_sintel/{model_name}/{dstype}/{scene}'):
-                    os.makedirs(f'vis_sintel/{model_name}/{dstype}/{scene}')
+                if not os.path.exists(f'vis_sintel/{split}/{model_name}/{dstype}/{scene}'):
+                    os.makedirs(f'vis_sintel/{split}/{model_name}/{dstype}/{scene}')
 
                 #if not os.path.exists(f'vis_test/gt/{dstype}/{scene}'):
                 #    os.makedirs(f'vis_test/gt/{dstype}/{scene}')
 
                 # image.save(f'vis_test/ours/{dstype}/flow/{test_id}.png')
-                flow_image.save(f'vis_sintel/{model_name}/{dstype}/{scene}/frame_{frame_id+1:04d}.png')
+                flow_image.save(f'vis_sintel/{split}/{model_name}/{dstype}/{scene}/frame_{frame_id+1:04d}.png')
                 #imageio.imwrite(f'vis_test/gt/{dstype}/{scene}/{frame_id+1}.png', image1[0].cpu().permute(1, 2, 0).numpy())
 
             if warm_start:
@@ -1103,7 +1106,8 @@ def gen_flow(model, model_name, iters, image1_path, image2_path, flow_path=None,
             flow_gt = flow_gt * [scale, scale]        
             flow_gt_img = flow_viz.flow_to_image(flow_gt)
             scale_flow_path = os.path.join(output_path, image1_name_noext + f'-flow-{scale}.png')
-            cv2.imwrite(scale_flow_path, flow_gt_img[..., ::-1])
+            Image.fromarray(flow_gt_img).save(scale_flow_path)
+            # cv2.imwrite(scale_flow_path, flow_gt_img[..., ::-1])
             print(f"Save scaled flow gt to {scale_flow_path}")
 
     # Shift image1 pixels along x and y axes.
@@ -1123,19 +1127,41 @@ def gen_flow(model, model_name, iters, image1_path, image2_path, flow_path=None,
             print(f"Save shifted flow gt to {shift_flow_path}")
             flow_gt = shift_flow_gt
 
-    padder = InputPadder(image1.shape, mode='kitti')
+    padder = InputPadder(image1.shape) #, mode='kitti')
     image1, image2 = padder.pad(image1[None].to(f'cuda:{model.device_ids[0]}'), image2[None].to(f'cuda:{model.device_ids[0]}'))
 
     _, flow_pr = model.module(image1, image2, iters=iters, test_mode=test_mode)
     flow = flow_pr[0].cpu() + offset_tensor
     flow = padder.unpad(flow).permute(1, 2, 0).numpy()
+    flow[~val_mask] = 0
 
     if flow_gt is not None:
         epe = np.sqrt(np.sum((flow - flow_gt)**2, axis=2)[val_mask])
         epe = epe.mean()
         print(f"EPE: {epe:.4f}")
 
-    #frame_utils.writeFlowKITTI(output_filename, flow)
+        gt_rad   = np.sqrt(np.square(flow_gt[..., 0]) + np.square(flow_gt[..., 1]))
+        flow_rad = np.sqrt(np.square(flow[..., 0])    + np.square(flow[..., 1]))
+        gt_max_rad = gt_rad.max()
+        total_pixel_count = val_mask.sum()
+        exceed_counts = (flow_rad > gt_max_rad).sum()
+        exceed_ratio  = exceed_counts / total_pixel_count
+        print(f"{exceed_counts}/{exceed_ratio*100:.1f}% pixels exceed max gt flow radius {gt_max_rad:.4f}, ", end="")
+        # flow_to_image() normalizes the whole flow with the maximum radius. 
+        # If the maximum radius of flow is different from the maximum radius of flow_gt, 
+        # the flow image will look quite different from the flow_gt image, 
+        # even if they are numerically very close (e.g. EPE 1.xx).
+        # However, if too many pixels are beyond the max gt flow radius, 
+        # then do not clip the radiuses of these pixels.
+        # Otherwise, the flow image will become a monotonic blob and lose all details.
+        if exceed_ratio > 0 and exceed_ratio <= 0.1:
+            scales = np.ones_like(flow_rad)
+            scales[flow_rad > gt_max_rad] = gt_max_rad / flow_rad[flow_rad > gt_max_rad]
+            flow = flow * np.expand_dims(scales, 2)
+            print("Clip these radiuses.")
+        else:
+            print("Do not clip radiuses.")
+
     flow_img = flow_viz.flow_to_image(flow)
     image = Image.fromarray(flow_img)
     image.save(flow_filepath)
@@ -1178,6 +1204,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', help="restore checkpoint")
     parser.add_argument('--dataset', help="dataset for evaluation")
+    parser.add_argument('--split', type=str, default="test", help="split of dataset for evaluation")
     parser.add_argument('--slowset', type=str, help="slowflow set for evaluation, e.g. 300,3")
     parser.add_argument('--img1', type=str, default=None, help="first image for evaluation")
     parser.add_argument('--img2', type=str, default=None, help="second image for evaluation")
@@ -1194,6 +1221,7 @@ if __name__ == '__main__':
                         help='use setrans (Squeeze-Expansion Transformer)')
     parser.add_argument('--raft', action='store_true', 
                         help='use raft')
+    parser.add_argument('--nogma', action='store_true', help='(ablation) Do not use GMA')
 
     parser.add_argument('--iters', type=int, default=12)
     parser.add_argument('--num_heads', default=1, type=int,
@@ -1268,7 +1296,10 @@ if __name__ == '__main__':
         sys.exit()
 
     if args.raft:
-        model = nn.DataParallel(RAFT(args))
+        if args.nogma:
+            model = nn.DataParallel(CRAFT_nogma(args), device_ids=args.gpus)
+        else:        
+            model = nn.DataParallel(RAFT(args))
     else:    
         model = nn.DataParallel(CRAFT(args))
     
@@ -1309,7 +1340,7 @@ if __name__ == '__main__':
 
     if args.dataset == 'sintel' and (args.submit or args.vis):
         create_sintel_submission_vis(model_name, model, warm_start=True,
-                                     do_vis=args.vis)
+                                     do_vis=args.vis, split=args.split)
         exit(0)
 
     if args.dataset == 'kitti' and (args.submit or args.vis):
