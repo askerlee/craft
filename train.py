@@ -176,10 +176,9 @@ def load_checkpoint(args, model, optimizer, lr_scheduler, logger):
         
 def main(args):
     if args.raft:
-        if args.nogma:
-            model = nn.DataParallel(CRAFT_nogma(args), device_ids=args.gpus)
-        else:
-            model = nn.DataParallel(RAFT(args), device_ids=args.gpus)
+        model = nn.DataParallel(RAFT(args), device_ids=args.gpus)
+    elif args.nogma:
+        model = nn.DataParallel(CRAFT_nogma(args), device_ids=args.gpus)
     else:    
         model = nn.DataParallel(CRAFT(args), device_ids=args.gpus)
 

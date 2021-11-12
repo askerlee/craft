@@ -1296,10 +1296,9 @@ if __name__ == '__main__':
         sys.exit()
 
     if args.raft:
-        if args.nogma:
-            model = nn.DataParallel(CRAFT_nogma(args), device_ids=args.gpus)
-        else:        
-            model = nn.DataParallel(RAFT(args))
+        model = nn.DataParallel(RAFT(args), device_ids=args.gpus)
+    elif args.nogma:
+        model = nn.DataParallel(CRAFT_nogma(args), device_ids=args.gpus)
     else:    
         model = nn.DataParallel(CRAFT(args))
     
