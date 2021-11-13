@@ -5,6 +5,7 @@ import math
 from utils.utils import bilinear_sampler, coords_grid
 # from compute_sparse_correlation import compute_sparse_corr, compute_sparse_corr_torch, compute_sparse_corr_mink
 from setrans import CrossAttFeatTrans, gen_all_indices, SETransInputFeatEncoder
+import os
 
 try:
     import alt_cuda_corr
@@ -25,12 +26,17 @@ class CorrBlock:
 
         batch, h1, w1, dim, h2, w2 = corr.shape
         if self.do_corr_global_norm:
-            corr_3d = corr.permute(0, 3, 1, 2, 4, 5).view(B, dim, -1)
+            corr_3d = corr.permute(0, 3, 1, 2, 4, 5).view(batch, dim, -1)
             corr_normed = F.layer_norm( corr_3d, (corr_3d.shape[2],), eps=1e-12 )
             corr = corr_normed.view(batch, dim, h1, w1, h2, w2).permute(0, 2, 3, 1, 4, 5)
 
         corr = corr.reshape(batch * h1 * w1, dim, h2, w2)
-
+        if 'SAVECORR' in os.environ:
+            corr_savepath = os.environ['SAVECORR']
+            corr2 = corr.reshape(batch, h1, w1, h2, w2)
+            torch.save(corr2, corr_savepath)
+            print(f"corr tensor saved to {corr_savepath}")
+            
         self.corr_pyramid.append(corr)
         for i in range(self.num_levels - 1):
             corr = F.avg_pool2d(corr, 2, stride=2)
@@ -56,8 +62,10 @@ class CorrBlock:
             corr = corr.view(batch, h1, w1, -1)
             out_pyramid.append(corr)
 
+        # Concatenate the four levels (4 resolutions of neighbors), 
+        # and permute the neighbors to the channel dimension.
         out = torch.cat(out_pyramid, dim=-1)
-        # [batch, neighbors, h1, w1]
+        # [batch, number of neighbors, h1, w1]
         return out.permute(0, 3, 1, 2).contiguous().float()
 
     @staticmethod

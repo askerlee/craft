@@ -4,6 +4,18 @@
 4 Validation KITTI: 0.606827, 1.405475
 5 Validation KITTI: 0.578238, 1.348295
 
+Evaluate on 143.182:
+0.577845, 1.340409
+
+Removing corr_fn pos_biases (slightly worse):
+0.579336, 1.354281
+
+Removing f2trans pos_biases (slightly worse):
+0.578142, 1.340872
+
+Removing both (moderately worse):
+0.579635, 1.355114
+
 env CUDA_VISIBLE_DEVICES=0,3 python train.py --name craft-kitti --stage kitti --validation kitti --output results/kitti/craft --restore_ckpt results/sintel/craft/craft-sintel.pth --num_steps 50000 --lr 0.000125 --image_size 288 960 --wdecay 0.00001 --gamma 0.85 --gpus 0 1 --batch_size 6 --val_freq 10000 --print_freq 100 --mixed_precision --setrans --craft --corrnorm global --f2trans 
 
 Time: 09191453

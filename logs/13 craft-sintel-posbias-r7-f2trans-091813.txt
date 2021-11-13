@@ -27,6 +27,14 @@ validate_sintel:
 12  Valid (clean) EPE: 0.607844, 1px: 0.929505, 3px: 0.971988, 5px: 0.981925, 0-3 0.11, 3-5 0.22, 5-10 0.34, 10-inf 1.58
 12  Valid (final) EPE: 1.066055, 1px: 0.893766, 3px: 0.951289, 5px: 0.967212, 0-3 0.13, 3-5 0.48, 5-10 0.47, 10-inf 2.88
 
+Setting corr_fn pos_biases to 0 (slightly better):
+Iter 0, Valid (clean) EPE: 0.604279, 1px: 0.929528, 3px: 0.971979, 5px: 0.981952, 0-3 0.11, 3-5 0.22, 5-10 0.34, 10-inf 1.56
+Iter 0, Valid (final) EPE: 1.058758, 1px: 0.893785, 3px: 0.951299, 5px: 0.967262, 0-3 0.13, 3-5 0.47, 5-10 0.47, 10-inf 2.86
+
+Setting f2_trans pos_biases to 0 (slightly worse):
+Iter 0, Valid (clean) EPE: 0.607396, 1px: 0.929473, 3px: 0.971980, 5px: 0.981945, 0-3 0.11, 3-5 0.22, 5-10 0.34, 10-inf 1.57
+Iter 0, Valid (final) EPE: 1.063384, 1px: 0.893763, 3px: 0.951280, 5px: 0.967199, 0-3 0.13, 3-5 0.47, 5-10 0.47, 10-inf 2.87
+
 validate_sintel_occ:
 Validation (clean) EPE: 0.607844, 1px: 0.929505, 3px: 0.971988, 5px: 0.981925
 Occ epe: 4.667817, Noc epe: 0.287984

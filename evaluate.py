@@ -1314,8 +1314,11 @@ if __name__ == '__main__':
         
     checkpoint = torch.load(args.model)
     if 'model' in checkpoint:
+        # Ablation study of the impact of positional biases.
         if args.craft and args.f2trans == 'full':
-            checkpoint['model']['module.f2_trans.vispos_encoder.pos_coder.biases'].zero_()
+            pass
+            #checkpoint['model']['module.corr_fn.vispos_encoder.pos_coder.biases'].zero_()
+            #checkpoint['model']['module.f2_trans.vispos_encoder.pos_coder.biases'].zero_()
         msg = model.load_state_dict(checkpoint['model'], strict=False)
     else:
         # Load old checkpoint.

@@ -202,8 +202,8 @@ class CRAFT(nn.Module):
         flow_predictions = []
         for itr in range(iters):
             coords1 = coords1.detach()
-            # corr: [6, 324, 50, 90]. 324: neighbors. 
-            # radius = 4 -> neighbor points = (4*2+1)^2 = 81. Upsize x4 -> 324.
+            # corr: [6, 324, 50, 90]. 324: number of points in the neighborhood. 
+            # radius = 4 -> neighbor points = (4*2+1)^2 = 81. 4 levels: x4 -> 324.
             corr = self.corr_fn(coords1)  # index correlation volume
             flow = coords1 - coords0
             
