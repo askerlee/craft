@@ -26,7 +26,7 @@ class FlowDataset(data.Dataset):
             else:
                 self.augmentor = FlowAugmentor(**aug_params)
 
-        # if is_test, do not return flow (only for LB evaluation).
+        # if is_test, do not return flow (only for LB submission).
         self.is_test = False
         self.init_seed = False
         self.flow_list = []
@@ -42,6 +42,8 @@ class FlowDataset(data.Dataset):
         else:
             extra_info = 0
             
+        # if is_test, do not return flow (only for LB submission).
+        # If there's groundtruth flow, then is_test=False, e.g. on chairs and things.
         if self.is_test:
             img1 = frame_utils.read_gen(self.image_list[index][0])
             img2 = frame_utils.read_gen(self.image_list[index][1])
@@ -449,7 +451,7 @@ def fetch_dataloader(args, SINTEL_TRAIN_DS='C+T+K+S+H'):
         train_dataset = VIPER(aug_params, split='training')
 
     train_loader = data.DataLoader(train_dataset, batch_size=args.batch_size,
-                                   pin_memory=True, shuffle=True, num_workers=4, drop_last=True)
+                                   pin_memory=True, shuffle=True, num_workers=args.num_workers, drop_last=True)
 
     print('Training with %d image pairs' % len(train_dataset))
     return train_loader

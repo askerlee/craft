@@ -332,6 +332,8 @@ if __name__ == '__main__':
     parser.add_argument('--lr', type=float, default=0.00002)
     parser.add_argument('--num_steps', type=int, default=100000)
     parser.add_argument('--batch_size', type=int, default=6)
+    parser.add_argument('--workers', dest='num_workers', type=int, default=4)
+
     parser.add_argument('--image_size', type=int, nargs='+', default=[384, 512])
     parser.add_argument('--gpus', type=int, nargs='+', default=[0, 1])
 

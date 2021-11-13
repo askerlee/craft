@@ -1068,7 +1068,6 @@ def gen_flow(model, model_name, iters, image1_path, image2_path, flow_path=None,
     image1_name_noext, _ = os.path.splitext(image1_name)
     _, image2_name = os.path.split(image2_path)
     image2_name_noext, _ = os.path.splitext(image2_name)
-    flow_filepath = os.path.join(output_path, image1_name_noext + f"-{model_name}-{iters}.png")
 
     image1 = frame_utils.read_gen(image1_path)
     image2 = frame_utils.read_gen(image2_path)
@@ -1130,43 +1129,50 @@ def gen_flow(model, model_name, iters, image1_path, image2_path, flow_path=None,
     padder = InputPadder(image1.shape) #, mode='kitti')
     image1, image2 = padder.pad(image1[None].to(f'cuda:{model.device_ids[0]}'), image2[None].to(f'cuda:{model.device_ids[0]}'))
 
-    _, flow_pr = model.module(image1, image2, iters=iters, test_mode=test_mode)
-    flow = flow_pr[0].cpu() + offset_tensor
-    flow = padder.unpad(flow).permute(1, 2, 0).numpy()
-    flow[~val_mask] = 0
+    _, flow_prs = model.module(image1, image2, iters=iters, test_mode=test_mode)
+    # if test_mode = 1, flow_pr: [1, 2, 512, 640]
+    # if test_mode = 2, flow_pr is a list of flow fields, each field is [1, 2, 512, 640].
+    if test_mode == 1:
+        flow_prs = [ flow_prs ]
 
-    if flow_gt is not None:
-        epe = np.sqrt(np.sum((flow - flow_gt)**2, axis=2)[val_mask])
-        epe = epe.mean()
-        print(f"EPE: {epe:.4f}")
+    for it, flow_pr in enumerate(flow_prs):
+        flow = flow_pr[0].cpu() + offset_tensor
+        flow = padder.unpad(flow).permute(1, 2, 0).numpy()
+        flow[~val_mask] = 0
 
-        gt_rad   = np.sqrt(np.square(flow_gt[..., 0]) + np.square(flow_gt[..., 1]))
-        flow_rad = np.sqrt(np.square(flow[..., 0])    + np.square(flow[..., 1]))
-        gt_max_rad = gt_rad.max()
-        total_pixel_count = val_mask.sum()
-        exceed_counts = (flow_rad > gt_max_rad).sum()
-        exceed_ratio  = exceed_counts / total_pixel_count
-        print(f"{exceed_counts}/{exceed_ratio*100:.1f}% pixels exceed max gt flow radius {gt_max_rad:.4f}, ", end="")
-        # flow_to_image() normalizes the whole flow with the maximum radius. 
-        # If the maximum radius of flow is different from the maximum radius of flow_gt, 
-        # the flow image will look quite different from the flow_gt image, 
-        # even if they are numerically very close (e.g. EPE 1.xx).
-        # However, if too many pixels are beyond the max gt flow radius, 
-        # then do not clip the radiuses of these pixels.
-        # Otherwise, the flow image will become a monotonic blob and lose all details.
-        if exceed_ratio > 0 and exceed_ratio <= 0.1:
-            scales = np.ones_like(flow_rad)
-            scales[flow_rad > gt_max_rad] = gt_max_rad / flow_rad[flow_rad > gt_max_rad]
-            flow = flow * np.expand_dims(scales, 2)
-            print("Clip these radiuses.")
-        else:
-            print("Do not clip radiuses.")
+        if flow_gt is not None:
+            epe = np.sqrt(np.sum((flow - flow_gt)**2, axis=2)[val_mask])
+            epe = epe.mean()
+            print(f"EPE: {epe:.4f}")
 
-    flow_img = flow_viz.flow_to_image(flow)
-    image = Image.fromarray(flow_img)
-    image.save(flow_filepath)
+            gt_rad   = np.sqrt(np.square(flow_gt[..., 0]) + np.square(flow_gt[..., 1]))
+            flow_rad = np.sqrt(np.square(flow[..., 0])    + np.square(flow[..., 1]))
+            gt_max_rad = gt_rad.max()
+            total_pixel_count = val_mask.sum()
+            exceed_counts = (flow_rad > gt_max_rad).sum()
+            exceed_ratio  = exceed_counts / total_pixel_count
+            print(f"{exceed_counts}/{exceed_ratio*100:.1f}% pixels exceed max gt flow radius {gt_max_rad:.4f}, ", end="")
+            # flow_to_image() normalizes the whole flow with the maximum radius. 
+            # If the maximum radius of flow is different from the maximum radius of flow_gt, 
+            # the flow image will look quite different from the flow_gt image, 
+            # even if they are numerically very close (e.g. EPE 1.xx).
+            # However, if too many pixels are beyond the max gt flow radius, 
+            # then do not clip the radiuses of these pixels.
+            # Otherwise, the flow image will become a monotonic blob and lose all details.
+            if exceed_ratio > 0 and exceed_ratio <= 0.1:
+                scales = np.ones_like(flow_rad)
+                scales[flow_rad > gt_max_rad] = gt_max_rad / flow_rad[flow_rad > gt_max_rad]
+                flow = flow * np.expand_dims(scales, 2)
+                print("Clip these radiuses.")
+            else:
+                print("Do not clip radiuses.")
 
-    print(f"Generated flow {flow_filepath}.")
+        flow_img = flow_viz.flow_to_image(flow)
+        image = Image.fromarray(flow_img)
+        flow_savepath = os.path.join(output_path, image1_name_noext + f"-{model_name}-{iters}-{it:02d}.png")
+        image.save(flow_savepath)
+
+        print(f"Generated flow {flow_savepath}.")
 
 def fix_checkpoint(args, model):
     checkpoint = torch.load(args.model, map_location='cuda')
@@ -1308,6 +1314,8 @@ if __name__ == '__main__':
         
     checkpoint = torch.load(args.model)
     if 'model' in checkpoint:
+        if args.craft and args.f2trans == 'full':
+            checkpoint['model']['module.f2_trans.vispos_encoder.pos_coder.biases'].zero_()
         msg = model.load_state_dict(checkpoint['model'], strict=False)
     else:
         # Load old checkpoint.
@@ -1334,7 +1342,7 @@ if __name__ == '__main__':
 
     if args.img1 is not None:
         gen_flow(model, model_name, args.iters, args.img1, args.img2, args.flow, args.output, 
-                 scale=args.scale, xy_shift=args.xy_shifts[0])
+                 test_mode=args.test_mode, scale=args.scale, xy_shift=args.xy_shifts[0])
         exit(0)
 
     if args.dataset == 'sintel' and (args.submit or args.vis):
