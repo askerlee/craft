@@ -36,7 +36,7 @@ class CorrBlock:
             corr2 = corr.reshape(batch, h1, w1, h2, w2)
             torch.save(corr2, corr_savepath)
             print(f"corr tensor saved to {corr_savepath}")
-            
+
         self.corr_pyramid.append(corr)
         for i in range(self.num_levels - 1):
             corr = F.avg_pool2d(corr, 2, stride=2)
@@ -159,7 +159,13 @@ class TransCorrBlock(CorrBlock, nn.Module):
         batch, h1, w1, dim, h2, w2 = corr.shape
         # Merge batch with h1 and w1 to improve efficiency. They will be separate later.
         corr = corr.reshape(batch*h1*w1, dim, h2, w2)
-        
+
+        if 'SAVECORR' in os.environ:
+            corr_savepath = os.environ['SAVECORR']
+            corr2 = corr.reshape(batch, h1, w1, h2, w2)
+            torch.save(corr2, corr_savepath)
+            print(f"corr tensor saved to {corr_savepath}")
+
         self.corr_pyramid.append(corr)
         for i in range(self.num_levels-1):
             corr = F.avg_pool2d(corr, 2, stride=2)
