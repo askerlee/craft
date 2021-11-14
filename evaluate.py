@@ -249,7 +249,7 @@ def validate_things(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1
     results = {}
     if seg_interval == -1:
         seg_interval = 100
-    mag_endpoints = [3, 5, 10, np.inf]
+    mag_endpoints = [1, 10, 20, 30, np.inf]
     if xy_shift is not None:
         x_shift, y_shift = xy_shift
         print(f"Apply x,y shift {x_shift},{y_shift}")
@@ -397,7 +397,7 @@ def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1
     results = {}
     if seg_interval == -1:
         seg_interval = 100
-    mag_endpoints = [3, 5, 10, np.inf]
+    mag_endpoints = [1, 10, 20, 30, np.inf]
     if xy_shift is not None:
         x_shift, y_shift = xy_shift
         print(f"Apply x,y shift {x_shift},{y_shift}")
