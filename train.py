@@ -371,7 +371,8 @@ if __name__ == '__main__':
                         help='Whether to use transformer on frame 2 features. '
                              'Half: do self-attention only on half of the channels')                        
     parser.add_argument('--f2posw', dest='f2_pos_code_weight', type=float, default=0.5)
-
+    parser.add_argument('--f2radius', dest='f2_attn_mask_radius', type=int, default=-1)
+ 
     parser.add_argument('--intermodes', dest='inter_num_modes', type=int, default=4, 
                         help='Number of modes in inter-frame attention')
     parser.add_argument('--intramodes', dest='intra_num_modes', type=int, default=4, 

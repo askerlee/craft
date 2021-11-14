@@ -31,11 +31,13 @@ class CorrBlock:
             corr = corr_normed.view(batch, dim, h1, w1, h2, w2).permute(0, 2, 3, 1, 4, 5)
 
         corr = corr.reshape(batch * h1 * w1, dim, h2, w2)
+
+        # Save corr for visualization
         if 'SAVECORR' in os.environ:
             corr_savepath = os.environ['SAVECORR']
-            corr2 = corr.reshape(batch, h1, w1, h2, w2)
+            corr2 = corr.detach().cpu().reshape(batch, h1, w1, h2, w2)
             torch.save(corr2, corr_savepath)
-            print(f"corr tensor saved to {corr_savepath}")
+            print(f"Corr tensor saved to {corr_savepath}")
 
         self.corr_pyramid.append(corr)
         for i in range(self.num_levels - 1):
@@ -162,9 +164,9 @@ class TransCorrBlock(CorrBlock, nn.Module):
 
         if 'SAVECORR' in os.environ:
             corr_savepath = os.environ['SAVECORR']
-            corr2 = corr.reshape(batch, h1, w1, h2, w2)
+            corr2 = corr.detach().cpu().reshape(batch, h1, w1, h2, w2)
             torch.save(corr2, corr_savepath)
-            print(f"corr tensor saved to {corr_savepath}")
+            print(f"Corr tensor saved to {corr_savepath}")
 
         self.corr_pyramid.append(corr)
         for i in range(self.num_levels-1):

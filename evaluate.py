@@ -1277,6 +1277,7 @@ if __name__ == '__main__':
                         help='Whether to use transformer on frame 2 features. '
                              'Half: do self-attention only on half of the channels')
     parser.add_argument('--f2posw', dest='f2_pos_code_weight', type=float, default=0.5)
+    parser.add_argument('--f2radius', dest='f2_attn_mask_radius', type=int, default=-1)
                             
     parser.add_argument('--intermodes', dest='inter_num_modes', type=int, default=4, 
                         help='Number of modes in inter-frame attention')
@@ -1302,9 +1303,9 @@ if __name__ == '__main__':
         sys.exit()
 
     if args.raft:
-        model = nn.DataParallel(RAFT(args), device_ids=args.gpus)
+        model = nn.DataParallel(RAFT(args))
     elif args.nogma:
-        model = nn.DataParallel(CRAFT_nogma(args), device_ids=args.gpus)
+        model = nn.DataParallel(CRAFT_nogma(args))
     else:    
         model = nn.DataParallel(CRAFT(args))
     
