@@ -132,7 +132,7 @@ class CRAFT_nogma(nn.Module):
             fmap1, fmap2 = self.fnet([image1, image2])  
             if self.args.f1trans != 'none':
                 fmap12 = torch.cat([fmap1, fmap2], dim=0)
-                fmap12  = self.f2_trans(fmap1)
+                fmap12  = self.f2_trans(fmap12)
                 fmap1, fmap2 = torch.split(fmap12, [fmap1.shape[0], fmap2.shape[0]])
 
             elif self.args.f2trans != 'none':
