@@ -1271,7 +1271,12 @@ if __name__ == '__main__':
     parser.add_argument('--radius', dest='corr_radius', type=int, default=4)    
     parser.add_argument('--posr', dest='pos_bias_radius', type=int, default=7, 
                         help='The radius of positional biases')
-                        
+
+    # f1trans is for ablation only, not suggested.
+    parser.add_argument('--f1', dest='f1trans', type=str, 
+                        choices=['none', 'full', 'half'], default='none',
+                        help='Whether to use transformer on frame 1 features. '
+                             'Half: do self-attention only on half of the channels')                        
     parser.add_argument('--f2', dest='f2trans', type=str, 
                         choices=['none', 'full', 'half'], default='none',
                         help='Whether to use transformer on frame 2 features. '

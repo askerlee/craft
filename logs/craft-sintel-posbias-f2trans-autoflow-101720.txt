@@ -23,8 +23,8 @@
 12 Valid (clean) EPE: 0.624930, 1px: 0.929359, 3px: 0.971789, 5px: 0.981568
 12 Valid (final) EPE: 1.101270, 1px: 0.892707, 3px: 0.949764, 5px: 0.966070
 
-env CUDA_VISIBLE_DEVICES=2,3 python train.py --name craft3-sintel --stage sintel --validation sintel --output results/sintel/craft3 --restore_ckpt results/things/craft/craft-things.pth --num_steps 120000 --lr 0.000125 --image_size 368 768 --wdecay 0.00001 --gamma 0.85 --gpus 0 1 --batch_size 6 --val_freq 10000 --print_freq 100 --mixed_precision --setrans --corrnorm global --f2trans --craft --autoflow
-Time: 10172045
+env CUDA_VISIBLE_DEVICES=2,3 python train.py --name craft3-sintel --stage sintel --validation sintel --output results/sintel/craft3 --restore_ckpt results/things/craft/craft-things.pth --num_steps 120000 --lr 0.000125 --image_size 368 768 --wdecay 0.00001 --gamma 0.85 --gpus 0 1 --batch_size 6 --val_freq 10000 --print_freq 100 --mixed_precision --setrans --corrnorm global --f2trans --craft --autoflow 
+Time: 10172045
 Args:
 Namespace(add_noise=False, batch_size=6, clip=1.0, corr_norm_type='global', corr_radius=4, craft=True, dropout=0.0, epsilon=1e-08, f2_pos_code_weight=0.5, f2trans=True, freeze_bn=False, gamma=0.85, gpus=[0, 1], image_size=[368, 768], inter_num_modes=4, inter_pos_code_type='bias', inter_pos_code_weight=0.5, inter_qk_have_bias=True, intra_num_modes=4, intra_pos_code_type='bias', intra_pos_code_weight=1.0, iters=12, load_optimizer_state=False, load_scheduler_state=False, lr=0.000125, mixed_precision=True, model_name='', name='craft3-sintel', num_heads=1, num_steps=120000, output='results/sintel/craft3', perturb_inter_posw_range=0.0, perturb_intra_posw_range=0.0, pos_bias_radius=7, position_and_content=False, position_only=False, print_freq=100, restore_ckpt='results/things/craft/craft-things.pth', setrans=True, small=False, stage='sintel', upsample_learn=False, use_autoflow=True, val_freq=10000, validation=['sintel'], wdecay=1e-05)
 Lookup radius: 4
@@ -366,74 +366,39 @@ Iter 0, Valid (final) EPE: 1.707692, 1px: 0.872600, 3px: 0.936519, 5px: 0.954717
 results/sintel/craft3/30000_craft3-sintel.pth saved
 Iter 0, Valid (clean) EPE: 0.871750, 1px: 0.917122, 3px: 0.965721, 5px: 0.976934
 Iter 0, Valid (final) EPE: 1.639677, 1px: 0.877530, 3px: 0.939202, 5px: 0.956927
-[ 30100,  0.0000986]     0.8528,     0.9256,     0.9446,     2.5440,    14h21m
-[ 30200,  0.0000985]     0.8387,     0.9195,     0.9414,     2.8100,    14h17m
-[ 30300,  0.0000984]     0.8459,     0.9245,     0.9445,     2.3502,    14h15m
-[ 30400,  0.0000983]     0.8588,     0.9339,     0.9524,     1.8772,    14h15m
-[ 30500,  0.0000982]     0.8503,     0.9262,     0.9453,     2.6245,    14h14m
-[ 30600,  0.0000981]     0.8607,     0.9325,     0.9495,     2.8748,    14h14m
-[ 30700,  0.0000979]     0.8572,     0.9321,     0.9511,     1.9476,    14h13m
-[ 30800,  0.0000978]     0.8568,     0.9279,     0.9455,     2.6460,    14h12m
-[ 30900,  0.0000977]     0.8510,     0.9255,     0.9454,     2.6978,    14h11m
-[ 31000,  0.0000976]     0.8605,     0.9334,     0.9522,     1.6883,    14h10m
-[ 31100,  0.0000975]     0.8501,     0.9259,     0.9446,     2.5059,    14h09m
-[ 31200,  0.0000974]     0.8440,     0.9170,     0.9359,     3.2454,    14h09m
-[ 31300,  0.0000973]     0.8581,     0.9301,     0.9478,     3.3007,    14h06m
-[ 31400,  0.0000972]     0.8449,     0.9224,     0.9422,     2.6947,    14h06m
-[ 31500,  0.0000971]     0.8545,     0.9305,     0.9493,     2.1421,    14h06m
-[ 31600,  0.0000970]     0.8625,     0.9349,     0.9523,     1.9659,    14h05m
-[ 31700,  0.0000968]     0.8502,     0.9233,     0.9425,     3.2448,    14h03m
-[ 31800,  0.0000967]     0.8551,     0.9301,     0.9486,     2.8843,    14h03m
-[ 31900,  0.0000966]     0.8567,     0.9296,     0.9478,     2.1574,    14h02m
-[ 32000,  0.0000965]     0.8654,     0.9357,     0.9535,     2.1758,    14h02m
-[ 32100,  0.0000964]     0.8460,     0.9257,     0.9451,     2.1958,    13h59m
-[ 32200,  0.0000963]     0.8418,     0.9185,     0.9376,     3.6843,    14h00m
-[ 32300,  0.0000962]     0.8460,     0.9281,     0.9495,     1.7424,    13h57m
-[ 32400,  0.0000961]     0.8433,     0.9231,     0.9437,     2.0620,    13h56m
-[ 32500,  0.0000960]     0.8493,     0.9277,     0.9482,     2.1733,    13h56m
-[ 32600,  0.0000959]     0.8522,     0.9278,     0.9463,     2.2753,    13h57m
-[ 32700,  0.0000958]     0.8733,     0.9403,     0.9567,     1.7779,    13h55m
-[ 32800,  0.0000956]     0.8457,     0.9261,     0.9487,     1.7651,    13h54m
-[ 32900,  0.0000955]     0.8598,     0.9334,     0.9518,     1.9104,    13h53m
-[ 33000,  0.0000954]     0.8589,     0.9350,     0.9536,     1.8116,    13h51m
-[ 33100,  0.0000953]     0.8566,     0.9332,     0.9522,     1.9651,    13h51m
-[ 33200,  0.0000952]     0.8556,     0.9301,     0.9489,     2.3342,    13h50m
-[ 33300,  0.0000951]     0.8635,     0.9357,     0.9529,     1.7215,    13h49m
-[ 33400,  0.0000950]     0.8582,     0.9302,     0.9472,     2.9776,    13h50m
-[ 33500,  0.0000949]     0.8450,     0.9214,     0.9423,     2.5273,    13h46m
-[ 33600,  0.0000948]     0.8432,     0.9181,     0.9381,     2.7450,    13h47m
-[ 33700,  0.0000947]     0.8658,     0.9339,     0.9513,     2.1131,    13h45m
-[ 33800,  0.0000945]     0.8650,     0.9352,     0.9524,     2.1263,    13h44m
-[ 33900,  0.0000944]     0.8614,     0.9359,     0.9545,     1.6682,    13h44m
-[ 34000,  0.0000943]     0.8514,     0.9282,     0.9469,     2.0658,    13h42m
-[ 34100,  0.0000942]     0.8598,     0.9341,     0.9510,     2.2563,    13h42m
-[ 34200,  0.0000941]     0.8545,     0.9265,     0.9449,     2.6073,    13h41m
-[ 34300,  0.0000940]     0.8548,     0.9305,     0.9492,     1.7689,    13h40m
-[ 34400,  0.0000939]     0.8481,     0.9268,     0.9470,     2.1831,    13h39m
-[ 34500,  0.0000938]     0.8546,     0.9292,     0.9473,     2.1370,    13h38m
-[ 34600,  0.0000937]     0.8581,     0.9308,     0.9494,     1.9439,    13h37m
-[ 34700,  0.0000936]     0.8432,     0.9186,     0.9381,     3.1340,    13h36m
-[ 34800,  0.0000935]     0.8460,     0.9225,     0.9438,     3.1580,    13h35m
-[ 34900,  0.0000933]     0.8494,     0.9302,     0.9504,     1.7177,    13h34m
-[ 35000,  0.0000932]     0.8455,     0.9232,     0.9433,     2.9533,    13h34m
-[ 35100,  0.0000931]     0.8476,     0.9245,     0.9437,     2.4073,    13h31m
-[ 35200,  0.0000930]     0.8578,     0.9307,     0.9492,     2.1287,    13h31m
-[ 35300,  0.0000929]     0.8600,     0.9335,     0.9523,     2.0305,    13h31m
-[ 35400,  0.0000928]     0.8680,     0.9395,     0.9576,     1.6886,    13h30m
-[ 35500,  0.0000927]     0.8576,     0.9327,     0.9509,     2.0444,    13h28m
-[ 35600,  0.0000926]     0.8390,     0.9182,     0.9399,     2.4025,    13h27m
-[ 35700,  0.0000925]     0.8508,     0.9279,     0.9467,     2.1727,    13h26m
-[ 35800,  0.0000924]     0.8646,     0.9375,     0.9547,     1.9026,    13h26m
-[ 35900,  0.0000922]     0.8521,     0.9324,     0.9523,     2.0620,    13h25m
-[ 36000,  0.0000921]     0.8631,     0.9328,     0.9506,     2.2325,    13h25m
-[ 36100,  0.0000920]     0.8453,     0.9225,     0.9425,     2.4620,    13h22m
-[ 36200,  0.0000919]     0.8555,     0.9308,     0.9506,     1.8520,    13h22m
-[ 36300,  0.0000918]     0.8555,     0.9274,     0.9460,     2.3131,    13h22m
-[ 36400,  0.0000917]     0.8417,     0.9158,     0.9347,     2.9254,    13h20m
-[ 36500,  0.0000916]     0.8580,     0.9346,     0.9530,     2.3879,    13h19m
 
-env CUDA_VISIBLE_DEVICES=2,3 python train.py --name craft3-sintel --stage sintel --validation sintel --output results/sintel/craft3 --restore_ckpt results/sintel/craft/30000_craft-sintel.pth --num_steps 120000 --lr 0.000125 --image_size 368 768 --wdecay 0.00001 --gamma 0.85 --gpus 0 1 --batch_size 6 --val_freq 10000 --print_freq 100 --mixed_precision --setrans --corrnorm global --f2trans --craft --autoflow --loadopt --loadsched 
+env CUDA_VISIBLE_DEVICES=2,3 python train.py --name craft3-sintel --stage sintel --validation sintel --output results/sintel/craft3 --restore_ckpt results/sintel/craft/30000_craft-sintel.pth --num_steps 120000 --lr 0.000125 --image_size 368 768 --wdecay 0.00001 --gamma 0.85 --gpus 0 1 --batch_size 6 --val_freq 10000 --print_freq 100 --mixed_precision --setrans --corrnorm global --f2trans --craft --autoflow --loadopt --loadsched
 Time: 10180805
+Args:
+Namespace(add_noise=False, batch_size=6, clip=1.0, corr_norm_type='global', corr_radius=4, craft=True, dropout=0.0, epsilon=1e-08, f2_pos_code_weight=0.5, f2trans=True, freeze_bn=False, gamma=0.85, gpus=[0, 1], image_size=[368, 768], inter_num_modes=4, inter_pos_code_type='bias', inter_pos_code_weight=0.5, inter_qk_have_bias=True, intra_num_modes=4, intra_pos_code_type='bias', intra_pos_code_weight=1.0, iters=12, load_optimizer_state=True, load_scheduler_state=True, lr=0.000125, mixed_precision=True, model_name='', name='craft3-sintel', num_heads=1, num_steps=120000, output='results/sintel/craft3', perturb_inter_posw_range=0.0, perturb_intra_posw_range=0.0, pos_bias_radius=7, position_and_content=False, position_only=False, print_freq=100, restore_ckpt='results/sintel/craft/30000_craft-sintel.pth', setrans=True, small=False, stage='sintel', upsample_learn=False, use_autoflow=True, val_freq=10000, validation=['sintel'], wdecay=1e-05)
+Lookup radius: 4
+Inter-frame trans config:
+{'feat_dim': 256, 'in_feat_dim': 256, 'pos_dim': 2, 'pos_code_weight': 0.5, 'perturb_posw_range': 0.0, 'num_modes': 4, 'tie_qk_scheme': 'shared', 'mid_type': 'shared', 'trans_output_type': 'private', 'act_fun': <function gelu at 0x7f4b48b63ee0>, 'attn_clip': 100, 'attn_diag_cycles': 1000, 'base_initializer_range': 0.02, 'qk_have_bias': True, 'v_has_bias': False, 'query_idbias_scale': 10, 'feattrans_lin1_idbias_scale': 10, 'pool_modes_feat': 'softmax', 'hidden_dropout_prob': 0.1, 'attention_probs_dropout_prob': 0.2, 'pos_code_type': 'bias', 'ablate_multihead': False, 'out_attn_probs_only': False, 'out_attn_scores_only': True, 'pos_bias_radius': 7, 'max_pos_size': 160}
+Inter-frame correlation block: in_feat_dim: 256, feat_dim: 256, modes: 4, qk_have_bias: True
+Positional biases weight perturbation: 0.0/0.5
+Sliding-window Positional Biases, r: 7, max size: (200, 200)
+F2 transformer-out_trans: v_has_bias: False, has_FFN: False, has_input_skip: True
+F2 transformer: in_feat_dim: 256, feat_dim: 256, modes: 4, qk_have_bias: False
+Positional biases weight perturbation: 0.0/0.5
+Sliding-window Positional Biases, r: 7, max size: (200, 200)
+F2-trans config:
+{'feat_dim': 256, 'in_feat_dim': 256, 'pos_dim': 2, 'pos_code_weight': 0.5, 'perturb_posw_range': 0.0, 'num_modes': 4, 'tie_qk_scheme': None, 'mid_type': 'shared', 'trans_output_type': 'private', 'act_fun': <function gelu at 0x7f4b48b63ee0>, 'attn_clip': 100, 'attn_diag_cycles': 1000, 'base_initializer_range': 0.02, 'qk_have_bias': False, 'v_has_bias': False, 'query_idbias_scale': 10, 'feattrans_lin1_idbias_scale': 10, 'pool_modes_feat': 'softmax', 'hidden_dropout_prob': 0.1, 'attention_probs_dropout_prob': 0.2, 'pos_code_type': 'bias', 'ablate_multihead': False, 'out_attn_probs_only': False, 'out_attn_scores_only': False, 'pos_bias_radius': 7, 'has_FFN': False, 'has_input_skip': True}
+Intra-frame attention: in_feat_dim: 128, feat_dim: 128, modes: 4, qk_have_bias: False
+Positional biases weight perturbation: 0.0/1.0
+Sliding-window Positional Biases, r: 7, max size: (200, 200)
+Intra-frame trans config:
+{'feat_dim': 128, 'in_feat_dim': 128, 'pos_dim': 2, 'pos_code_weight': 1.0, 'perturb_posw_range': 0.0, 'num_modes': 4, 'tie_qk_scheme': None, 'mid_type': 'shared', 'trans_output_type': 'private', 'act_fun': <function gelu at 0x7f4b48b63ee0>, 'attn_clip': 100, 'attn_diag_cycles': 1000, 'base_initializer_range': 0.02, 'qk_have_bias': False, 'v_has_bias': False, 'query_idbias_scale': 10, 'feattrans_lin1_idbias_scale': 10, 'pool_modes_feat': 'softmax', 'hidden_dropout_prob': 0.1, 'attention_probs_dropout_prob': 0.2, 'pos_code_type': 'bias', 'ablate_multihead': False, 'out_attn_probs_only': True, 'out_attn_scores_only': False, 'pos_bias_radius': 7, 'has_FFN': False, 'has_input_skip': True}
+Motion Aggregator: v_has_bias: False, has_FFN: False, has_input_skip: True
+Parameter Count: 6307435
+Training with 329738 image pairs
+Model checkpoint loaded from results/sintel/craft/30000_craft-sintel.pth: <All keys matched successfully>.
+Optimizer state loaded.
+Scheduler state loaded.
+Logger loaded.
+train.py:227: FutureWarning: Non-finite norm encountered in torch.nn.utils.clip_grad_norm_; continuing anyway. Note that the default behavior will change in a future release to error out if a non-finite total norm is encountered. At that point, setting error_if_nonfinite=false will be required to retain the old behavior.
+  torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip)
+/home/li_shaohua/venv/lib/python3.8/site-packages/torch/optim/lr_scheduler.py:1289: UserWarning: To get the last learning rate computed by the scheduler, please use `get_last_lr()`.
+  warnings.warn("To get the last learning rate computed by the scheduler, "
 [ 30100,  0.0000987]     0.8438,     0.9243,     0.9447,     2.3162,    15h10m
 [ 30200,  0.0000987]     0.8432,     0.9230,     0.9440,     2.6801,    14h18m
 [ 30300,  0.0000987]     0.8518,     0.9277,     0.9468,     2.4849,    14h15m
@@ -998,6 +963,14 @@ Iter 0, Valid (final) EPE: 1.225508, 1px: 0.888039, 3px: 0.946961, 5px: 0.964056
 [ 84700,  0.0000987]     0.8767,     0.9429,     0.9590,     1.5543,    05h37m
 [ 84800,  0.0000987]     0.8707,     0.9365,     0.9530,     1.9491,    05h36m
 [ 84900,  0.0000987]     0.8678,     0.9365,     0.9536,     2.2214,    05h35m
+[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
+[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
+[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
+[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
+[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
+[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
+[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
+[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 85000,  0.0000987]     0.8900,     0.9502,     0.9646,     1.4432,    05h34m
 [ 85100,  0.0000987]     0.8706,     0.9377,     0.9546,     1.8077,    05h32m
 [ 85200,  0.0000987]     0.8793,     0.9435,     0.9588,     1.5861,    05h31m

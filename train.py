@@ -365,11 +365,17 @@ if __name__ == '__main__':
                         help='(GMA) number of heads in attention and aggregation')
     parser.add_argument('--posr', dest='pos_bias_radius', type=int, default=7, 
                         help='The radius of positional biases')
-                        
+
+    # f1trans is for ablation only, not suggested.                    
+    parser.add_argument('--f1', dest='f1trans', type=str, 
+                        choices=['none', 'full', 'half'], default='none',
+                        help='Whether to use transformer on frame 1 features. '
+                             'Half: do self-attention only on half of the channels')                         
     parser.add_argument('--f2', dest='f2trans', type=str, 
                         choices=['none', 'full', 'half'], default='none',
                         help='Whether to use transformer on frame 2 features. '
                              'Half: do self-attention only on half of the channels')                        
+
     parser.add_argument('--f2posw', dest='f2_pos_code_weight', type=float, default=0.5)
     parser.add_argument('--f2radius', dest='f2_attn_mask_radius', type=int, default=-1)
  

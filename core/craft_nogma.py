@@ -54,7 +54,33 @@ class CRAFT_nogma(nn.Module):
             
         self.corr_fn = TransCorrBlock(self.inter_trans_config, radius=self.args.corr_radius,
                                       do_corr_global_norm=True)
-        
+
+        # f1trans is for ablation only. Not suggested.
+        if args.f1trans != 'none':
+            # f1_trans/f2trans has the same configuration as GMA att, 
+            # except that the feature dimension is doubled, and not out_attn_probs_only.
+            self.f1_trans_config = SETransConfig()
+            self.f1_trans_config.update_config(args)
+            self.f1_trans_config.do_half_attn = (args.f2trans == 'half')
+            self.f1_trans_config.in_feat_dim = 256
+            self.f1_trans_config.feat_dim  = 256
+            # if do_half_attn, has_input_skip will be changed to False within SelfAttVisPosTrans.__init__().
+            self.f1_trans_config.has_input_skip = True
+            # No FFN. f2trans simply aggregates similar features.
+            self.f1_trans_config.has_FFN = False
+            
+            # Not tying QK performs slightly better.
+            self.f1_trans_config.tie_qk_scheme = None
+            self.f1_trans_config.qk_have_bias  = False
+            self.f1_trans_config.out_attn_probs_only    = False
+            self.f1_trans_config.attn_diag_cycles   = 1000
+            self.f1_trans_config.num_modes          = args.intra_num_modes
+            self.f1_trans_config.pos_code_type      = args.intra_pos_code_type
+            self.f1_trans_config.pos_code_weight    = args.f2_pos_code_weight
+            self.f1_trans = SelfAttVisPosTrans(self.f1_trans_config, "F1 transformer")
+            print("F1-trans config:\n{}".format(self.f1_trans_config.__dict__))
+            self.args.f1_trans_config = self.f1_trans_config
+
         if args.f2trans != 'none':
             # f2_trans has the same configuration as GMA att, 
             # except that the feature dimension is doubled, and not out_attn_probs_only.
@@ -129,7 +155,9 @@ class CRAFT_nogma(nn.Module):
 
         # run the feature network
         with autocast(enabled=self.args.mixed_precision):
-            fmap1, fmap2 = self.fnet([image1, image2])        
+            fmap1, fmap2 = self.fnet([image1, image2])  
+            if self.args.f1trans != 'none':
+                fmap1  = self.f1_trans(fmap1)                  
             if self.args.f2trans != 'none':
                 fmap2  = self.f2_trans(fmap2)
                 
