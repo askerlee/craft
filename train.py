@@ -323,8 +323,6 @@ if __name__ == '__main__':
     parser.add_argument('--loadsched', dest='load_scheduler_state', action='store_true', 
                         help='Load scheduler state from checkpoint (default: not load)')
     
-    parser.add_argument('--autoflow',   dest='use_autoflow', action='store_true', 
-                        help='Use autoflow training data')
     parser.add_argument('--output', type=str, default='checkpoints', 
                         help='output directory to save checkpoints and plots')
     parser.add_argument('--radius', dest='corr_radius', type=int, default=4)    

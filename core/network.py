@@ -162,7 +162,12 @@ class CRAFT(nn.Module):
         # run the feature network
         with autocast(enabled=self.args.mixed_precision):
             fmap1, fmap2 = self.fnet([image1, image2])
-            if self.args.f2trans != 'none':
+            # f1trans is for ablation. Not recommended.
+            if self.args.f1trans != 'none':
+                fmap12 = torch.cat([fmap1, fmap2], dim=0)
+                fmap12  = self.f2_trans(fmap12)
+                fmap1, fmap2 = torch.split(fmap12, [fmap1.shape[0], fmap2.shape[0]])
+            elif self.args.f2trans != 'none':
                 fmap2  = self.f2_trans(fmap2)
 
         # fmap1, fmap2: [1, 256, 55, 128]. 1/8 size of the original image.
