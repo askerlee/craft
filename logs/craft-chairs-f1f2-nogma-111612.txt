@@ -11,9 +11,10 @@
 11 Validation Chairs EPE: 0.843320
 12 Validation Chairs EPE: 0.825795
 
+python train.py --name craft-chairs --stage chairs --validation chairs --output results/chairs/craft-f1f2full-nogma --num_steps 120000 --lr 0.00025 --image_size 368 496 --wdecay 0.0001 --gpus 0 1 --batch_size 8 --val_freq 10000 --print_freq 100 --mixed_precision --craft --f2 full --f1 full --nogma
 Time: 11161232
 Args:
-Namespace(add_noise=False, batch_size=8, clip=1.0, corr_radius=4, craft=True, dropout=0.0, epsilon=1e-08, f1trans='full', f2_attn_mask_radius=-1, f2_pos_code_weight=0.5, f2trans='full', freeze_bn=False, gamma=0.8, gpus=[0, 1], image_size=[368, 496], inter_num_modes=4, inter_pos_code_type='bias', inter_pos_code_weight=0.5, inter_qk_have_bias=True, intra_num_modes=4, intra_pos_code_type='bias', intra_pos_code_weight=1.0, iters=12, load_optimizer_state=False, load_scheduler_state=False, lr=0.00025, mixed_precision=True, model_name='', name='craft-chairs', nogma=True, num_heads=1, num_steps=120000, num_workers=4, output='results/chairs/craft-f2full-nogma', pos_bias_radius=7, position_and_content=False, position_only=False, print_freq=100, raft=False, restore_ckpt=None, setrans=False, stage='chairs', upsample_learn=False, use_autoflow=False, val_freq=10000, validation=['chairs'], wdecay=0.0001)
+Namespace(add_noise=False, batch_size=8, clip=1.0, corr_radius=4, craft=True, dropout=0.0, epsilon=1e-08, f1trans='full', f2_attn_mask_radius=-1, f2_pos_code_weight=0.5, f2trans='full', freeze_bn=False, gamma=0.8, gpus=[0, 1], image_size=[368, 496], inter_num_modes=4, inter_pos_code_type='bias', inter_pos_code_weight=0.5, inter_qk_have_bias=True, intra_num_modes=4, intra_pos_code_type='bias', intra_pos_code_weight=1.0, iters=12, load_optimizer_state=False, load_scheduler_state=False, lr=0.00025, mixed_precision=True, model_name='', name='craft-chairs', nogma=True, num_heads=1, num_steps=120000, num_workers=4, output='results/chairs/craft-f1f2full-nogma', pos_bias_radius=7, position_and_content=False, position_only=False, print_freq=100, raft=False, restore_ckpt=None, setrans=False, stage='chairs', upsample_learn=False, use_autoflow=False, val_freq=10000, validation=['chairs'], wdecay=0.0001)
 CRAFT_nogma Lookup radius: 4
 Inter-frame trans config:
 {'feat_dim': 256, 'in_feat_dim': 256, 'pos_dim': 2, 'pos_code_weight': 0.5, 'num_modes': 4, 'tie_qk_scheme': 'shared', 'mid_type': 'shared', 'trans_output_type': 'private', 'act_fun': <function gelu at 0x7f3d602095e0>, 'attn_clip': 100, 'attn_diag_cycles': 1000, 'base_initializer_range': 0.02, 'qk_have_bias': True, 'v_has_bias': False, 'query_idbias_scale': 10, 'feattrans_lin1_idbias_scale': 10, 'pool_modes_feat': 'softmax', 'hidden_dropout_prob': 0.1, 'attention_probs_dropout_prob': 0.2, 'pos_code_type': 'bias', 'ablate_multihead': False, 'out_attn_probs_only': False, 'out_attn_scores_only': True, 'do_half_attn': False, 'attn_mask_radius': -1, 'pos_bias_radius': 7, 'max_pos_size': 160}
@@ -134,7 +135,7 @@ train.py:234: FutureWarning: Non-finite norm encountered in torch.nn.utils.clip_
 [  9800,  0.0002417]     0.7432,     0.8910,     0.9210,     2.9100,    16h24m
 [  9900,  0.0002415]     0.7395,     0.8935,     0.9237,     3.0756,    16h23m
 [ 10000,  0.0002412]     0.7425,     0.8953,     0.9249,     3.0722,    16h25m
-results/chairs/craft-f2full-nogma/10000_craft-chairs.pth saved
+results/chairs/craft-f1f2full-nogma/10000_craft-chairs.pth saved
 Validation Chairs EPE: 1.877462
 [ 10100,  0.0002410]     0.7245,     0.8790,     0.9108,     3.7462,    16h23m
 [ 10200,  0.0002408]     0.7366,     0.8880,     0.9178,     3.5581,    16h27m
@@ -236,7 +237,7 @@ Validation Chairs EPE: 1.877462
 [ 19800,  0.0002198]     0.7705,     0.9098,     0.9355,     2.5558,    14h58m
 [ 19900,  0.0002196]     0.7919,     0.9182,     0.9392,     2.5769,    14h51m
 [ 20000,  0.0002193]     0.7954,     0.9230,     0.9444,     2.2086,    14h58m
-results/chairs/craft-f2full-nogma/20000_craft-chairs.pth saved
+results/chairs/craft-f1f2full-nogma/20000_craft-chairs.pth saved
 Validation Chairs EPE: 1.495296
 [ 20100,  0.0002191]     0.7838,     0.9182,     0.9415,     2.2907,    14h52m
 [ 20200,  0.0002189]     0.7773,     0.9144,     0.9380,     2.5790,    14h28m
@@ -338,7 +339,7 @@ Validation Chairs EPE: 1.495296
 [ 29800,  0.0001979]     0.7980,     0.9270,     0.9481,     2.1052,    13h28m
 [ 29900,  0.0001976]     0.8098,     0.9318,     0.9524,     2.0389,    13h22m
 [ 30000,  0.0001974]     0.8079,     0.9284,     0.9490,     2.0140,    12h38m
-results/chairs/craft-f2full-nogma/30000_craft-chairs.pth saved
+results/chairs/craft-f1f2full-nogma/30000_craft-chairs.pth saved
 Validation Chairs EPE: 1.269105
 [ 30100,  0.0001972]     0.8007,     0.9296,     0.9501,     1.8832,    13h10m
 [ 30200,  0.0001970]     0.8140,     0.9338,     0.9537,     1.7376,    13h19m
@@ -440,7 +441,7 @@ Validation Chairs EPE: 1.269105
 [ 39800,  0.0001760]     0.8096,     0.9354,     0.9534,     2.0469,    11h19m
 [ 39900,  0.0001757]     0.8199,     0.9373,     0.9549,     2.1646,    12h00m
 [ 40000,  0.0001755]     0.8184,     0.9387,     0.9569,     1.7127,    11h52m
-results/chairs/craft-f2full-nogma/40000_craft-chairs.pth saved
+results/chairs/craft-f1f2full-nogma/40000_craft-chairs.pth saved
 Validation Chairs EPE: 1.140197
 [ 40100,  0.0001753]     0.8081,     0.9328,     0.9518,     2.1755,    11h47m
 [ 40200,  0.0001751]     0.8162,     0.9351,     0.9540,     1.9721,    11h54m
@@ -542,7 +543,7 @@ Validation Chairs EPE: 1.140197
 [ 49800,  0.0001540]     0.8403,     0.9474,     0.9629,     1.5453,    10h27m
 [ 49900,  0.0001538]     0.8288,     0.9458,     0.9619,     1.5505,    10h25m
 [ 50000,  0.0001536]     0.8163,     0.9356,     0.9536,     2.1898,    10h26m
-results/chairs/craft-f2full-nogma/50000_craft-chairs.pth saved
+results/chairs/craft-f1f2full-nogma/50000_craft-chairs.pth saved
 Validation Chairs EPE: 1.123197
 [ 50100,  0.0001534]     0.8237,     0.9406,     0.9578,     1.8471,    10h22m
 [ 50200,  0.0001532]     0.8287,     0.9439,     0.9605,     1.8204,    10h23m
@@ -644,7 +645,7 @@ Validation Chairs EPE: 1.123197
 [ 59800,  0.0001321]     0.8345,     0.9475,     0.9629,     1.6526,    08h44m
 [ 59900,  0.0001319]     0.8395,     0.9470,     0.9626,     1.6733,    08h41m
 [ 60000,  0.0001317]     0.8380,     0.9497,     0.9638,     1.5207,    08h31m
-results/chairs/craft-f2full-nogma/60000_craft-chairs.pth saved
+results/chairs/craft-f1f2full-nogma/60000_craft-chairs.pth saved
 Validation Chairs EPE: 0.990845
 [ 60100,  0.0001315]     0.8319,     0.9465,     0.9625,     1.7133,    08h55m
 [ 60200,  0.0001313]     0.8340,     0.9458,     0.9613,     1.6632,    09h04m
@@ -746,7 +747,7 @@ Validation Chairs EPE: 0.990845
 [ 69800,  0.0001102]     0.8381,     0.9502,     0.9651,     1.5527,    07h32m
 [ 69900,  0.0001100]     0.8435,     0.9497,     0.9640,     1.6829,    07h38m
 [ 70000,  0.0001098]     0.8365,     0.9488,     0.9637,     1.5987,    07h37m
-results/chairs/craft-f2full-nogma/70000_craft-chairs.pth saved
+results/chairs/craft-f1f2full-nogma/70000_craft-chairs.pth saved
 Validation Chairs EPE: 0.948740
 [ 70100,  0.0001096]     0.8434,     0.9525,     0.9663,     1.4165,    07h33m
 [ 70200,  0.0001093]     0.8405,     0.9492,     0.9629,     1.7146,    07h34m
@@ -848,7 +849,7 @@ Validation Chairs EPE: 0.948740
 [ 79800,  0.0000883]     0.8584,     0.9554,     0.9678,     1.4078,    06h07m
 [ 79900,  0.0000881]     0.8537,     0.9558,     0.9683,     1.5541,    06h07m
 [ 80000,  0.0000879]     0.8452,     0.9503,     0.9643,     1.5385,    05h58m
-results/chairs/craft-f2full-nogma/80000_craft-chairs.pth saved
+results/chairs/craft-f1f2full-nogma/80000_craft-chairs.pth saved
 Validation Chairs EPE: 0.896074
 [ 80100,  0.0000876]     0.8517,     0.9532,     0.9666,     1.6313,    05h58m
 [ 80200,  0.0000874]     0.8462,     0.9515,     0.9650,     1.4577,    06h01m
@@ -950,7 +951,7 @@ Validation Chairs EPE: 0.896074
 [ 89800,  0.0000664]     0.8597,     0.9557,     0.9680,     1.2863,    04h35m
 [ 89900,  0.0000662]     0.8546,     0.9555,     0.9689,     1.3088,    04h35m
 [ 90000,  0.0000660]     0.8559,     0.9560,     0.9688,     1.2463,    04h26m
-results/chairs/craft-f2full-nogma/90000_craft-chairs.pth saved
+results/chairs/craft-f1f2full-nogma/90000_craft-chairs.pth saved
 Validation Chairs EPE: 0.865426
 [ 90100,  0.0000657]     0.8605,     0.9562,     0.9685,     1.3747,    04h32m
 [ 90200,  0.0000655]     0.8546,     0.9544,     0.9674,     1.4165,    04h32m
@@ -1052,7 +1053,7 @@ Validation Chairs EPE: 0.865426
 [ 99800,  0.0000445]     0.8604,     0.9554,     0.9677,     1.2762,    03h05m
 [ 99900,  0.0000443]     0.8709,     0.9588,     0.9706,     1.2152,    03h02m
 [100000,  0.0000440]     0.8554,     0.9559,     0.9689,     1.2563,    02h57m
-results/chairs/craft-f2full-nogma/100000_craft-chairs.pth saved
+results/chairs/craft-f1f2full-nogma/100000_craft-chairs.pth saved
 Validation Chairs EPE: 0.838371
 [100100,  0.0000438]     0.8636,     0.9580,     0.9702,     1.3475,    03h01m
 [100200,  0.0000436]     0.8567,     0.9543,     0.9670,     1.5268,    03h01m
@@ -1154,7 +1155,7 @@ Validation Chairs EPE: 0.838371
 [109800,  0.0000226]     0.8642,     0.9576,     0.9698,     1.2687,    01h33m
 [109900,  0.0000224]     0.8655,     0.9600,     0.9715,     1.2030,    01h32m
 [110000,  0.0000221]     0.8688,     0.9581,     0.9696,     1.3486,    01h31m
-results/chairs/craft-f2full-nogma/110000_craft-chairs.pth saved
+results/chairs/craft-f1f2full-nogma/110000_craft-chairs.pth saved
 Validation Chairs EPE: 0.843320
 [110100,  0.0000219]     0.8576,     0.9583,     0.9702,     1.2646,    01h30m
 [110200,  0.0000217]     0.8615,     0.9590,     0.9712,     1.1792,    01h26m
@@ -1256,7 +1257,6 @@ Validation Chairs EPE: 0.843320
 [119800,  0.0000007]     0.8767,     0.9612,     0.9720,     1.1418,    00h01m
 [119900,  0.0000004]     0.8629,     0.9597,     0.9710,     1.1885,    00h00m
 [120000,  0.0000002]     0.8586,     0.9578,     0.9704,     1.1828,    00h00m
-results/chairs/craft-f2full-nogma/120000_craft-chairs.pth saved
+results/chairs/craft-f1f2full-nogma/120000_craft-chairs.pth saved
 Validation Chairs EPE: 0.825795
-results/chairs/craft-f2full-nogma/craft-chairs.pth saved
-[2m⏎[m                                                                               ⏎ [K[?2004h]0;fish /home/shaohua/craft[30m[m[32mshaohua[m@[33mMEHDI[m [32m~/craft[m (main)[m> [K
+results/chairs/craft-f1f2full-nogma/craft-chairs.pth saved

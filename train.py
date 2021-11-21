@@ -216,7 +216,8 @@ def train(model, train_loader, optimizer, scheduler, logger, args):
 
     for i_batch, data_blob in enumerate(train_loader):
         tic = time.time()
-        image1, image2, flow, valid, _ = [x.cuda() for x in data_blob]
+        # the last element in data_blob is extra_info, which is a list of strings.
+        image1, image2, flow, valid = [x.cuda() for x in data_blob[:4]]
 
         if args.add_noise:
             stdv = np.random.uniform(0.0, 5.0)
