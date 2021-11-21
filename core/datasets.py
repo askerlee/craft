@@ -179,8 +179,6 @@ class MpiSintel(FlowDataset):
                     self.seg_list += sorted(glob(osp.join(seg_root, scene, '*.png')))
                     self.seg_inv_list += sorted(glob(osp.join(seg_inv_root, scene, '*.png')))
 
-        breakpoint()
-
 class FlyingChairs(FlowDataset):
     def __init__(self, aug_params=None, split='training', root='datasets/FlyingChairs_release/data'):
         super(FlyingChairs, self).__init__(aug_params)
