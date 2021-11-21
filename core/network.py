@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from update import GMAUpdateBlock
 from extractor import BasicEncoder
 from corr import CorrBlock, TransCorrBlock
-from utils.utils import coords_grid, upflow8
+from utils.utils import coords_grid, upflow8, print0
 from gma import Attention
 from setrans import SETransConfig, SelfAttVisPosTrans
 
@@ -38,7 +38,7 @@ class CRAFT(nn.Module):
         # default CRAFT corr_radius: 4
         if args.corr_radius == -1:
             args.corr_radius = 4
-        print("Lookup radius: %d" %args.corr_radius)
+        print0("Lookup radius: %d" %args.corr_radius)
                 
         if args.craft:
             self.inter_trans_config = SETransConfig()
@@ -53,7 +53,7 @@ class CRAFT(nn.Module):
             self.inter_trans_config.pos_code_type   = args.inter_pos_code_type
             self.inter_trans_config.pos_code_weight = args.inter_pos_code_weight
             self.args.inter_trans_config = self.inter_trans_config
-            print("Inter-frame trans config:\n{}".format(self.inter_trans_config.__dict__))
+            print0("Inter-frame trans config:\n{}".format(self.inter_trans_config.__dict__))
             
             self.corr_fn = TransCorrBlock(self.inter_trans_config, radius=self.args.corr_radius,
                                           do_corr_global_norm=True)
@@ -87,7 +87,7 @@ class CRAFT(nn.Module):
             self.f2_trans_config.pos_code_type      = args.intra_pos_code_type
             self.f2_trans_config.pos_code_weight    = args.f2_pos_code_weight
             self.f2_trans = SelfAttVisPosTrans(self.f2_trans_config, "F2 transformer")
-            print("F2-trans config:\n{}".format(self.f2_trans_config.__dict__))
+            print0("F2-trans config:\n{}".format(self.f2_trans_config.__dict__))
             self.args.f2_trans_config = self.f2_trans_config
                    
         if args.setrans:
@@ -110,7 +110,7 @@ class CRAFT(nn.Module):
             self.intra_trans_config.pos_code_weight     = args.intra_pos_code_weight
             self.att = SelfAttVisPosTrans(self.intra_trans_config, "Intra-frame attention")
             self.args.intra_trans_config = self.intra_trans_config
-            print("Intra-frame trans config:\n{}".format(self.intra_trans_config.__dict__))
+            print0("Intra-frame trans config:\n{}".format(self.intra_trans_config.__dict__))
         else:
             self.att = Attention(args=self.args, dim=cdim, heads=self.args.num_heads, max_pos_size=160, dim_head=cdim)
 

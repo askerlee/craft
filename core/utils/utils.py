@@ -3,7 +3,12 @@ import torch.nn.functional as F
 import numpy as np
 from scipy import interpolate
 # from torch_scatter import scatter_softmax, scatter_add
+import os
 
+# Only print on GPU0. Avoid duplicate messages.
+def print0(*print_args, **kwargs):
+    if ("LOCAL_RANK" not in os.environ) or (os.environ["LOCAL_RANK"] == 0):
+        print(*print_args, **kwargs)
 
 class InputPadder:
     """ Pads images such that dimensions are divisible by 8 """

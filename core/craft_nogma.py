@@ -8,6 +8,7 @@ from extractor import BasicEncoder
 from corr import TransCorrBlock
 from utils.utils import coords_grid, upflow8
 from setrans import SETransConfig, SelfAttVisPosTrans
+from utils.utils import print0
 
 try:
     autocast = torch.cuda.amp.autocast
@@ -33,7 +34,7 @@ class CRAFT_nogma(nn.Module):
         # default CRAFT corr_radius: 4
         if args.corr_radius == -1:
             args.corr_radius = 4
-        print("CRAFT_nogma Lookup radius: %d" %args.corr_radius)
+        print0("CRAFT_nogma Lookup radius: %d" %args.corr_radius)
 
         if 'dropout' not in self.args:
             self.args.dropout = 0
@@ -50,7 +51,7 @@ class CRAFT_nogma(nn.Module):
         self.inter_trans_config.pos_code_type   = args.inter_pos_code_type
         self.inter_trans_config.pos_code_weight = args.inter_pos_code_weight
         self.args.inter_trans_config = self.inter_trans_config
-        print("Inter-frame trans config:\n{}".format(self.inter_trans_config.__dict__))
+        print0("Inter-frame trans config:\n{}".format(self.inter_trans_config.__dict__))
             
         self.corr_fn = TransCorrBlock(self.inter_trans_config, radius=self.args.corr_radius,
                                       do_corr_global_norm=True)
@@ -77,7 +78,7 @@ class CRAFT_nogma(nn.Module):
             self.f2_trans_config.pos_code_type      = args.intra_pos_code_type
             self.f2_trans_config.pos_code_weight    = args.f2_pos_code_weight
             self.f2_trans = SelfAttVisPosTrans(self.f2_trans_config, "F2 transformer")
-            print("F2-trans config:\n{}".format(self.f2_trans_config.__dict__))
+            print0("F2-trans config:\n{}".format(self.f2_trans_config.__dict__))
             self.args.f2_trans_config = self.f2_trans_config
                     
         # feature network, context network, and update block

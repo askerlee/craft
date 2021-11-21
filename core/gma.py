@@ -1,7 +1,6 @@
 import torch
 from torch import nn, einsum
 from einops import rearrange
-import random
 
 # max_pos_size = 160
 class RelPosEmb(nn.Module):

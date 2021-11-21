@@ -6,7 +6,6 @@ import copy
 from datetime import datetime
 import argparse
 import os
-import cv2
 import time
 import numpy as np
 import matplotlib
@@ -20,22 +19,14 @@ import torch.optim as optim
 from network import CRAFT
 from raft import RAFT
 from craft_nogma import CRAFT_nogma
-from utils import flow_viz
 import datasets
 import evaluate
+from utils.utils import print0
 
 from torch.cuda.amp import GradScaler
 
 # exclude extremly large displacements
 MAX_FLOW = 400
-
-
-def convert_flow_to_image(image1, flow):
-    flow = flow.permute(1, 2, 0).cpu().numpy()
-    flow_image = flow_viz.flow_to_image(flow)
-    flow_image = cv2.resize(flow_image, (image1.shape[3], image1.shape[2]))
-    return flow_image
-
 
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -108,7 +99,7 @@ class Logger:
         time_left_hm = "{:02d}h{:02d}m".format(time_left_sec // 3600, time_left_sec % 3600 // 60)
         time_left_hm = f"{time_left_hm:>9}"
         # print the training status
-        print(training_str + metrics_str + time_left_hm)
+        print0(training_str + metrics_str + time_left_hm)
 
         # logging running loss to total loss
         self.train_epe_list.append(np.mean(self.running_loss_dict['epe']))
@@ -142,7 +133,7 @@ def save_checkpoint(cp_path, model, optimizer, lr_scheduler, logger):
                  }
 
     torch.save(save_state, cp_path)
-    print(f"{cp_path} saved")
+    print0(f"{cp_path} saved")
 
 def load_checkpoint(args, model, optimizer, lr_scheduler, logger):
     checkpoint = torch.load(args.restore_ckpt, map_location='cuda')
@@ -153,38 +144,46 @@ def load_checkpoint(args, model, optimizer, lr_scheduler, logger):
         # Load old checkpoint.
         msg = model.load_state_dict(checkpoint, strict=False)
 
-    print(f"Model checkpoint loaded from {args.restore_ckpt}: {msg}.")
+    print0(f"Model checkpoint loaded from {args.restore_ckpt}: {msg}.")
 
     if args.load_optimizer_state and 'optimizer' in checkpoint:
         optimizer.load_state_dict(checkpoint['optimizer'])
-        print("Optimizer state loaded.")
+        print0("Optimizer state loaded.")
     else:
-        print("Optimizer state NOT loaded.")
+        print0("Optimizer state NOT loaded.")
         
     if args.load_scheduler_state and 'lr_scheduler' in checkpoint:
         lr_scheduler.load_state_dict(checkpoint['lr_scheduler'])
-        print("Scheduler state loaded.")
+        print0("Scheduler state loaded.")
         if 'logger' in checkpoint:
             # https://stackoverflow.com/questions/243836/how-to-copy-all-properties-of-an-object-to-another-object-in-python
             logger.__dict__.update(checkpoint['logger'])
-            print("Logger loaded.")
+            print0("Logger loaded.")
         else:
-            print("Logger NOT loaded.")
+            print0("Logger NOT loaded.")
     else:
-        print("Scheduler state NOT loaded.")
-        print("Logger NOT loaded.")
+        print0("Scheduler state NOT loaded.")
+        print0("Logger NOT loaded.")
         
 def main(args):
-    if args.raft:
-        model = nn.DataParallel(RAFT(args), device_ids=args.gpus)
-    elif args.nogma:
-        model = nn.DataParallel(CRAFT_nogma(args), device_ids=args.gpus)
-    else:    
-        model = nn.DataParallel(CRAFT(args), device_ids=args.gpus)
+    torch.cuda.set_device(args.local_rank)
+    torch.distributed.init_process_group(backend='nccl',
+                                         init_method='env://')
 
-    print(f"Parameter Count: {count_parameters(model)}")
+    if args.raft:
+        model = RAFT(args)
+    elif args.nogma:
+        model = CRAFT_nogma(args)
+    else:
+        model = CRAFT(args)
 
     model.cuda()
+    model = nn.parallel.DistributedDataParallel(model, device_ids=[args.local_rank],
+                                                output_device=args.local_rank,
+                                                find_unused_parameters=True)
+
+    print0(f"Parameter Count: {count_parameters(model)}")
+
     model.train()
 
     train_loader = datasets.fetch_dataloader(args)
@@ -206,7 +205,8 @@ def main(args):
             break
 
     PATH = args.output+f'/{args.name}.pth'
-    save_checkpoint(PATH, model, optimizer, scheduler, logger)
+    if args.local_rank == 0:
+        save_checkpoint(PATH, model, optimizer, scheduler, logger)
     return PATH
 
 
@@ -246,8 +246,8 @@ def train(model, train_loader, optimizer, scheduler, logger, args):
         # Validate
         if logger.total_steps % args.val_freq == args.val_freq - 1:
             PATH = args.output + f'/{logger.total_steps+1}_{args.name}.pth'
-            save_checkpoint(PATH, model, optimizer, scheduler, logger)
-            if args.do_validation:
+            if args.local_rank == 0:
+                save_checkpoint(PATH, model, optimizer, scheduler, logger)
                 validate(model, args, logger)
                 plot_train(logger, args)
                 plot_val(logger, args)
@@ -319,10 +319,6 @@ if __name__ == '__main__':
     parser.add_argument('--nogma', action='store_true', help='(ablation) Do not use GMA')
 
     parser.add_argument('--validation', type=str, nargs='+')
-    # Using the newest PyTorch nightly, validation may increase GPU RAM usage 
-    # a little bit and crash the training process.
-    parser.add_argument('--novalid', dest='do_validation', action='store_false', 
-                        help='Do not do validation')
     parser.add_argument('--restore_ckpt', help="restore checkpoint")
     parser.add_argument('--loadopt',   dest='load_optimizer_state', action='store_true', 
                         help='Do not load optimizer state from checkpoint (default: not load)')
@@ -340,6 +336,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--image_size', type=int, nargs='+', default=[384, 512])
     parser.add_argument('--gpus', type=int, nargs='+', default=[0, 1])
+    parser.add_argument('--local_rank', type=int, default=0)
 
     parser.add_argument('--mixed_precision', default=False, action='store_true', help='use mixed precision')
     parser.add_argument('--wdecay', type=float, default=.00005)
@@ -408,6 +405,6 @@ if __name__ == '__main__':
         os.makedirs(args.output)
 
     timestamp = datetime.now().strftime("%m%d%H%M")
-    print("Time: {}".format(timestamp))
-    print("Args:\n{}".format(args))
+    print0("Time: {}".format(timestamp))
+    print0("Args:\n{}".format(args))
     main(args)
