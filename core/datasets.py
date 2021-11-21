@@ -139,7 +139,7 @@ class FlowDataset(data.Dataset):
 
 class MpiSintel(FlowDataset):
     def __init__(self, aug_params=None, split='training', root='datasets/Sintel', dstype='clean',
-                 occlusion=False, segmentation=False):
+                 occlusion=False, segmentation=False, debug=False):
         super(MpiSintel, self).__init__(aug_params)
         flow_root = osp.join(root, split, 'flow')
         image_root = osp.join(root, split, dstype)
@@ -147,7 +147,8 @@ class MpiSintel(FlowDataset):
         # occ_root = osp.join(root, split, 'occ_plus_out')
         # occ_root = osp.join(root, split, 'in_frame_occ')
         # occ_root = osp.join(root, split, 'out_of_frame')
-        self.extra_info = []
+        if debug:
+            self.extra_info = []
 
         seg_root = osp.join(root, split, 'segmentation')
         seg_inv_root = osp.join(root, split, 'segmentation_invalid')
@@ -169,7 +170,8 @@ class MpiSintel(FlowDataset):
                 self.image_list += [ [image_list[i], image_list[i+1]] ]
                 # i: frame_id, the sequence number of the image.
                 # The first image in this folder is numbered 0.
-                self.extra_info += [ (scene, i) ] # scene and frame_id
+                if debug:
+                    self.extra_info += [ (scene, i) ] # scene and frame_id
 
             if split != 'test':
                 self.flow_list += sorted(glob(osp.join(flow_root, scene, '*.flo')))
@@ -245,9 +247,11 @@ class FlyingThings3D(FlowDataset):
       
 
 class KITTI(FlowDataset):
-    def __init__(self, aug_params=None, split='training', root='datasets/KITTI'):
+    def __init__(self, aug_params=None, split='training', root='datasets/KITTI',
+                 debug=False):
         super(KITTI, self).__init__(aug_params, sparse=True)
-        self.extra_info = []
+        if debug:
+            self.extra_info = []
 
         if split == 'testing':
             self.is_test = True
@@ -258,8 +262,9 @@ class KITTI(FlowDataset):
 
         for img1, img2 in zip(images1, images2):
             frame_id = img1.split('/')[-1]
-            self.extra_info += [ [frame_id] ]
             self.image_list += [ [img1, img2] ]
+            if debug:
+                self.extra_info += [ [frame_id] ]
 
         if split == 'training':
             self.flow_list = sorted(glob(osp.join(root, 'flow_occ/*_10.png')))
@@ -284,11 +289,13 @@ class HD1K(FlowDataset):
             seq_ix += 1
 
 class Autoflow(FlowDataset):
-    def __init__(self, aug_params=None, split='training', root='datasets/autoflow'):
+    def __init__(self, aug_params=None, split='training', root='datasets/autoflow',
+                 debug=False):
         super(Autoflow, self).__init__(aug_params)
         scene_count = len(os.listdir(root))
         training_size = int(scene_count * 0.9)
-        self.extra_info = []
+        if debug:
+            self.extra_info = []
         
         for i, scene in enumerate(sorted(os.listdir(root))):
             if split == 'training' and i <= training_size or \
@@ -299,18 +306,21 @@ class Autoflow(FlowDataset):
                 
                 self.image_list += [ [image0_path, image1_path] ]
                 self.flow_list  += [ flow_path ]
-                self.extra_info += [ [scene] ]
+                if debug:
+                    self.extra_info += [ [scene] ]
 
 # The VIPER .npz flow files have been converted to KITTI .png format.
 class VIPER(FlowDataset):
-    def __init__(self, aug_params=None, split='training', root='datasets/viper/', filetype='jpg'):
+    def __init__(self, aug_params=None, split='training', root='datasets/viper/', filetype='jpg',
+                 debug=False):
         super(VIPER, self).__init__(aug_params, sparse=True)
         split_map = { 'training': 'train', 'validation': 'val', 'test': 'test' }
         split = split_map[split]
         split_img_root  = osp.join(root, filetype, split, 'img')
         split_flow_root = osp.join(root, filetype, split, 'flow')
         skip_count = 0
-        self.extra_info = []
+        if debug:
+            self.extra_info = []
 
         if split == 'test':
             # 001_00001, 001_00076, ...
@@ -362,19 +372,22 @@ class VIPER(FlowDataset):
                         
                 self.image_list += [ [image0_path, image1_path] ]
                 self.flow_list  += [ flow_path ]
-                self.extra_info += [ [img0_trunk] ]
+                if debug:
+                    self.extra_info += [ [img0_trunk] ]
+
         print(f"{skip_count} files skipped")
 
 class SlowFlow(FlowDataset):
     def __init__(self, aug_params=None, split='test', root='datasets/slowflow/', filetype='png', 
-                 blur_mag=100, blur_num_frames=0):
+                 blur_mag=100, blur_num_frames=0, debug=True):
         super(SlowFlow, self).__init__(aug_params, sparse=False)
         sequence_folder = "sequence" if blur_num_frames == 0 else f"sequence_R0{blur_num_frames}"
         sequence_root = osp.join(root, str(blur_mag), sequence_folder)
         print(sequence_root)
         flow_root = osp.join(root, str(blur_mag), 'flow')
         skip_count = 0
-        self.extra_info = []
+        if debug:
+            self.extra_info = []
 
         for i, scene in enumerate(sorted(os.listdir(sequence_root))):
             # scene: Animals, Ball...
@@ -404,7 +417,8 @@ class SlowFlow(FlowDataset):
 
                 self.image_list += [ [image0_path, image1_path] ]
                 self.flow_list  += [ flow_path ]
-                self.extra_info += [ [scene, img0_trunk] ]
+                if debug:
+                    self.extra_info += [ [scene, img0_trunk] ]
 
         print(f"{len(self.image_list)} pairs loaded. {skip_count} skipped")
 
