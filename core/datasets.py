@@ -129,6 +129,8 @@ class FlowDataset(data.Dataset):
     def __rmul__(self, v):
         self.flow_list = v * self.flow_list
         self.image_list = v * self.image_list
+        if self.extra_info is not None:
+            self.extra_info = v * self.extra_info
         return self
         
     def __len__(self):
@@ -177,6 +179,7 @@ class MpiSintel(FlowDataset):
                     self.seg_list += sorted(glob(osp.join(seg_root, scene, '*.png')))
                     self.seg_inv_list += sorted(glob(osp.join(seg_inv_root, scene, '*.png')))
 
+        breakpoint()
 
 class FlyingChairs(FlowDataset):
     def __init__(self, aug_params=None, split='training', root='datasets/FlyingChairs_release/data'):
