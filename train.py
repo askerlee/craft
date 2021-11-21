@@ -247,9 +247,10 @@ def train(model, train_loader, optimizer, scheduler, logger, args):
         if logger.total_steps % args.val_freq == args.val_freq - 1:
             PATH = args.output + f'/{logger.total_steps+1}_{args.name}.pth'
             save_checkpoint(PATH, model, optimizer, scheduler, logger)
-            validate(model, args, logger)
-            plot_train(logger, args)
-            plot_val(logger, args)
+            if args.do_validation:
+                validate(model, args, logger)
+                plot_train(logger, args)
+                plot_val(logger, args)
 
         if logger.total_steps >= args.num_steps:
             break
@@ -318,6 +319,10 @@ if __name__ == '__main__':
     parser.add_argument('--nogma', action='store_true', help='(ablation) Do not use GMA')
 
     parser.add_argument('--validation', type=str, nargs='+')
+    # Using the newest PyTorch nightly, validation may increase GPU RAM usage 
+    # a little bit and crash the training process.
+    parser.add_argument('--novalid', dest='do_validation', action='store_false', 
+                        help='Do not do validation')
     parser.add_argument('--restore_ckpt', help="restore checkpoint")
     parser.add_argument('--loadopt',   dest='load_optimizer_state', action='store_true', 
                         help='Do not load optimizer state from checkpoint (default: not load)')
@@ -345,6 +350,7 @@ if __name__ == '__main__':
                         help='If True, use learned upsampling, otherwise, use bilinear upsampling.')
     parser.add_argument('--gamma', type=float, default=0.8, help='exponential loss weighting of the sequential predictions')
     parser.add_argument('--add_noise', action='store_true')
+    # default: not freeze bn.
     parser.add_argument('--freeze_bn', action='store_true')
     
     parser.add_argument('--iters', type=int, default=12)
