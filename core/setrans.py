@@ -63,7 +63,7 @@ class SETransConfig(object):
         self.act_fun = F.gelu
 
         self.attn_clip = 100
-        self.attn_diag_cycles = 10000
+        self.attn_diag_cycles = 1000
         self.base_initializer_range = 0.02
         
         self.qk_have_bias = False
@@ -460,7 +460,7 @@ class CrossAttFeatTrans(SETransInitWeights):
         if 'attn_diag_cycles' in config.__dict__:
             self.attn_diag_cycles   = config.attn_diag_cycles
         else:
-            self.attn_diag_cycles   = 10000
+            self.attn_diag_cycles   = 1000
         self.max_attn    = 0
         self.clamp_count = 0
         self.call_count  = 0

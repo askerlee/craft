@@ -45,7 +45,7 @@ class CRAFT_nogma(nn.Module):
         self.inter_trans_config.feat_dim    = 256
         self.inter_trans_config.max_pos_size     = 160
         self.inter_trans_config.out_attn_scores_only    = True
-        self.inter_trans_config.attn_diag_cycles = 10000
+        self.inter_trans_config.attn_diag_cycles = 1000
         self.inter_trans_config.num_modes       = args.inter_num_modes
         self.inter_trans_config.qk_have_bias    = args.inter_qk_have_bias
         self.inter_trans_config.pos_code_type   = args.inter_pos_code_type
@@ -73,7 +73,7 @@ class CRAFT_nogma(nn.Module):
             self.f2_trans_config.tie_qk_scheme = None
             self.f2_trans_config.qk_have_bias  = False
             self.f2_trans_config.out_attn_probs_only    = False
-            self.f2_trans_config.attn_diag_cycles   = 10000
+            self.f2_trans_config.attn_diag_cycles   = 1000
             self.f2_trans_config.num_modes          = args.intra_num_modes
             self.f2_trans_config.pos_code_type      = args.intra_pos_code_type
             self.f2_trans_config.pos_code_weight    = args.f2_pos_code_weight
