@@ -31,7 +31,8 @@ def get_boundary(h, w, H, W, radius):
     return top, bottom, left, right
 
 def vis_attention(model_name, img1_path, img2_path, points, attention5d_path, 
-                  radius=32, img_scale=1, alpha=1, savedir='attvis'):
+                  radius=32, box_radius=8, img_scale=1, alpha=1, savedir='attvis',
+                  proj_img2=False):
     img2_name = os.path.basename(img2_path)
     img2_trunk = os.path.splitext(img2_name)[0]
     if img1_path is not None:
@@ -73,13 +74,13 @@ def vis_attention(model_name, img1_path, img2_path, points, attention5d_path,
         neg_count = np.count_nonzero(attention < 0)
         pos_count = np.count_nonzero(attention > 0)
         print(f"{point}: median {median}, {pos_count} > 0, {neg_count} < 0")
-        box_top, box_bottom, box_left, box_right = get_boundary(h0, w0, H, W, radius=10)
+        box_top, box_bottom, box_left, box_right = get_boundary(h0, w0, H, W, radius=box_radius)
 
         if img1_np is not None:
             # draw a square around the point
             # the side length of the square is 2*radius+1
             blank_rect = np.copy(img1_np)
-            cv2.rectangle(blank_rect, (box_left, box_top), (box_right, box_bottom), (0, 0, 255), 2)
+            cv2.rectangle(blank_rect, (box_left, box_top), (box_right, box_bottom), (0, 0, 255), 1)
             img1_np2 = cv2.addWeighted(img1_np, (1-alpha), blank_rect, alpha, 0)
             img1_savename = f"{img1_trunk}-{point[0]},{point[1]}-highlight.png" 
             img1_savepath = os.path.join(savedir, img1_savename)
@@ -92,25 +93,25 @@ def vis_attention(model_name, img1_path, img2_path, points, attention5d_path,
         attention = (255 * attention / attention.max()).astype(np.uint8)
         # heatmap: [368, 768, 3]
         heatmap = cv2.applyColorMap(attention, cv2.COLORMAP_JET)[:, :, ::-1]
-        overlaid_img = img2_np * 0.6 + heatmap * 0.3
-        overlaid_img = overlaid_img.astype(np.uint8)
+        overlaid_img2 = img2_np * 0.6 + heatmap * 0.3
+        overlaid_img2 = overlaid_img2.astype(np.uint8)
 
-        overlaid_img2 = overlaid_img.copy()
-        # self attention, draw a green rectangle.
+        blank_rect = overlaid_img2.copy()
+        # self attention on Frame-2, draw a red rectangle.
         if img1_path == img2_path:
             color = (255, 0, 0)
-        # cross attention, draw a red rectangle.
-        else:
+            cv2.rectangle(blank_rect, (box_left, box_top), (box_right, box_bottom), color, 1)
+        # Cross-frame attention. If proj_img2, draw a green rectangle in Frame-2 
+        # at the same location of the query in Frame-1.
+        elif proj_img2:
             color = (0, 255, 0)
+            cv2.rectangle(blank_rect, (box_left, box_top), (box_right, box_bottom), color, 1)
 
-        blank_rect = np.copy(overlaid_img)
-        cv2.rectangle(blank_rect, (box_left, box_top), (box_right, box_bottom), color, 2)
-        overlaid_img2 = cv2.addWeighted(overlaid_img, (1-alpha), blank_rect, alpha, 0)
-
-        overlaid_img_obj = Image.fromarray(overlaid_img2)
+        overlaid_img2 = cv2.addWeighted(overlaid_img2, (1-alpha), blank_rect, alpha, 0)
+        overlaid_img2_obj = Image.fromarray(overlaid_img2)
         img2_savename = f"{img2_trunk}-{point[0]},{point[1]}-{model_name}.png"
         img2_savepath = os.path.join(savedir, img2_savename)
-        overlaid_img_obj.save(img2_savepath)
+        overlaid_img2_obj.save(img2_savepath)
         print(f"Saved '{img2_savepath}'")
 
 
@@ -125,11 +126,13 @@ if __name__ == '__main__':
     parser.add_argument('--savedir', type=str, default='attvis')
     parser.add_argument('--scale', dest='img_scale', type=float, default=1.0)
     parser.add_argument('--radius', dest='radius', type=int, default=32)
+    parser.add_argument('--box_radius', dest='box_radius', type=int, default=8)
     parser.add_argument('--alpha', type=float, default=1)
+    parser.add_argument('--proj_img2', action='store_true')
 
     args = parser.parse_args()
 
     points = args.points.split(".")
     points = [[int(x) for x in p.split(",")] for p in points]
     vis_attention(args.model_name, args.img1_path, args.img2_path, points, args.attention5d_path, 
-                  args.radius, args.img_scale, args.alpha, args.savedir)
+                  args.radius, args.box_radius, args.img_scale, args.alpha, args.savedir, args.proj_img2)
