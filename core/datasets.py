@@ -469,7 +469,7 @@ def fetch_dataloader(args, SINTEL_TRAIN_DS='C+T+K+S+H'):
 
     train_sampler = DistributedSampler(train_dataset, shuffle=True)
     train_loader = data.DataLoader(train_dataset, batch_size=args.batch_size, sampler=train_sampler,
-                                   pin_memory=True, shuffle=True, num_workers=args.num_workers, drop_last=True)
+                                   pin_memory=True, shuffle=False, num_workers=args.num_workers, drop_last=True)
 
     print0('Training with %d image pairs' % len(train_dataset))
     return train_loader

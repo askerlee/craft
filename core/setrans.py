@@ -11,6 +11,7 @@ import torch.nn.functional as F
 from torch import einsum
 from einops import rearrange
 from setrans_ablation import RandPosEmbedder, SinuPosEmbedder, ZeroEmbedder, MultiHeadFeatTrans
+from utils.utils import print0
 torch.set_printoptions(sci_mode=False)
 
 bb2_stage_dims = {  'raft-small':   [32, 32,  64,  96,   128],   
@@ -62,7 +63,7 @@ class SETransConfig(object):
         self.act_fun = F.gelu
 
         self.attn_clip = 100
-        self.attn_diag_cycles = 800
+        self.attn_diag_cycles = 10000
         self.base_initializer_range = 0.02
         
         self.qk_have_bias = False
@@ -125,7 +126,7 @@ class SETransConfig(object):
         if 'dropout_prob' in args and args.dropout_prob >= 0:
             self.hidden_dropout_prob          = args.dropout_prob
             self.attention_probs_dropout_prob = args.dropout_prob
-            print("Dropout prob: %.2f" %(args.dropout_prob))
+            print0("Dropout prob: %.2f" %(args.dropout_prob))
             
 CONFIG = SETransConfig()
 
@@ -314,7 +315,7 @@ class ExpandedFeatTrans(nn.Module):
         self.has_FFN        = getattr(config, 'has_FFN', True)
         self.has_input_skip = getattr(config, 'has_input_skip', False)
 
-        print("{}: v_has_bias: {}, has_FFN: {}, has_input_skip: {}".format(
+        print0("{}: v_has_bias: {}, has_FFN: {}, has_input_skip: {}".format(
               self.name, config.v_has_bias, self.has_FFN, self.has_input_skip))
               
         if config.pool_modes_feat[0] == '[':
@@ -445,13 +446,13 @@ class CrossAttFeatTrans(SETransInitWeights):
         self.att_dropout = nn.Dropout(config.attention_probs_dropout_prob)
 
         self.tie_qk_scheme    = config.tie_qk_scheme
-        print("{}: in_feat_dim: {}, feat_dim: {}, modes: {}, qk_have_bias: {}".format(
+        print0("{}: in_feat_dim: {}, feat_dim: {}, modes: {}, qk_have_bias: {}".format(
               self.name, self.in_feat_dim, self.feat_dim, self.num_modes, config.qk_have_bias))
 
         # if using SlidingPosBiases, then add positional embeddings here.
         if config.pos_code_type == 'bias':
             self.pos_code_weight = config.pos_code_weight
-            print("Positional biases weight: {:.3}".format(self.pos_code_weight))
+            print0("Positional biases weight: {:.3}".format(self.pos_code_weight))
         else:
             self.pos_code_weight = 1
             
@@ -517,7 +518,7 @@ class CrossAttFeatTrans(SETransInitWeights):
         attention_scores = attention_scores / math.sqrt(self.attention_mode_dim)  # [B0, 4, U1, U2]
 
         #if self.call_count == 0:
-        #    print(f"{self.name} query: {list(query_feat.shape)}, attn: {list(attention_scores.shape)}")
+        #    print0(f"{self.name} query: {list(query_feat.shape)}, attn: {list(attention_scores.shape)}")
 
         with torch.no_grad():
             curr_max_attn = attention_scores.max().item()
@@ -533,7 +534,7 @@ class CrossAttFeatTrans(SETransInitWeights):
         self.call_count += 1
         if self.training:
             if self.call_count % self.attn_diag_cycles == 0:
-                print("max-attn: {:.2f}, avg-attn: {:.2f}, clamp-count: {}".format(self.max_attn, curr_avg_attn, self.clamp_count))
+                print0("max-attn: {:.2f}, avg-attn: {:.2f}, clamp-count: {}".format(self.max_attn, curr_avg_attn, self.clamp_count))
                 self.max_attn    = 0
                 self.clamp_count = 0
 
@@ -583,7 +584,7 @@ class SelfAttVisPosTrans(nn.Module):
 
         if self.do_half_attn:
             assert not self.out_attn_only
-            print("Do half-channel self-attention")
+            print0("Do half-channel self-attention")
             # Half of the input channels will pass through without transformation. So no need to do input skip.
             self.config.has_input_skip = False 
             self.config.in_feat_dim = config.in_feat_dim // 2
@@ -635,7 +636,7 @@ class SelfAttVisPosTrans(nn.Module):
             batch, C, h1, w1 = x1.shape
             f2attn = f2_attention_probs.reshape(batch, h1, w1, h1, w1)
             torch.save(f2attn, f2_savepath)
-            print(f"F2 attention tensor saved to {f2_savepath}")
+            print0(f"F2 attention tensor saved to {f2_savepath}")
 
         # reshape x1_trans to the input shape.
         # if do_half_attn, then concatenate x1_trans with x2.
@@ -667,7 +668,7 @@ class LearnedSinuPosEmbedder(nn.Module):
         self.pos_fc = nn.Linear(self.pos_dim, self.pos_embed_dim, bias=True)
         self.pos_mix_norm_layer = nn.LayerNorm(self.pos_embed_dim, eps=1e-12, elementwise_affine=affine)
         self.omega = omega
-        print("Learnable Sinusoidal positional encoding")
+        print0("Learnable Sinusoidal positional encoding")
         
     def forward(self, pos_normed):
         pos_embed_sum = 0
@@ -724,7 +725,7 @@ class SlidingPosBiases(nn.Module):
         self.register_buffer('all_w1s', all_w1s, persistent=False)
         self.register_buffer('all_h2s', all_h2s, persistent=False)
         self.register_buffer('all_w2s', all_w2s, persistent=False)
-        print(f"Sliding-window Positional Biases, r: {R}, max size: {max_pos_size}")
+        print0(f"Sliding-window Positional Biases, r: {R}, max size: {max_pos_size}")
         
     def forward(self, feat):
         feat_shape = feat.shape
@@ -759,7 +760,7 @@ class SETransInputFeatEncoder(nn.Module):
         # if using SlidingPosBiases, do not add positional embeddings here.
         if config.pos_code_type != 'bias':
             self.pos_code_weight = config.pos_code_weight
-            print("Positional embedding weight: {:.3}".format(self.pos_code_weight))
+            print0("Positional embedding weight: {:.3}".format(self.pos_code_weight))
         else:
             self.pos_code_weight   = 0
             

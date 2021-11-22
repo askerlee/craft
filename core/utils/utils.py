@@ -7,7 +7,8 @@ import os
 
 # Only print on GPU0. Avoid duplicate messages.
 def print0(*print_args, **kwargs):
-    if ("LOCAL_RANK" not in os.environ) or (os.environ["LOCAL_RANK"] == 0):
+    local_rank = int(os.environ.get('LOCAL_RANK', 0))
+    if local_rank == 0:
         print(*print_args, **kwargs)
 
 class InputPadder:
