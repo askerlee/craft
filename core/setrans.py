@@ -460,7 +460,7 @@ class CrossAttFeatTrans(SETransInitWeights):
         if 'attn_diag_cycles' in config.__dict__:
             self.attn_diag_cycles   = config.attn_diag_cycles
         else:
-            self.attn_diag_cycles   = 500
+            self.attn_diag_cycles   = 10000
         self.max_attn    = 0
         self.clamp_count = 0
         self.call_count  = 0
