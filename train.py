@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import torch.distributed as dist
 
 from network import CRAFT
 from raft import RAFT
@@ -53,6 +54,10 @@ def sequence_loss(flow_preds, flow_gt, valid, gamma):
 
     epe = torch.sum((flow_preds[-1] - flow_gt)**2, dim=1).sqrt()
     epe = epe.view(-1)[valid.view(-1)]
+    world_size = int(os.environ.get('WORLD_SIZE', 1))
+    if world_size > 1:
+        flow_loss = reduce_tensor(flow_loss, world_size)
+        epe = gather_tensor(epe, world_size)
 
     metrics = {
         'epe': epe.mean().item(),
@@ -75,6 +80,17 @@ def fetch_optimizer(args, model):
 
     return optimizer, scheduler
 
+def reduce_tensor(tensor, world_size):
+    rt = tensor.clone()
+    dist.all_reduce(rt, op=dist.ReduceOp.SUM)
+    rt /= world_size
+    return rt
+
+def gather_tensor(tensor, world_size):
+    tensor_list = [torch.zeros_like(tensor) for _ in range(world_size)]
+    dist.all_gather(tensor_list, tensor)
+    gathered_tensor = torch.cat(tensor_list, dim=0)
+    return gathered_tensor
 
 class Logger:
     def __init__(self, scheduler, args):
