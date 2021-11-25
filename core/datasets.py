@@ -441,7 +441,7 @@ def fetch_dataloader(args, SINTEL_TRAIN_DS='C+T+K+S+H'):
     elif args.stage == 'autoflow':
         # autoflow image size: (488, 576)
         # minimal scale = 2**0.42 = 1.338. 576*1.338=770.6 > 768. Otherwise there'll be exceptions.
-        train_dataset = Autoflow({'crop_size': args.image_size, 'min_scale': 0, 'max_scale': 0.8, 
+        train_dataset = Autoflow({'crop_size': args.image_size, 'min_scale': -0.2, 'max_scale': 0.8, 
                                   'spatial_aug_prob': 1, 'do_flip': True})
 
     elif args.stage == 'sintel':

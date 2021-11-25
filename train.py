@@ -400,10 +400,10 @@ if __name__ == '__main__':
     torch.manual_seed(1234)
     np.random.seed(1234)
 
-    if not os.path.isdir(args.output):
-        os.makedirs(args.output)
-
     args.local_rank = int(os.environ.get('LOCAL_RANK', 0))
+
+    if args.local_rank == 0 and not os.path.isdir(args.output):
+        os.makedirs(args.output)
 
     timestamp = datetime.now().strftime("%m%d%H%M")
     print0("Time: {}".format(timestamp))
