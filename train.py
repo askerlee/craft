@@ -183,8 +183,9 @@ def load_checkpoint(args, model, optimizer, lr_scheduler, logger):
         
 def main(args):
     torch.cuda.set_device(args.local_rank)
-    torch.distributed.init_process_group(backend='nccl',
-                                         init_method='env://')
+    if len(args.gpus) > 1 and torch.cuda.device_count() > 1:
+        torch.distributed.init_process_group(backend='nccl',
+                                            init_method='env://')
 
     if args.raft:
         model = RAFT(args)
@@ -194,9 +195,10 @@ def main(args):
         model = CRAFT(args)
 
     model.cuda()
-    model = nn.parallel.DistributedDataParallel(model, device_ids=[args.local_rank],
-                                                output_device=args.local_rank,
-                                                find_unused_parameters=True)
+    if len(args.gpus) > 1 and torch.cuda.device_count() > 1:
+        model = nn.parallel.DistributedDataParallel(model, device_ids=[args.local_rank],
+                                                    output_device=args.local_rank,
+                                                    find_unused_parameters=True)
 
     print0(f"Parameter Count: {count_parameters(model)}")
 
@@ -411,7 +413,8 @@ if __name__ == '__main__':
                         choices=['lsinu', 'bias'], default='bias')
     parser.add_argument('--intraposw', dest='intra_pos_code_weight', type=float, default=1.0)
 
-    args = parser.parse_args()
+    # args = parser.parse_args() # raise unrecognized argument 'setrans' error
+    args, _ = parser.parse_known_args()
 
     torch.manual_seed(1234)
     np.random.seed(1234)
