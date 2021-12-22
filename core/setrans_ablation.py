@@ -194,20 +194,12 @@ class MultiHeadFeatTrans(nn.Module):
         # parameters are not shared (parameter sharing makes no sense).
         self.first_linear = nn.Linear(self.in_feat_dim, self.feat_dim_allhead)
         
-        print("%s: pool_modes_feat=concat, mid_type=%s, trans_output_type=%s" % \
-                (self.name, config.mid_type, config.trans_output_type))
+        print("%s: pool_modes_feat=concat, trans_output_type=%s" % \
+                (self.name, config.trans_output_type))
 
         # Disable multiple modes for intermediate and output layers.
         config.num_modes = 1
-        # It doesn't matter whether using the shared version or private version modules,
-        # as there's only one mode.
-        self.mid_type = config.mid_type
-        if self.mid_type == 'shared':
-            self.intermediate = MMSharedMid(self.config)
-        elif self.mid_type == 'private':
-            self.intermediate = MMPrivateMid(self.config)
-        else:
-            self.intermediate = config.act_fun
+        self.intermediate = MMSharedMid(self.config)
 
         if config.trans_output_type == 'shared':
             self.output = MMSharedOutput(config)

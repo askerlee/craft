@@ -242,7 +242,7 @@ def validate_chairs(model, iters=6, test_mode=1):
 
 
 @torch.no_grad()
-def validate_things(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1, 
+def validate_things(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, max_val_count=-1, 
                     verbose=False, seg_interval=-1):
     """ Perform evaluation on the FlyingThings (test) split """
     model.eval()
@@ -277,6 +277,11 @@ def validate_things(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1
             breakpoint()
                        
         val_dataset = datasets.FlyingThings3D(dstype=dstype, aug_params=None, split='validation')
+        # Use multiple workers to push GPU utility to near 100%.
+        val_loader  = data.DataLoader(val_dataset, batch_size=batch_size,
+                                      pin_memory=False, shuffle=False, num_workers=4, drop_last=False)
+
+
         print(f'Dataset length {len(val_dataset)}')
         val_count = 0
         if max_val_count == -1:
@@ -287,12 +292,14 @@ def validate_things(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1
         # else:
         #     GaussianBlur = None
 
-        for val_id in range(len(val_dataset)):
-            image1, image2, flow_gt, _, _ = val_dataset[val_id]
-            image1 = image1[None].cuda()
-            image2 = image2[None].cuda()
+
+        for data_blob in iter(val_loader):  
+            image1, image2, flow_gt, _, _ = data_blob
+            image1 = image1.cuda()
+            image2 = image2.cuda()
 
             image1, flow_gt, val_mask = shift_pixels(image1, flow_gt, xy_shift)
+            val_mask = val_mask.unsqueeze(0).expand(image1.shape[0], -1, -1)
 
             # if GaussianBlur is not None:
             #     image1 = GaussianBlur(image1)
@@ -308,14 +315,14 @@ def validate_things(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1
                 flow_prs = [ flow_prs ]
             
             for it, flow_pr in enumerate(flow_prs):
-                flow = padder.unpad(flow_pr[0]).cpu()
+                flow = padder.unpad(flow_pr).cpu()
                 flow += offset_tensor
-                epe = torch.sum((flow - flow_gt)**2, dim=0)[val_mask].sqrt()
+                epe = torch.sum((flow - flow_gt)**2, dim=1)[val_mask].sqrt()
                 epe_list.setdefault(it, [])
                 epe_list[it].append(epe.view(-1).numpy())
 
             epe_seg.append(epe.view(-1).numpy())
-            mag = torch.sum(flow_gt**2, dim=0)[val_mask].sqrt()
+            mag = torch.sum(flow_gt**2, dim=1)[val_mask].sqrt()
 
             prev_mag_endpoint = 0
             for mag_endpoint in mag_endpoints:
@@ -408,6 +415,10 @@ def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1
     
     for dstype in ['clean', 'final']:
         val_dataset = datasets.MpiSintel(split='training', aug_params=None, dstype=dstype)
+        # Use multiple workers to push GPU utility to near 100%.
+        val_loader  = data.DataLoader(val_dataset, batch_size=1,
+                                      pin_memory=False, shuffle=False, num_workers=4, drop_last=False)
+
         print(f'Dataset length {len(val_dataset)}')
         val_count = 0
         if max_val_count == -1:
@@ -434,10 +445,10 @@ def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1
         # else:
         #     GaussianBlur = None
 
-        for val_id in range(len(val_dataset)):
-            image1, image2, flow_gt, _, _ = val_dataset[val_id]
-            image1 = image1[None].cuda()
-            image2 = image2[None].cuda()
+        for data_blob in iter(val_loader):  
+            image1, image2, flow_gt, _, _ = data_blob
+            image1 = image1.cuda()
+            image2 = image2.cuda()
 
             # if GaussianBlur is not None:
             #     #image1 = GaussianBlur(image1)
@@ -445,6 +456,7 @@ def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1
 
             # Shift image1 pixels along x and y axes.
             image1, flow_gt, val_mask = shift_pixels(image1, flow_gt, xy_shift)
+            val_mask = val_mask.unsqueeze(0).expand(image1.shape[0], -1, -1)
             
             padder = InputPadder(image1.shape)
             image1, image2 = padder.pad(image1, image2)
@@ -456,14 +468,14 @@ def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1
                 flow_prs = [ flow_prs ]
 
             for it, flow_pr in enumerate(flow_prs):
-                flow = padder.unpad(flow_pr[0]).cpu()
+                flow = padder.unpad(flow_pr).cpu()
                 flow += offset_tensor
-                epe = torch.sum((flow - flow_gt)**2, dim=0)[val_mask].sqrt()
+                epe = torch.sum((flow - flow_gt)**2, dim=1)[val_mask].sqrt()
                 epe_list.setdefault(it, [])
                 epe_list[it].append(epe.view(-1).numpy())
 
             epe_seg.append(epe.view(-1).numpy())
-            mag = torch.sum(flow_gt**2, dim=0)[val_mask].sqrt()
+            mag = torch.sum(flow_gt**2, dim=1)[val_mask].sqrt()
 
             prev_mag_endpoint = 0
             for mag_endpoint in mag_endpoints:
@@ -736,7 +748,7 @@ def validate_viper(model, iters=6, test_mode=1, batch_size=2, max_val_count=500,
                                              'spatial_aug_prob': 1})
 
     val_loader  = data.DataLoader(val_dataset, batch_size=batch_size,
-                                  pin_memory=False, shuffle=False, num_workers=8, drop_last=False)
+                                  pin_memory=False, shuffle=False, num_workers=4, drop_last=False)
 
                                    
     out_list, epe_list = {}, {}
@@ -1246,7 +1258,7 @@ if __name__ == '__main__':
                         help='Test mode (1: normal, 2: evaluate performance of every iteration)')
     parser.add_argument('--maxval', dest='max_val_count', default=-1, type=int, 
                         help='Maximum number of evaluated examples')
-    parser.add_argument('--bs', dest='batch_size', default=2, type=int, 
+    parser.add_argument('--bs', dest='batch_size', default=1, type=int, 
                         help='Batch size')
 
     parser.add_argument('--scale', dest='scale', default=1, type=float)
@@ -1255,19 +1267,14 @@ if __name__ == '__main__':
     parser.add_argument('--yshifts', dest='y_shifts', default=None, type=str, 
                         help='Shift image1 pixels along y with these offsets')
 
-    """     parser.add_argument('--blurk', dest='blur_kernel', default=5, type=int, 
+    """ parser.add_argument('--blurk', dest='blur_kernel', default=5, type=int, 
                             help='Gaussian blur kernel size')
         # Only if blur_sigma > 0 (regardless of blur_kernel), Gaussian blur will be applied.
         parser.add_argument('--blurs', dest='blur_sigma', default=-1, type=int, 
-                            help='Gaussian blur sigma') """
+                            help='Gaussian blur sigma') 
+    """
 
     # Ablations
-    parser.add_argument('--replace', default=False, action='store_true',
-                        help='Replace local motion feature with aggregated motion features')
-    parser.add_argument('--no_alpha', default=False, action='store_true',
-                        help='Remove learned alpha, set it to 1')
-    parser.add_argument('--no_residual', default=False, action='store_true',
-                        help='Remove residual connection. Do not add local features with the aggregated features.')
     parser.add_argument('--radius', dest='corr_radius', type=int, default=4)    
     parser.add_argument('--posr', dest='pos_bias_radius', type=int, default=7, 
                         help='The radius of positional biases')
@@ -1380,7 +1387,8 @@ if __name__ == '__main__':
 
             elif args.dataset == 'things':
                 validate_things(model.module, iters=args.iters, test_mode=args.test_mode, 
-                                max_val_count=args.max_val_count, xy_shift=xy_shift, 
+                                xy_shift=xy_shift, batch_size=args.batch_size,
+                                max_val_count=args.max_val_count, 
                                 verbose=args.verbose, seg_interval=args.seg_interval)
 
             elif args.dataset == 'sintel':

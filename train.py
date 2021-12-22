@@ -54,6 +54,7 @@ def sequence_loss(flow_preds, flow_gt, valid, gamma):
 
     epe = torch.sum((flow_preds[-1] - flow_gt)**2, dim=1).sqrt()
     epe = epe.view(-1)[valid.view(-1)]
+    
     world_size = int(os.environ.get('WORLD_SIZE', 1))
     if world_size > 1:
         flow_loss = reduce_tensor(flow_loss, world_size)

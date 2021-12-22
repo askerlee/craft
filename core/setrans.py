@@ -57,8 +57,7 @@ class SETransConfig(object):
         # When doing ablation study of multi-head, num_modes means num_heads, 
         # to avoid introducing extra config parameters.
         self.num_modes = 4
-        self.tie_qk_scheme = 'shared'           # shared, loose, or none.
-        self.mid_type      = 'shared'           # shared, private, or none.
+        self.tie_qk_scheme  = 'shared'          # shared, loose, or none.
         self.trans_output_type  = 'private'     # shared or private.
         self.act_fun = F.gelu
 
@@ -111,7 +110,7 @@ class SETransConfig(object):
     def update_config(self, args):
         self.set_backbone_type(args)
         self.try_assign(args, 'use_pretrained', 'apply_attn_stage', 'num_modes', 
-                              'trans_output_type', 'mid_type', 'base_initializer_range', 
+                              'trans_output_type', 'base_initializer_range', 
                               'pos_code_type', 'ablate_multihead', 'attn_clip', 'attn_diag_cycles', 
                               'tie_qk_scheme', 'feattrans_lin1_idbias_scale', 'qk_have_bias', 'v_has_bias',
                               # out_attn_probs_only/out_attn_scores_only are only True for the optical flow correlation block.
@@ -161,57 +160,30 @@ def add_identity_bias(module):
                         
 #====================================== SETrans Shared Modules ========================================#
 
-class MMPrivateMid(nn.Module):
-    def __init__(self, config):
-        super(MMPrivateMid, self).__init__()
-        # Use 1x1 convolution as a group linear layer.
-        # Equivalent to each group going through a respective nn.Linear().
-        self.num_modes      = config.num_modes
-        self.feat_dim       = config.feat_dim
-        feat_dim_allmode    = self.feat_dim * self.num_modes
-        self.group_linear   = nn.Conv1d(feat_dim_allmode, feat_dim_allmode, 1, groups=self.num_modes)
-        self.mid_act_fn     = config.act_fun
-        # This dropout is not presented in huggingface transformers.
-        # Added to conform with lucidrains and rwightman's implementations.
-        self.dropout = nn.Dropout(config.hidden_dropout_prob)
-
-    def forward(self, x):
-        x_trans = self.group_linear(x)      # [B0, 1792*4, U] -> [B0, 1792*4, U]
-        x_act   = self.mid_act_fn(x_trans)  # [B0, 1792*4, U]
-        x_drop  = self.dropout(x_act)
-        return x_drop
-
 class MMSharedMid(nn.Module):
     def __init__(self, config):
         super(MMSharedMid, self).__init__()
         self.num_modes      = config.num_modes
         self.feat_dim       = config.feat_dim
-        feat_dim_allmode    = self.feat_dim * self.num_modes
         self.shared_linear  = nn.Linear(self.feat_dim, self.feat_dim)
         self.mid_act_fn     = config.act_fun
         # This dropout is not presented in huggingface transformers.
         # Added to conform with lucidrains and rwightman's implementations.
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
         
-    # x: [B0, 1792*4, U] or [B0, 4, U, 1792]
+    # x: [B0, 1792*4, U]
     def forward(self, x):
-        if len(x.shape) == 3:
-            # shape_4d: [B0, 4, 1792, U].
-            shape_4d    = ( x.shape[0], self.num_modes, self.feat_dim, x.shape[2] )
-            # x_4d: [B0, 4, U, 1792].
-            x_4d        = x.view(shape_4d).permute([0, 1, 3, 2])
-            reshaped    = True
-        else:
-            x_4d        = x
-            reshaped    = False
+        # shape_4d: [B0, 4, 1792, U].
+        shape_4d    = ( x.shape[0], self.num_modes, self.feat_dim, x.shape[2] )
+        # x_4d: [B0, 4, U, 1792].
+        x_4d        = x.view(shape_4d).permute([0, 1, 3, 2])
 
-        x_trans         = self.shared_linear(x_4d)
-        x_act           = self.mid_act_fn(x_trans)
-        x_drop          = self.dropout(x_act)
+        x_trans     = self.shared_linear(x_4d)
+        x_act       = self.mid_act_fn(x_trans)
+        x_drop      = self.dropout(x_act)
         
-        if reshaped:
-            # restore the original shape
-            x_drop      = x_drop.permute([0, 1, 3, 2]).reshape(x.shape)
+        # restore the original shape
+        x_drop      = x_drop.permute([0, 1, 3, 2]).reshape(x.shape)
 
         return x_drop
 
@@ -223,6 +195,7 @@ class MMPrivateOutput(nn.Module):
         self.num_modes  = config.num_modes
         self.feat_dim   = config.feat_dim
         feat_dim_allmode = self.feat_dim * self.num_modes
+        # Each group (mode) is applied a linear transformation, respectively.
         self.group_linear = nn.Conv1d(feat_dim_allmode, feat_dim_allmode, 1, groups=self.num_modes)
         self.resout_norm_layer = nn.LayerNorm(self.feat_dim, eps=1e-12, elementwise_affine=True)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
@@ -277,6 +250,8 @@ class LearnedSoftAggregate(nn.Module):
     def __init__(self, num_feat, group_dim, keepdim=False):
         super(LearnedSoftAggregate, self).__init__()
         self.group_dim  = group_dim
+        # num_feat = 1: element-wise score function & softmax.
+        # num_feat > 1: the linear score function is applied to the last dim (features) of the input tensor. 
         self.num_feat   = num_feat
         self.feat2score = nn.Linear(num_feat, 1)
         self.keepdim    = keepdim
@@ -318,12 +293,8 @@ class ExpandedFeatTrans(nn.Module):
         print0("{}: v_has_bias: {}, has_FFN: {}, has_input_skip: {}".format(
               self.name, config.v_has_bias, self.has_FFN, self.has_input_skip))
               
-        if config.pool_modes_feat[0] == '[':
-            self.pool_modes_keepdim = True
-            self.pool_modes_feat = config.pool_modes_feat[1:-1]     # remove '[' and ']'
-        else:
-            self.pool_modes_keepdim = False
-            self.pool_modes_feat = config.pool_modes_feat
+        self.pool_modes_keepdim = False
+        self.pool_modes_feat = config.pool_modes_feat
 
         if self.pool_modes_feat == 'softmax':
             agg_basis_feat_dim = self.feat_dim
@@ -333,13 +304,7 @@ class ExpandedFeatTrans(nn.Module):
                                                       keepdim=self.pool_modes_keepdim)
 
         if self.has_FFN:
-            self.mid_type = config.mid_type
-            if self.mid_type == 'shared':
-                self.intermediate = MMSharedMid(self.config)
-            elif self.mid_type == 'private':
-                self.intermediate = MMPrivateMid(self.config)
-            else:
-                self.intermediate = config.act_fun
+            self.intermediate = MMSharedMid(self.config)
 
             if config.trans_output_type == 'shared':
                 self.output = MMSharedOutput(config)
@@ -544,29 +509,24 @@ class CrossAttFeatTrans(SETransInitWeights):
         if attention_mask is not None:
             attention_scores = attention_scores + attention_mask
 
+        # When out_attn_scores_only, dropout is not applied to attention scores.
+        if self.out_attn_scores_only:
+            if self.num_modes > 1:
+                # [3, num_modes=4, 4500, 4500] => [3, 1, 4500, 4500]
+                attention_scores = self.attn_softaggr(attention_scores)
+            # attention_scores = self.att_dropout(attention_scores)
+            return attention_scores
+
         # Normalize the attention scores to probabilities.
         attention_probs = nn.functional.softmax(attention_scores, dim=-1)
-        self.attention_probs = attention_probs
+        # self.attention_probs = attention_probs
 
         # lucidrains doesn't have this dropout but rwightman has. Will keep it.
-        # This is actually dropping out entire tokens to attend to, which might
-        # seem a bit unusual, but is taken from the original Transformer paper.
         attention_probs = self.att_dropout(attention_probs)     #[B0, 4, U1, U2]
 
         if self.out_attn_probs_only:
             # [6, 4, 4500, 4500]
             return attention_probs
-
-        # When out_attn_scores_only, dropout is not applied to attention scores.
-        elif self.out_attn_scores_only:
-            if self.num_modes > 1:
-                if self.num_modes == 2:
-                    attention_scores = attention_scores.mean(dim=1, keepdim=True)
-                else:
-                    # [3, num_modes=4, 4500, 4500] => [3, 1, 4500, 4500]
-                    attention_scores = self.attn_softaggr(attention_scores)
-            # attention_scores = self.att_dropout(attention_scores)
-            return attention_scores
 
         else:
             # out_feat: [B0, U1, 1792], in the same size as query_feat.
