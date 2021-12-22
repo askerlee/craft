@@ -140,7 +140,10 @@ def create_sintel_submission_vis(model_name, model, warm_start=False, output_pat
             frame_utils.writeFlow(output_file, flow)
             scene_prev = scene
 
-    print("Created sintel submission.")
+    if do_vis:
+        print("Created sintel visualization.")
+    else:
+        print("Created sintel submission.")
 
 @torch.no_grad()
 def create_kitti_submission_vis(model_name, model, output_path='kitti_submission', 
@@ -173,7 +176,10 @@ def create_kitti_submission_vis(model_name, model, output_path='kitti_submission
             flow_image.save(f'vis_kitti/{model_name}/{frame_id}')
             # imageio.imwrite(f'vis_kitti/{model_name}/{frame_id}.png', image1[0].cpu().permute(1, 2, 0).numpy())
 
-    print("Created KITTI submission.")
+    if do_vis:
+        print("Created KITTI visualization.")
+    else:
+        print("Created KITTI submission.")
 
 @torch.no_grad()
 def create_viper_submission_vis(model_name, model, output_path='viper_submission', 
@@ -218,7 +224,10 @@ def create_viper_submission_vis(model_name, model, output_path='viper_submission
         output_filename = os.path.join(output_path, frame_id + ".flo")
         frame_utils.writeFlow(output_filename, flow)
 
-    print("Created VIPER submission.")
+    if do_vis:
+        print("Created VIPER visualization.")
+    else:
+        print("Created VIPER submission.")
 
 @torch.no_grad()
 def validate_chairs(model, iters=6, test_mode=1):
