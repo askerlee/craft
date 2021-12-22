@@ -98,7 +98,7 @@ def create_sintel_submission_vis(model_name, model, warm_start=False, output_pat
     """ Create submission for the Sintel leaderboard """
     model.eval()
     for dstype in ['clean', 'final']:
-        test_dataset = datasets.MpiSintel(split=split, aug_params=None, dstype=dstype)
+        test_dataset = datasets.MpiSintel(split=split, aug_params=None, dstype=dstype, debug=True)
         # If split==training, we manually set test_dataset to test mode.
         test_dataset.is_test = True
 
@@ -397,7 +397,7 @@ def validate_things(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, ma
 
 
 @torch.no_grad()
-def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1, 
+def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, max_val_count=-1, 
                     verbose=False, seg_interval=-1):
     """ Peform validation using the Sintel (train) split """
     model.eval()
@@ -416,7 +416,7 @@ def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, max_val_count=-1
     for dstype in ['clean', 'final']:
         val_dataset = datasets.MpiSintel(split='training', aug_params=None, dstype=dstype)
         # Use multiple workers to push GPU utility to near 100%.
-        val_loader  = data.DataLoader(val_dataset, batch_size=1,
+        val_loader  = data.DataLoader(val_dataset, batch_size=batch_size,
                                       pin_memory=False, shuffle=False, num_workers=4, drop_last=False)
 
         print(f'Dataset length {len(val_dataset)}')
@@ -1393,7 +1393,8 @@ if __name__ == '__main__':
 
             elif args.dataset == 'sintel':
                 validate_sintel(model.module, iters=args.iters, test_mode=args.test_mode, 
-                                max_val_count=args.max_val_count, xy_shift=xy_shift, 
+                                xy_shift=xy_shift, batch_size=args.batch_size,
+                                max_val_count=args.max_val_count, 
                                 verbose=args.verbose, seg_interval=args.seg_interval)
 
             elif args.dataset == 'sintel_occ':
