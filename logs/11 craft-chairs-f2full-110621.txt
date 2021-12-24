@@ -10,7 +10,9 @@
 10 Validation Chairs EPE: 0.805727
 11 Validation Chairs EPE: 0.772147
 12 Validation Chairs EPE: 0.759447
-python train.py --name craft-chairs --stage chairs --validation chairs --output results/chairs/craft-f2full --num_steps 120000 --lr 0.00025 --image_size 368 496 --wdecay 0.0001 --gpus 0 1 --batch_size 8 --val_freq 10000 --print_freq 100 --mixed_precision --corrnorm global --craft --f2 full --setransTime: 11062155
+
+python train.py --name craft-chairs --stage chairs --validation chairs --output results/chairs/craft-f2full --num_steps 120000 --lr 0.00025 --image_size 368 496 --wdecay 0.0001 --gpus 0 1 --batch_size 8 --val_freq 10000 --print_freq 100 --mixed_precision --corrnorm global --craft --f2 full --setrans
+Time: 11062155
 Args:
 Namespace(add_noise=False, batch_size=8, clip=1.0, corr_norm_type='global', corr_radius=4, craft=True, dropout=0.0, epsilon=1e-08, f2_pos_code_weight=0.5, f2trans='full', freeze_bn=False, gamma=0.8, gpus=[0, 1], image_size=[368, 496], inter_num_modes=4, inter_pos_code_type='bias', inter_pos_code_weight=0.5, inter_qk_have_bias=True, intra_num_modes=4, intra_pos_code_type='bias', intra_pos_code_weight=1.0, iters=12, load_optimizer_state=False, load_scheduler_state=False, lr=0.00025, mixed_precision=True, model_name='', name='craft-chairs', num_heads=1, num_steps=120000, output='results/chairs/craft-f2full', pos_bias_radius=7, position_and_content=False, position_only=False, print_freq=100, restore_ckpt=None, setrans=True, small=False, stage='chairs', upsample_learn=False, use_autoflow=False, val_freq=10000, validation=['chairs'], wdecay=0.0001)
 Lookup radius: 4
