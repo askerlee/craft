@@ -10,210 +10,7 @@
 10 Validation Chairs EPE: 0.805727
 11 Validation Chairs EPE: 0.772147
 12 Validation Chairs EPE: 0.759447
-
-python train.py --name craft-chairs --stage chairs --validation chairs --output results/chairs/craft-f2full-gma --num_steps 120000 --lr 0.00025 --image_size 368 496 --wdecay 0.0001 --gpus 0 1 --batch_size 8 --val_freq 10000 --print_freq 100 --mixed_precision --corrnorm global --craft --f2 full --setrans
-Time: 11062125
-Args:
-Namespace(add_noise=False, batch_size=8, clip=1.0, corr_norm_type='global', corr_radius=4, craft=True, dropout=0.0, epsilon=1e-08, f2_pos_code_weight=0.5, f2trans='full', freeze_bn=False, gamma=0.8, gpus=[0, 1], image_size=[368, 496], inter_num_modes=4, inter_pos_code_type='bias', inter_pos_code_weight=0.5, inter_qk_have_bias=True, intra_num_modes=4, intra_pos_code_type='bias', intra_pos_code_weight=1.0, iters=12, load_optimizer_state=False, load_scheduler_state=False, lr=0.00025, mixed_precision=True, model_name='', name='craft-chairs', num_heads=1, num_steps=120000, output='results/chairs/craft-f2full-gma', pos_bias_radius=7, position_and_content=False, position_only=False, print_freq=100, restore_ckpt=None, setrans=True, small=False, stage='chairs', upsample_learn=False, use_autoflow=False, val_freq=10000, validation=['chairs'], wdecay=0.0001)
-Lookup radius: 4
-Inter-frame trans config:
-{'feat_dim': 256, 'in_feat_dim': 256, 'pos_dim': 2, 'pos_code_weight': 0.5, 'num_modes': 4, 'tie_qk_scheme': 'shared', 'mid_type': 'shared', 'trans_output_type': 'private', 'act_fun': <function gelu at 0x7f2529a85430>, 'attn_clip': 100, 'attn_diag_cycles': 1000, 'base_initializer_range': 0.02, 'qk_have_bias': True, 'v_has_bias': False, 'query_idbias_scale': 10, 'feattrans_lin1_idbias_scale': 10, 'pool_modes_feat': 'softmax', 'hidden_dropout_prob': 0.1, 'attention_probs_dropout_prob': 0.2, 'pos_code_type': 'bias', 'ablate_multihead': False, 'out_attn_probs_only': False, 'out_attn_scores_only': True, 'do_half_attn': False, 'pos_bias_radius': 7, 'max_pos_size': 160}
-Inter-frame correlation block: in_feat_dim: 256, feat_dim: 256, modes: 4, qk_have_bias: True
-Positional biases weight: 0.5
-Sliding-window Positional Biases, r: 7, max size: (200, 200)
-F2 transformer-out_trans: v_has_bias: False, has_FFN: False, has_input_skip: True
-F2 transformer: in_feat_dim: 256, feat_dim: 256, modes: 4, qk_have_bias: False
-Positional biases weight: 0.5
-Sliding-window Positional Biases, r: 7, max size: (200, 200)
-F2-trans config:
-{'feat_dim': 256, 'in_feat_dim': 256, 'pos_dim': 2, 'pos_code_weight': 0.5, 'num_modes': 4, 'tie_qk_scheme': None, 'mid_type': 'shared', 'trans_output_type': 'private', 'act_fun': <function gelu at 0x7f2529a85430>, 'attn_clip': 100, 'attn_diag_cycles': 1000, 'base_initializer_range': 0.02, 'qk_have_bias': False, 'v_has_bias': False, 'query_idbias_scale': 10, 'feattrans_lin1_idbias_scale': 10, 'pool_modes_feat': 'softmax', 'hidden_dropout_prob': 0.1, 'attention_probs_dropout_prob': 0.2, 'pos_code_type': 'bias', 'ablate_multihead': False, 'out_attn_probs_only': False, 'out_attn_scores_only': False, 'do_half_attn': False, 'pos_bias_radius': 7, 'has_input_skip': True, 'has_FFN': False}
-Intra-frame attention: in_feat_dim: 128, feat_dim: 128, modes: 4, qk_have_bias: False
-Positional biases weight: 1.0
-Sliding-window Positional Biases, r: 7, max size: (200, 200)
-Intra-frame trans config:
-{'feat_dim': 128, 'in_feat_dim': 128, 'pos_dim': 2, 'pos_code_weight': 1.0, 'num_modes': 4, 'tie_qk_scheme': None, 'mid_type': 'shared', 'trans_output_type': 'private', 'act_fun': <function gelu at 0x7f2529a85430>, 'attn_clip': 100, 'attn_diag_cycles': 1000, 'base_initializer_range': 0.02, 'qk_have_bias': False, 'v_has_bias': False, 'query_idbias_scale': 10, 'feattrans_lin1_idbias_scale': 10, 'pool_modes_feat': 'softmax', 'hidden_dropout_prob': 0.1, 'attention_probs_dropout_prob': 0.2, 'pos_code_type': 'bias', 'ablate_multihead': False, 'out_attn_probs_only': True, 'out_attn_scores_only': False, 'do_half_attn': False, 'pos_bias_radius': 7, 'has_FFN': False, 'has_input_skip': True}
-Motion Aggregator: v_has_bias: False, has_FFN: False, has_input_skip: True
-Parameter Count: 6307435
-Training with 22232 image pairs
-train.py:229: FutureWarning: Non-finite norm encountered in torch.nn.utils.clip_grad_norm_; continuing anyway. Note that the default behavior will change in a future release to error out if a non-finite total norm is encountered. At that point, setting error_if_nonfinite=false will be required to retain the old behavior.
-  torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip)
-/home/li_shaohua/venv/lib/python3.8/site-packages/torch/optim/lr_scheduler.py:1289: UserWarning: To get the last learning rate computed by the scheduler, please use `get_last_lr()`.
-  warnings.warn("To get the last learning rate computed by the scheduler, "
-[   100,  0.0000140]     0.0624,     0.2829,     0.4131,    15.4527,    14h25m
-[   200,  0.0000180]     0.0387,     0.2014,     0.3586,    14.1394,    12h50m
-^CTraceback (most recent call last):
-  File "train.py", line 395, in <module>
-    main(args)
-  File "train.py", line 197, in main
-    train(model, train_loader, optimizer, scheduler, logger, args)
-  File "train.py", line 229, in train
-    torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip)
-  File "/home/li_shaohua/venv/lib/python3.8/site-packages/torch/nn/utils/clip_grad.py", line 42, in clip_grad_norm_
-    total_norm = torch.norm(torch.stack([torch.norm(p.grad.detach(), norm_type).to(device) for p in parameters]), norm_type)
-  File "/home/li_shaohua/venv/lib/python3.8/site-packages/torch/nn/utils/clip_grad.py", line 42, in <listcomp>
-    total_norm = torch.norm(torch.stack([torch.norm(p.grad.detach(), norm_type).to(device) for p in parameters]), norm_type)
-  File "/home/li_shaohua/venv/lib/python3.8/site-packages/torch/functional.py", line 1312, in norm
-    return _VF.norm(input, p, dim=_dim, keepdim=keepdim)  # type: ignore[attr-defined]
-KeyboardInterrupt
-[2m⏎[m                                                                               ⏎ [K[?2004h]0;fish /home/li_shaohua/craft[30m[m(venv) [m[32mli_shaohua[m@[33mDGXA100[m [32m~/craft[m (main)[m [m[31m[[1m[31m0[31m|[1m[31mSIGINT[m[31m][m[m> [K[53Cpython train.py --name craft-chairs --stage chairs --validation chairs --output results/chairs/craft-f2full-gma --num_steps 120000 --lr 0.00025 --image_size 368 496 --wdecay 0.0001 --gpus 0 1 --batch_size 8 --val_freq 10000 --print_freq 100 --mixed_precision --corrnorm global --craft --f2 full --setransMMMM
-
-
-
-[37CMMMM[16C[36mpython[30m[m [36m[4mtrain.py[30m[m [36m--name[30m[m [36m[4mcraft-chairs[30m[m [36m--stage[30m[m [36mchairs[30m[m [36m--validation[30m[m [36mchairs[30m[m [36m--output[30m[m [36m[4mresults/chairs/craft-f2full-gma[30m[m [36m--num_steps[30m[m [36m120000[30m[m [36m--lr[30m[m [36m0.00025[30m[m [36m--image_size[30m[m [36m368[30m[m [36m496[30m[m [36m--wdecay[30m[m [36m0.0001[30m[m [36m--gpus
-[C0[30m[m [36m[4m1[30m[m [36m--batch_size[30m[m [36m[4m8[30m[m [36m--val_freq[30m[m [36m10000[30m[m [36m--print_freq[30m[m [36m100[30m[m [36m--mixed_precision[30m[m [36m--corrnorm[30m[m [36mglobal[30m[m [36m--craft[30m[m [36m--f2[30m[m [36mfull[30m[m [36m--setransMMMM
-
-
-
-[37C[30m[mMMMM[53C[59C[65C[68C[69C[70C[75C
-[CM
-[8CM
-[9CM
-[10CM
-[16CM
-[23CM
-[24CM
-[25CM
-[36CM
-[43CM
-[44CM
-[45CM
-[52CM
-[60CM
-[67CM
-[73CM
-
-MM
-
-[4CMM
-
-[5CMM
-
-[6CMM
-
-[10CMM
-
-[7CMM
-
-[6CMM
-
-[5CMM
-
-[4C[36m[4m [30m[m-[36m-num_steps [30m[m1[36m20000 [30m[m-[36m-lr [30m[m0[36m.00025 [30m[m-[36m-image_size [30m[m3[36m68 [30m[m4[36m96 [30m[m-[36m-wdecay [30m[m0[36m.0001 [30m[m-[36m-gpus [30m[m0[36m [30m[m1[36m[4m [30m[m-[36m-batch_size [30m[m8[36m[4m [30m[m-[36m-val_freq [30m[m1[36m0000 [30m[m-[36m-print_freq [30m[m1[36m00 [30m[m-[36m-mixed_precision [30m[m-[36m-corrnorm [30m[mg[36mlobal [30m[m-[36m-craft [30m[m-[36m-f2 [30m[mf[36mull [30m[m-[36m-setrans[30m[m[KMMMM
-
-[3C [36m--num_steps[30m[m [36m120000[30m[m [36m--lr[30m[m [36m0.00025[30m[m [36m--image_size[30m[m [36m368[30m[m [36m496[30m[m [36m--wdecay[30m[m [36m0.0001[30m[m [36m--gpus[30m[m [36m0[30m[m [36m[4m1[30m[m [36m--batch_size[30m[m [36m[4m8[30m[m [36m--val_freq[30m[m [36m10000[30m[m [36m--print_freq[30m[m [36m100[30m[m [36m--mixed_precision[30m[m [36m--corrnor
-[C[30m[m [36mglobal[30m[m [36m--craft[30m[m [36m--f2[30m[m [36mfull[30m[m [36m--setransMMMM
-
-[3C[30m[m[36m[4m [30m[m-[36m-num_steps [30m[m1[36m20000 [30m[m-[36m-lr [30m[m0[36m.00025 [30m[m-[36m-image_size [30m[m3[36m68 [30m[m4[36m96 [30m[m-[36m-wdecay [30m[m0[36m.0001 [30m[m-[36m-gpus [30m[m0[36m [30m[m1[36m[4m [30m[m-[36m-batch_size [30m[m8[36m[4m [30m[m-[36m-val_freq [30m[m1[36m0000 [30m[m-[36m-print_freq [30m[m1[36m00 [30m[m-[36m-mixed_precision [30m[m-[36m-corrnorm [30m[mg[36mlobal [30m[m-[36m-craft [30m[m-[36m-f2 [30m[mf[36mull [30m[m-[36m-setrans[30m[m[KMMMM
-
-[C[C [36m--num_steps[30m[m [36m120000[30m[m [36m--lr[30m[m [36m0.00025[30m[m [36m--image_size[30m[m [36m368[30m[m [36m496[30m[m [36m--wdecay[30m[m [36m0.0001[30m[m [36m--gpus[30m[m [36m0[30m[m [36m[4m1[30m[m [36m--batch_size[30m[m [36m[4m8[30m[m [36m--val_freq[30m[m [36m10000[30m[m [36m--print_freq[30m[m [36m100[30m[m [36m--mixed_precision[30m[m [36m--corrnorm[30m[m [36mglobal[30m[m [36m--craft[30m[m [36m--f2[30m[m [36mfull[30m[m [36m--setransMMMM
-
-[C[C[30m[m[36m[4m [30m[m-[36m-num_steps [30m[m1[36m20000 [30m[m-[36m-lr [30m[m0[36m.00025 [30m[m-[36m-image_size [30m[m3[36m68 [30m[m4[36m96 [30m[m-[36m-wdecay [30m[m0[36m.0001 [30m[m-[36m-gpus [30m[m0[36m [30m[m1[36m[4m [30m[m-[36m-batch_size [30m[m8[36m[4m [30m[m-[36m-val_freq [30m[m1[36m0000 [30m[m-[36m-print_freq [30m[m1[36m00 [30m[m-[36m-mixed_precision [30m[m-[36m-corrnorm [30m[mg[36mlobal [30m[m-[36m-craft [30m[m-[36m-f2 [30m[mf[36mull [30m[m-[36m-setrans[30m[m[KMMMM
-
-[C [36m--num_steps[30m[m [36m120000[30m[m [36m--lr[30m[m [36m0.00025[30m[m [36m--image_size[30m[m [36m368[30m[m [36m496[30m[m [36m--wdecay[30m[m [36m0.0001[30m[m [36m--gpus[30m[m [36m0[30m[m [36m[4m1[30m[m [36m--batch_size[30m[m [36m[4m8[30m[m [36m--val_freq[30m[m [36m10000[30m[m [36m--print_freq[30m[m [36m100[30m[m [36m--mixed_precision[30m[m [36m--corrnorm[30m[m [36mglobal[30m[m [36m--craft[30m[m [36m--f2[30m[m [36mfull[30m[m [36m--setransMMMM
-
-[C[30m[mM[77C[36m[4mll [30m[m-[36m-num_steps [30m[m1[36m20000 [30m[m-[36m-lr [30m[m0[36m.00025 [30m[m-[36m-image_size [30m[m3[36m68 [30m[m4[36m96 [30m[m-[36m-wdecay [30m[m0[36m.0001 [30m[m-[36m-gpus [30m[m0[36m [30m[m1[36m[4m [30m[m-[36m-batch_size [30m[m8[36m[4m [30m[m-[36m-val_freq [30m[m1[36m0000 [30m[m-[36m-print_freq [30m[m1[36m00 [30m[m-[36m-mixed_precision [30m[m-[36m-corrnorm [30m[mg[36mlobal [30m[m-[36m-craft [30m[m-[36m-f2 [30m[mf[36mull [30m[m-[36m-setrans[30m[m[KMMMM
-
-M[78C[36m[4mll[30m[m [36m--num_steps[30m[m [36m120000[30m[m [36m--lr[30m[m [36m0.00025[30m[m [36m--image_size[30m[m [36m368[30m[m [36m496[30m[m [36m--wdecay[30m[m [36m0.0001[30m[m [36m--gpus[30m[m [36m0[30m[m [36m[4m1[30m[m [36m--batch_size[30m[m [36m[4m8[30m[m [36m--val_freq[30m[m [36m10000[30m[m [36m--print_freq[30m[m [36m100[30m[m [36m--mixed_precision[30m[m [36m--corrnorm[30m[m [36mg
-[5C[30m[m [36m--craft[30m[m [36m--f2[30m[m [36mfull[30m[m [36m--setransMMMM
-
-[30m[mMM
-
-
-
-[33C
-[30m[m[?2004l]0;python train.py --name craft-chairs --stage chairs --validation chairs --output results/chairs/craft-f2full --num_steps 120000 --lr 0.00025 --image_size 368 496 --wdecay 0.0001 --gpus 0 1 --batch_size 8 --val_freq 10000 --print_freq 100 --mixed_precision --corrnorm global --craft --f2 full --setrans /home/li_shaohua/craft[30m[mTime: 11062127
-Args:
-Namespace(add_noise=False, batch_size=8, clip=1.0, corr_norm_type='global', corr_radius=4, craft=True, dropout=0.0, epsilon=1e-08, f2_pos_code_weight=0.5, f2trans='full', freeze_bn=False, gamma=0.8, gpus=[0, 1], image_size=[368, 496], inter_num_modes=4, inter_pos_code_type='bias', inter_pos_code_weight=0.5, inter_qk_have_bias=True, intra_num_modes=4, intra_pos_code_type='bias', intra_pos_code_weight=1.0, iters=12, load_optimizer_state=False, load_scheduler_state=False, lr=0.00025, mixed_precision=True, model_name='', name='craft-chairs', num_heads=1, num_steps=120000, output='results/chairs/craft-f2full', pos_bias_radius=7, position_and_content=False, position_only=False, print_freq=100, restore_ckpt=None, setrans=True, small=False, stage='chairs', upsample_learn=False, use_autoflow=False, val_freq=10000, validation=['chairs'], wdecay=0.0001)
-Lookup radius: 4
-Inter-frame trans config:
-{'feat_dim': 256, 'in_feat_dim': 256, 'pos_dim': 2, 'pos_code_weight': 0.5, 'num_modes': 4, 'tie_qk_scheme': 'shared', 'mid_type': 'shared', 'trans_output_type': 'private', 'act_fun': <function gelu at 0x7f20e9d9f430>, 'attn_clip': 100, 'attn_diag_cycles': 1000, 'base_initializer_range': 0.02, 'qk_have_bias': True, 'v_has_bias': False, 'query_idbias_scale': 10, 'feattrans_lin1_idbias_scale': 10, 'pool_modes_feat': 'softmax', 'hidden_dropout_prob': 0.1, 'attention_probs_dropout_prob': 0.2, 'pos_code_type': 'bias', 'ablate_multihead': False, 'out_attn_probs_only': False, 'out_attn_scores_only': True, 'do_half_attn': False, 'pos_bias_radius': 7, 'max_pos_size': 160}
-Inter-frame correlation block: in_feat_dim: 256, feat_dim: 256, modes: 4, qk_have_bias: True
-Positional biases weight: 0.5
-Sliding-window Positional Biases, r: 7, max size: (200, 200)
-F2 transformer-out_trans: v_has_bias: False, has_FFN: False, has_input_skip: True
-F2 transformer: in_feat_dim: 256, feat_dim: 256, modes: 4, qk_have_bias: False
-Positional biases weight: 0.5
-Sliding-window Positional Biases, r: 7, max size: (200, 200)
-F2-trans config:
-{'feat_dim': 256, 'in_feat_dim': 256, 'pos_dim': 2, 'pos_code_weight': 0.5, 'num_modes': 4, 'tie_qk_scheme': None, 'mid_type': 'shared', 'trans_output_type': 'private', 'act_fun': <function gelu at 0x7f20e9d9f430>, 'attn_clip': 100, 'attn_diag_cycles': 1000, 'base_initializer_range': 0.02, 'qk_have_bias': False, 'v_has_bias': False, 'query_idbias_scale': 10, 'feattrans_lin1_idbias_scale': 10, 'pool_modes_feat': 'softmax', 'hidden_dropout_prob': 0.1, 'attention_probs_dropout_prob': 0.2, 'pos_code_type': 'bias', 'ablate_multihead': False, 'out_attn_probs_only': False, 'out_attn_scores_only': False, 'do_half_attn': False, 'pos_bias_radius': 7, 'has_input_skip': True, 'has_FFN': False}
-Intra-frame attention: in_feat_dim: 128, feat_dim: 128, modes: 4, qk_have_bias: False
-Positional biases weight: 1.0
-Sliding-window Positional Biases, r: 7, max size: (200, 200)
-Intra-frame trans config:
-{'feat_dim': 128, 'in_feat_dim': 128, 'pos_dim': 2, 'pos_code_weight': 1.0, 'num_modes': 4, 'tie_qk_scheme': None, 'mid_type': 'shared', 'trans_output_type': 'private', 'act_fun': <function gelu at 0x7f20e9d9f430>, 'attn_clip': 100, 'attn_diag_cycles': 1000, 'base_initializer_range': 0.02, 'qk_have_bias': False, 'v_has_bias': False, 'query_idbias_scale': 10, 'feattrans_lin1_idbias_scale': 10, 'pool_modes_feat': 'softmax', 'hidden_dropout_prob': 0.1, 'attention_probs_dropout_prob': 0.2, 'pos_code_type': 'bias', 'ablate_multihead': False, 'out_attn_probs_only': True, 'out_attn_scores_only': False, 'do_half_attn': False, 'pos_bias_radius': 7, 'has_FFN': False, 'has_input_skip': True}
-Motion Aggregator: v_has_bias: False, has_FFN: False, has_input_skip: True
-Parameter Count: 6307435
-Training with 22232 image pairs
-train.py:229: FutureWarning: Non-finite norm encountered in torch.nn.utils.clip_grad_norm_; continuing anyway. Note that the default behavior will change in a future release to error out if a non-finite total norm is encountered. At that point, setting error_if_nonfinite=false will be required to retain the old behavior.
-  torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip)
-/home/li_shaohua/venv/lib/python3.8/site-packages/torch/optim/lr_scheduler.py:1289: UserWarning: To get the last learning rate computed by the scheduler, please use `get_last_lr()`.
-  warnings.warn("To get the last learning rate computed by the scheduler, "
-[   100,  0.0000140]     0.0624,     0.2829,     0.4131,    15.4527,    14h14m
-[   200,  0.0000180]     0.0396,     0.2049,     0.3620,    14.0759,    12h56m
-[   300,  0.0000220]     0.0370,     0.2136,     0.3836,    13.7982,    12h54m
-[   400,  0.0000259]     0.0724,     0.3159,     0.4795,    11.9455,    12h51m
-[   500,  0.0000299]     0.1086,     0.3762,     0.5335,    10.7272,    12h54m
-[   600,  0.0000339]     0.1176,     0.3977,     0.5496,    11.2514,    12h51m
-[   700,  0.0000379]     0.1371,     0.4227,     0.5650,    10.9088,    12h50m
-[   800,  0.0000419]     0.1585,     0.4722,     0.6222,     9.7389,    12h47m
-[   900,  0.0000459]     0.2090,     0.5363,     0.6699,     8.6790,    12h49m
-[  1000,  0.0000499]     0.2603,     0.5845,     0.7042,     8.3777,    12h53m
-[  1100,  0.0000539]     0.2641,     0.5775,     0.6930,     8.8965,    12h46m
-[  1200,  0.0000579]     0.3237,     0.6385,     0.7420,     8.1544,    12h48m
-[  1300,  0.0000619]     0.3142,     0.6253,     0.7260,     8.6835,    12h49m
-[  1400,  0.0000659]     0.3627,     0.6594,     0.7540,     7.6430,    12h46m
-[  1500,  0.0000699]     0.3971,     0.6877,     0.7771,     6.8796,    12h43m
-[  1600,  0.0000739]     0.4098,     0.6908,     0.7752,     6.8824,    12h42m
-[  1700,  0.0000779]     0.4214,     0.6917,     0.7741,     7.4509,    12h43m
-[  1800,  0.0000819]     0.4449,     0.7081,     0.7891,     6.6230,    12h42m
-[  1900,  0.0000859]     0.4523,     0.7204,     0.7967,     6.6939,    12h41m
-[  2000,  0.0000899]     0.4819,     0.7249,     0.7963,     7.1876,    12h39m
-[  2100,  0.0000939]     0.4904,     0.7340,     0.8049,     6.7980,    12h41m
-[  2200,  0.0000979]     0.5185,     0.7533,     0.8197,     6.1400,    12h41m
-[  2300,  0.0001019]     0.5258,     0.7509,     0.8160,     6.8168,    12h39m
-[  2400,  0.0001059]     0.5318,     0.7503,     0.8140,     7.0564,    12h41m
-[  2500,  0.0001099]     0.5279,     0.7562,     0.8201,     6.4643,    12h36m
-[  2600,  0.0001139]     0.5576,     0.7799,     0.8404,     5.6420,    12h36m
-[  2700,  0.0001179]     0.5654,     0.7718,     0.8292,     6.2068,    12h39m
-[  2800,  0.0001219]     0.5694,     0.7803,     0.8372,     6.0243,    12h38m
-[  2900,  0.0001259]     0.5884,     0.7822,     0.8339,     6.3301,    12h46m
-[  3000,  0.0001299]     0.5802,     0.7851,     0.8410,     5.6322,    12h41m
-[  3100,  0.0001339]     0.5796,     0.7783,     0.8323,     6.5033,    12h41m
-[  3200,  0.0001379]     0.6095,     0.8012,     0.8531,     5.4692,    12h40m
-[  3300,  0.0001419]     0.5981,     0.7958,     0.8495,     5.7125,    12h41m
-[  3400,  0.0001459]     0.6218,     0.8147,     0.8651,     5.0009,    12h41m
-[  3500,  0.0001499]     0.6243,     0.8109,     0.8587,     5.7432,    12h40m
-[  3600,  0.0001539]     0.6247,     0.8119,     0.8592,     5.8621,    12h39m
-[  3700,  0.0001579]     0.6383,     0.8186,     0.8665,     5.2825,    12h37m
-[  3800,  0.0001619]     0.6467,     0.8271,     0.8737,     4.9735,    12h39m
-[  3900,  0.0001659]     0.6350,     0.8243,     0.8717,     4.9115,    12h38m
-[  4000,  0.0001699]     0.6533,     0.8266,     0.8714,     4.8683,    12h31m
-[  4100,  0.0001739]     0.6437,     0.8210,     0.8674,     5.2221,    12h30m
-[  4200,  0.0001778]     0.6555,     0.8294,     0.8730,     5.0668,    12h30m
-^CTraceback (most recent call last):
-  File "train.py", line 395, in <module>
-    main(args)
-  File "train.py", line 197, in main
-    train(model, train_loader, optimizer, scheduler, logger, args)
-  File "train.py", line 226, in train
-    scaler.scale(loss).backward()
-  File "/home/li_shaohua/venv/lib/python3.8/site-packages/torch/_tensor.py", line 255, in backward
-    torch.autograd.backward(self, gradient, retain_graph, create_graph, inputs=inputs)
-  File "/home/li_shaohua/venv/lib/python3.8/site-packages/torch/autograd/__init__.py", line 147, in backward
-    Variable._execution_engine.run_backward(
-KeyboardInterrupt
-[2m⏎[m                                                                               ⏎ [K[?2004h]0;fish /home/li_shaohua/craft[30m[m(venv) [m[32mli_shaohua[m@[33mDGXA100[m [32m~/craft[m (main)[m [m[31m[[1m[31m0[31m|[1m[31mSIGINT[m[31m][m[m> [K[53Cpython train.py --name craft-chairs --stage chairs --validation chairs --output results/chairs/craft-f2full --num_steps 120000 --lr 0.00025 --image_size 368 496 --wdecay 0.0001 --gpus 0 1 --batch_size 8 --val_freq 10000 --print_freq 100 --mixed_precision --corrnorm global --craft --f2 full --setransMMMM
-
-
-
-[33CMMMM[20C[36mpython[30m[m [36m[4mtrain.py[30m[m [36m--name[30m[m [36m[4mcraft-chairs[30m[m [36m--stage[30m[m [36mchairs[30m[m [36m--validation[30m[m [36mchairs[30m[m [36m--output[30m[m [36m[4mresults/chairs/craft-f2full
-[C[24m--num_steps[30m[m [36m120000[30m[m [36m--lr[30m[m [36m0.00025[30m[m [36m--image_size[30m[m [36m368[30m[m [36m496[30m[m [36m--wdecay[30m[m [36m0.0001[30m[m [36m--gpus[30m[m [36m0[30m[m [36m[4m1
-[C[24m--batch_size[30m[m [36m[4m8[30m[m [36m--val_freq[30m[m [36m10000[30m[m [36m--print_freq[30m[m [36m100[30m[m [36m--mixed_precision[30m[m [36m--corrnorm[30m[m [36mglobal[30m[m [36m--craft[30m[m [36m--f2[30m[m [36mfull[30m[m [36m--setransMMMM
-
-
-
-[33C[30m[m
-[30m[m[?2004l]0;python train.py --name craft-chairs --stage chairs --validation chairs --output results/chairs/craft-f2full --num_steps 120000 --lr 0.00025 --image_size 368 496 --wdecay 0.0001 --gpus 0 1 --batch_size 8 --val_freq 10000 --print_freq 100 --mixed_precision --corrnorm global --craft --f2 full --setrans /home/li_shaohua/craft[30m[mTime: 11062155
+python train.py --name craft-chairs --stage chairs --validation chairs --output results/chairs/craft-f2full --num_steps 120000 --lr 0.00025 --image_size 368 496 --wdecay 0.0001 --gpus 0 1 --batch_size 8 --val_freq 10000 --print_freq 100 --mixed_precision --corrnorm global --craft --f2 full --setransTime: 11062155
 Args:
 Namespace(add_noise=False, batch_size=8, clip=1.0, corr_norm_type='global', corr_radius=4, craft=True, dropout=0.0, epsilon=1e-08, f2_pos_code_weight=0.5, f2trans='full', freeze_bn=False, gamma=0.8, gpus=[0, 1], image_size=[368, 496], inter_num_modes=4, inter_pos_code_type='bias', inter_pos_code_weight=0.5, inter_qk_have_bias=True, intra_num_modes=4, intra_pos_code_type='bias', intra_pos_code_weight=1.0, iters=12, load_optimizer_state=False, load_scheduler_state=False, lr=0.00025, mixed_precision=True, model_name='', name='craft-chairs', num_heads=1, num_steps=120000, output='results/chairs/craft-f2full', pos_bias_radius=7, position_and_content=False, position_only=False, print_freq=100, restore_ckpt=None, setrans=True, small=False, stage='chairs', upsample_learn=False, use_autoflow=False, val_freq=10000, validation=['chairs'], wdecay=0.0001)
 Lookup radius: 4

@@ -104,12 +104,12 @@ class SETransConfig(object):
         self.feattrans_lin1_idbias_scale = 10
 
         # Pooling settings
-        self.pool_modes_feat  = 'softmax'   # softmax, max, mean, or none. With [] means keepdim=True.
+        self.pool_modes_feat  = 'softmax'       # softmax, max, mean, or none.
 
         # Randomness settings
         self.hidden_dropout_prob = 0.1
         self.attention_probs_dropout_prob = 0.2
-        self.drop_path_prob = 0.1
+        self.drop_path_prob = 0                 # Drop path reduces performance greatly.
         self.pos_code_type          = 'bias'
         self.ablate_multihead       = False
         self.out_attn_probs_only    = False
