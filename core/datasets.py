@@ -280,9 +280,6 @@ class KITTITrain(FlowDataset):
                  debug=False):
         super(KITTITrain, self).__init__(aug_params, sparse=True)
 
-        if split == 'testing':
-            self.is_test = True
-
         root = osp.join(root, "training")
         images1 = sorted(glob(osp.join(root, 'image_2/*_10.png')))
         images2 = sorted(glob(osp.join(root, 'image_2/*_11.png')))
