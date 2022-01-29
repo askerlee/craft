@@ -25,6 +25,7 @@ from utils import flow_viz
 from utils import frame_utils
 
 from utils.utils import InputPadder, forward_interpolate
+from fvcore.nn import FlopCountAnalysis
 
 # Just an empty Logger definition to satisfy torch.load().
 class Logger:
@@ -1068,7 +1069,7 @@ def save_checkpoint(cp_path, model, optimizer_state, lr_scheduler_state, logger)
 
 @torch.no_grad()
 def gen_flow(model, model_name, iters, image1_path, image2_path, flow_path=None, output_path='output', 
-             test_mode=1, scale=1., xy_shift=None):
+             test_mode=1, scale=1., xy_shift=None, calc_flop=False):
     """ Generate flow given two images """
     model.eval()
 
@@ -1149,6 +1150,12 @@ def gen_flow(model, model_name, iters, image1_path, image2_path, flow_path=None,
 
     padder = InputPadder(image1.shape) #, mode='kitti')
     image1, image2 = padder.pad(image1[None].to(f'cuda:{model.device_ids[0]}'), image2[None].to(f'cuda:{model.device_ids[0]}'))
+
+    # https://github.com/facebookresearch/fvcore/blob/main/docs/flop_count.md
+    if calc_flop:
+        flops = FlopCountAnalysis(model, (image1, image2, iters))
+        print(flops.by_module())
+        exit()
 
     _, flow_prs = model.module(image1, image2, iters=iters, test_mode=test_mode)
     # if test_mode = 1, flow_pr: [1, 2, 512, 640]
@@ -1237,6 +1244,7 @@ if __name__ == '__main__':
     parser.add_argument('--img2', type=str, default=None, help="second image for evaluation")
     parser.add_argument('--flow', type=str, default=None, help="ground truth flow")
     parser.add_argument('--output', type=str, default="output", help="output directory")
+    parser.add_argument('--flop', dest='calc_flop', action='store_true', help="Compute model FLOPs")
 
     parser.add_argument('--verbose', action='store_true', help="print stats every 100 iterations")
     parser.add_argument('--seginterval', dest='seg_interval', 
@@ -1353,7 +1361,10 @@ if __name__ == '__main__':
 
     model_name = os.path.split(args.model)[-1].split(".")[0]
     if 'craft' in model_name:
-        model_name = model_name.replace("craft", f"craft-f2{args.f2trans}")
+        if args.f1trans == 'full':
+            model_name = model_name.replace("craft", "craft-f1f2")
+        else:
+            model_name = model_name.replace("craft", f"craft-f2{args.f2trans}")
 
     if args.seg_interval > 0:
         args.verbose = True
@@ -1367,7 +1378,8 @@ if __name__ == '__main__':
 
     if args.img1 is not None:
         gen_flow(model, model_name, args.iters, args.img1, args.img2, args.flow, args.output, 
-                 test_mode=args.test_mode, scale=args.scale, xy_shift=args.xy_shifts[0])
+                 test_mode=args.test_mode, scale=args.scale, xy_shift=args.xy_shifts[0],
+                 calc_flop=args.calc_flop)
         exit(0)
 
     if args.dataset == 'sintel' and (args.submit or args.vis):

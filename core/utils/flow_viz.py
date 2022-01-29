@@ -16,6 +16,7 @@
 # Date Created: 2018-08-03
 
 import numpy as np
+import cv2
 
 def make_colorwheel():
     """
@@ -130,3 +131,13 @@ def flow_to_image(flow_uv, clip_flow=None, convert_to_bgr=False):
     u = u / (rad_max + epsilon)
     v = v / (rad_max + epsilon)
     return flow_uv_to_colors(u, v, convert_to_bgr)
+
+def warp_flow(image2, flowgt):
+    H, W, _ = image2.shape
+    flow2 = flowgt.copy()
+    flow2[:, :, 0] += np.arange(W)
+    flow2[:, :, 1] += np.arange(H)[:, None]
+    mask = np.logical_or(flow2[..., 0] < 0, flow2[..., 1] < 0)
+    image1 = cv2.remap(image2, flow2, None, cv2.INTER_LINEAR)
+    # No need to manually fill in masked pixels. They will be set to 0 by remap().
+    return image1

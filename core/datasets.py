@@ -16,6 +16,7 @@ import re
 from utils import frame_utils
 from utils.augmentor import FlowAugmentor, SparseFlowAugmentor
 from utils.utils import print0
+from sklearn.model_selection import train_test_split
 
 # sparse: sparse (kitti .png) format of flow data
 class FlowDataset(data.Dataset):
@@ -273,6 +274,34 @@ class KITTI(FlowDataset):
         if split == 'training':
             self.flow_list = sorted(glob(osp.join(root, 'flow_occ/*_10.png')))
 
+# Further split KITTI training data into training and testing sets.
+class KITTITrain(FlowDataset):
+    def __init__(self, aug_params=None, split='training', root='datasets/KITTI',
+                 debug=False):
+        super(KITTITrain, self).__init__(aug_params, sparse=True)
+
+        if split == 'testing':
+            self.is_test = True
+
+        root = osp.join(root, split)
+        images1 = sorted(glob(osp.join(root, 'image_2/*_10.png')))
+        images2 = sorted(glob(osp.join(root, 'image_2/*_11.png')))
+        flow_list = sorted(glob(osp.join(root, 'flow_occ/*_10.png')))
+
+        image_list = []
+        for img1, img2 in zip(images1, images2):
+            frame_id = img1.split('/')[-1]
+            image_list += [ [img1, img2] ]
+
+        image_list_train, image_list_test, flow_list_train, flow_list_test = \
+                    train_test_split(image_list, flow_list, test_size=0.3, random_state=42)
+
+        if split == 'training':
+            self.image_list = image_list_train
+            self.flow_list = flow_list_train
+        else:
+            self.image_list = image_list_test
+            self.flow_list = flow_list_test
 
 class HD1K(FlowDataset):
     def __init__(self, aug_params=None, root='datasets/HD1k'):
@@ -463,7 +492,11 @@ def fetch_dataloader(args, SINTEL_TRAIN_DS='C+T+K+S+H'):
     elif args.stage == 'kitti':
         aug_params = {'crop_size': args.image_size, 'min_scale': -0.2, 'max_scale': 0.4, 'do_flip': False}
         train_dataset = KITTI(aug_params, split='training')
-        
+
+    elif args.stage == 'kittitrain':
+        aug_params = {'crop_size': args.image_size, 'min_scale': -0.2, 'max_scale': 0.4, 'do_flip': False}
+        train_dataset = KITTITrain(aug_params, split='training')
+
     elif args.stage == 'viper':
         aug_params = {'crop_size': args.image_size, 'min_scale': -1, 'max_scale': -0.5, 
                       'spatial_aug_prob': 1, 'do_flip': False}

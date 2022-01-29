@@ -78,7 +78,7 @@ class SETransConfig(object):
         # self.use_pretrained = True        
 
         # Positional encoding settings.
-        self.pos_dim            = 2
+        self.pos_dim           = 2
         self.pos_code_weight   = 1
         
         # Architecture settings
@@ -115,7 +115,6 @@ class SETransConfig(object):
         self.out_attn_probs_only    = False
         # When out_attn_scores_only, dropout is not applied to attention scores.
         self.out_attn_scores_only   = False
-        self.do_half_attn = False
         self.attn_mask_radius = -1
         
     def set_backbone_type(self, args):
@@ -144,7 +143,7 @@ class SETransConfig(object):
                               'pos_code_type', 'ablate_multihead', 'attn_clip', 'attn_diag_cycles', 
                               'tie_qk_scheme', 'feattrans_lin1_idbias_scale', 'qk_have_bias', 'v_has_bias',
                               # out_attn_probs_only/out_attn_scores_only are only True for the optical flow correlation block.
-                              'out_attn_probs_only', 'out_attn_scores_only', 'do_half_attn'
+                              'out_attn_probs_only', 'out_attn_scores_only', 
                               'in_feat_dim', 'pos_bias_radius')
         
         if self.try_assign(args, 'out_feat_dim'):
@@ -181,7 +180,8 @@ class SETransInitWeights(nn.Module):
             module.bias.data.zero_()
 
 def tie_qk(module):
-    if isinstance(module, CrossAttFeatTrans) and module.tie_qk_scheme != 'none':
+    if isinstance(module, CrossAttFeatTrans) \
+            and module.tie_qk_scheme != 'none' and module.tie_qk_scheme != None:
         module.tie_qk()
 
 def add_identity_bias(module):
@@ -363,7 +363,7 @@ class ExpandedFeatTrans(nn.Module):
     # input_feat: [3, 4416, 128]. attention_probs: [3, 4, 4416, 4416]. 
     def forward(self, input_feat, attention_probs):
         # input_feat: [B, U2, 1792], mm_first_feat: [B, Units, 1792*4]
-        # B: batch size, U2: number of the 2nd grou  p of units,
+        # B: batch size, U2: number of the 2nd group of units,
         # IF: in_feat_dim, could be different from feat_dim, due to layer compression
         # (different from squeezed attention).
         B, U2, IF = input_feat.shape
@@ -377,8 +377,8 @@ class ExpandedFeatTrans(nn.Module):
         # mm_first_feat_4d: [B, 4, U2, 1792]
         mm_first_feat_4d = mm_first_feat.view(B, M, F, U2).transpose(2, 3)
 
-        # attention_probs: [B, Modes, U1, U2]
-        # mm_first_feat_fusion: [B, 4, U1, 1792]
+        # attention_probs:      [B, 4, U1, U2]. On sintel: [1, 4, 7040, 7040]
+        # mm_first_feat_fusion: [B, 4, U2, F]. On sintel: [1, 4, 7040, 256]
         mm_first_feat_fusion = torch.matmul(attention_probs, mm_first_feat_4d)
         mm_first_feat_fusion_3d = mm_first_feat_fusion.transpose(2, 3).reshape(B, M*F, U1)
         mm_first_feat = mm_first_feat_fusion_3d
@@ -570,30 +570,12 @@ class SelfAttVisPosTrans(nn.Module):
         self.config = copy.copy(config)
         self.name = name
         self.out_attn_only = config.out_attn_scores_only or config.out_attn_probs_only
-        self.do_half_attn  = config.do_half_attn
         self.attn_mask_radius   = config.attn_mask_radius
-
-        if self.do_half_attn:
-            assert not self.out_attn_only
-            print0("Do half-channel self-attention")
-            # Half of the input channels will pass through without transformation. So no need to do input skip.
-            self.config.has_input_skip = False 
-            self.config.in_feat_dim = config.in_feat_dim // 2
-            self.config.feat_dim    = config.feat_dim    // 2
-            self.half2_dropout = nn.Dropout(config.hidden_dropout_prob)
-            # Could adjust the impact of non-transformed upstream features
-            self.half2_norm    = nn.LayerNorm(self.config.feat_dim, elementwise_affine=True)
-
         self.setrans = CrossAttFeatTrans(self.config, name)
         self.vispos_encoder = SETransInputFeatEncoder(self.config)
 
     def forward(self, x):
-        if self.do_half_attn:
-            x1, x2 = torch.split(x, x.size(1) // 2, dim=1)
-        else:
-            x1 = x
-
-        coords = gen_all_indices(x1.shape[2:], device=x.device)
+        coords = gen_all_indices(x.shape[2:], device=x.device)
         if self.attn_mask_radius > 0:
             coords2 = coords.reshape(-1, 2)
             coords_diff = coords2.unsqueeze(0) - coords2.unsqueeze(1)
@@ -602,9 +584,9 @@ class SelfAttVisPosTrans(nn.Module):
         else:
             attn_mask = None
  
-        coords = coords.unsqueeze(0).repeat(x1.shape[0], 1, 1, 1)
+        coords = coords.unsqueeze(0).repeat(x.shape[0], 1, 1, 1)
         
-        x1_vispos, pos_biases = self.vispos_encoder(x1, coords, return_pos_biases=True)
+        x_vispos, pos_biases = self.vispos_encoder(x, coords, return_pos_biases=True)
 
                    
         # if out_attn_scores_only/out_attn_probs_only, 
@@ -615,7 +597,7 @@ class SelfAttVisPosTrans(nn.Module):
         # corr: [1, 1, 7040, 7040]
         # x_vispos: [B0, num_voxels, 256]
         # Here key_feat is omitted (None), i.e., key_feat = query_feat = x_vispos.
-        x1_trans = self.setrans(x1_vispos, pos_biases=pos_biases, attention_mask=attn_mask)
+        x_trans = self.setrans(x_vispos, pos_biases=pos_biases, attention_mask=attn_mask)
 
         # Save f2 attention for visualization
         if self.name == 'F2 transformer' and 'SAVEF2' in os.environ:
@@ -624,28 +606,15 @@ class SelfAttVisPosTrans(nn.Module):
             # [B0, 4, U1, U2] => [B0, U1, U2]
             f2_attention_probs = f2_attention_probs.mean(dim=1, keepdim=False)
             f2_savepath = os.environ['SAVEF2']
-            batch, C, h1, w1 = x1.shape
+            batch, C, h1, w1 = x.shape
             f2attn = f2_attention_probs.reshape(batch, h1, w1, h1, w1)
             torch.save(f2attn, f2_savepath)
             print0(f"F2 attention tensor saved to {f2_savepath}")
 
-        # reshape x1_trans to the input shape.
-        # if do_half_attn, then concatenate x1_trans with x2.
+        # reshape x_trans to the input shape.
         if not self.out_attn_only:
-            x1_trans_shape = x1_trans.shape
-            x1_trans = x1_trans.permute(0, 2, 1).reshape(x1.shape)
-
-            if self.do_half_attn:
-                x2 = x2.permute(0, 2, 3, 1).reshape(x1_trans_shape)
-                x2_drop     = self.half2_dropout(x2)
-                x2_normed   = self.half2_norm(x2_drop)
-                x2_normed   = x2_normed.permute(0, 2, 1).reshape(x1.shape)
-                x_trans     = torch.cat([x1_trans, x2_normed], dim=1)
-            else:
-                x_trans     = x1_trans
-
-        else:
-            x_trans = x1_trans
+            x_trans_shape = x_trans.shape
+            x_trans = x_trans.permute(0, 2, 1).reshape(x.shape)
             
         return x_trans
 

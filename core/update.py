@@ -141,6 +141,7 @@ class GMAUpdateBlock(nn.Module):
             # attention is multi-mode. ExpandedFeatTrans takes multi-mode attention.
             B, C, H, W = motion_features.shape
             motion_features_3d = motion_features.view(B, C, H*W).permute(0, 2, 1)
+            # motion_features_3d: [1, 7040, 128], attention: [1, 4, 7040, 7040]
             motion_features_global_3d = self.aggregator(motion_features_3d, attention)
             motion_features_global = motion_features_global_3d.view(B, H, W, C).permute(0, 3, 1, 2)
         else:

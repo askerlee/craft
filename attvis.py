@@ -31,7 +31,7 @@ def get_boundary(h, w, H, W, radius):
     return top, bottom, left, right
 
 def vis_attention(model_name, img1_path, img2_path, points, attention5d_path, 
-                  radius=32, box_radius=8, img_scale=1, alpha=1, savedir='attvis',
+                  radius=16, box_radius=8, img_scale=1, alpha=1, savedir='attvis',
                   proj_img2=False):
     img2_name = os.path.basename(img2_path)
     img2_trunk = os.path.splitext(img2_name)[0]
@@ -125,7 +125,7 @@ if __name__ == '__main__':
     parser.add_argument('--att', dest='attention5d_path', type=str, required=True)
     parser.add_argument('--savedir', type=str, default='attvis')
     parser.add_argument('--scale', dest='img_scale', type=float, default=1.0)
-    parser.add_argument('--radius', dest='radius', type=int, default=32)
+    parser.add_argument('--radius', dest='radius', type=int, default=16)
     parser.add_argument('--box_radius', dest='box_radius', type=int, default=8)
     parser.add_argument('--alpha', type=float, default=1)
     parser.add_argument('--proj_img2', action='store_true')

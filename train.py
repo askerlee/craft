@@ -358,12 +358,12 @@ if __name__ == '__main__':
     parser.add_argument('--wdecay', type=float, default=.00005)
     parser.add_argument('--epsilon', type=float, default=1e-8)
     parser.add_argument('--clip', type=float, default=1.0)
-    parser.add_argument('--dropout', type=float, default=0.0)
+    parser.add_argument('--dropout', type=float, default=0.0, help='Dropout rate for fnet and cnet')
     parser.add_argument('--upsample-learn', action='store_true', default=False,
                         help='If True, use learned upsampling, otherwise, use bilinear upsampling.')
     parser.add_argument('--gamma', type=float, default=0.8, help='exponential loss weighting of the sequential predictions')
     parser.add_argument('--add_noise', action='store_true')
-    # default: not freeze bn.
+    # default: not to freeze bn.
     parser.add_argument('--freeze_bn', action='store_true')
     
     parser.add_argument('--iters', type=int, default=12)
@@ -401,6 +401,8 @@ if __name__ == '__main__':
                         help='Number of modes in inter-frame attention')
     parser.add_argument('--intramodes', dest='intra_num_modes', type=int, default=4, 
                         help='Number of modes in intra-frame attention')
+    parser.add_argument('--f2modes', dest='f2_num_modes',       type=int, default=4, 
+                        help='Number of modes in F2 Transformer')
     # In inter-frame attention, having QK biases performs slightly better.
     parser.add_argument('--interqknobias', dest='inter_qk_have_bias', action='store_false', 
                         help='Do not use biases in the QK projections in the inter-frame attention')

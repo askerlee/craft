@@ -46,12 +46,12 @@ class CRAFT(nn.Module):
             self.inter_trans_config.in_feat_dim = 256
             self.inter_trans_config.feat_dim    = 256
             self.inter_trans_config.max_pos_size     = 160
-            self.inter_trans_config.out_attn_scores_only    = True
+            self.inter_trans_config.out_attn_scores_only    = True                  # implies no FFN and no skip.
             self.inter_trans_config.attn_diag_cycles = 1000
-            self.inter_trans_config.num_modes       = args.inter_num_modes
-            self.inter_trans_config.qk_have_bias    = args.inter_qk_have_bias
-            self.inter_trans_config.pos_code_type   = args.inter_pos_code_type
-            self.inter_trans_config.pos_code_weight = args.inter_pos_code_weight
+            self.inter_trans_config.num_modes       = args.inter_num_modes          # default: 4
+            self.inter_trans_config.qk_have_bias    = args.inter_qk_have_bias       # default: True
+            self.inter_trans_config.pos_code_type   = args.inter_pos_code_type      # default: bias
+            self.inter_trans_config.pos_code_weight = args.inter_pos_code_weight    # default: 0.5
             self.args.inter_trans_config = self.inter_trans_config
             print0("Inter-frame trans config:\n{}".format(self.inter_trans_config.__dict__))
             
@@ -67,11 +67,9 @@ class CRAFT(nn.Module):
             # except that the feature dimension is doubled, and not out_attn_probs_only.
             self.f2_trans_config = SETransConfig()
             self.f2_trans_config.update_config(args)
-            self.f2_trans_config.do_half_attn = (args.f2trans == 'half')
             self.f2_trans_config.in_feat_dim = 256
             self.f2_trans_config.feat_dim  = 256
             # f2trans(x) = attn_aggregate(v(x)) + x. Here attn_aggregate and v (first_linear) both have 4 modes.
-            # if do_half_attn, has_input_skip will be changed to False within SelfAttVisPosTrans.__init__().
             self.f2_trans_config.has_input_skip = True
             # No FFN. f2trans simply aggregates similar features.
             self.f2_trans_config.has_FFN = False
@@ -83,9 +81,9 @@ class CRAFT(nn.Module):
             self.f2_trans_config.qk_have_bias  = False
             self.f2_trans_config.out_attn_probs_only    = False
             self.f2_trans_config.attn_diag_cycles   = 1000
-            self.f2_trans_config.num_modes          = args.intra_num_modes
-            self.f2_trans_config.pos_code_type      = args.intra_pos_code_type
-            self.f2_trans_config.pos_code_weight    = args.f2_pos_code_weight
+            self.f2_trans_config.num_modes          = args.f2_num_modes             # default: 4
+            self.f2_trans_config.pos_code_type      = args.intra_pos_code_type      # default: bias
+            self.f2_trans_config.pos_code_weight    = args.f2_pos_code_weight       # default: 0.5
             self.f2_trans = SelfAttVisPosTrans(self.f2_trans_config, "F2 transformer")
             print0("F2-trans config:\n{}".format(self.f2_trans_config.__dict__))
             self.args.f2_trans_config = self.f2_trans_config
@@ -95,8 +93,8 @@ class CRAFT(nn.Module):
             self.intra_trans_config.update_config(args)
             self.intra_trans_config.in_feat_dim = 128
             self.intra_trans_config.feat_dim  = 128
-            # Having FFN reduces performance.
             # has_FFN & has_input_skip are for GMAUpdateBlock.aggregator.
+            # Having FFN reduces performance. GMA has no FFN.
             self.intra_trans_config.has_FFN = False
             self.intra_trans_config.has_input_skip = True
             self.intra_trans_config.attn_mask_radius = -1
@@ -105,9 +103,9 @@ class CRAFT(nn.Module):
             self.intra_trans_config.qk_have_bias  = False
             self.intra_trans_config.out_attn_probs_only    = True
             self.intra_trans_config.attn_diag_cycles = 1000
-            self.intra_trans_config.num_modes           = args.intra_num_modes
-            self.intra_trans_config.pos_code_type       = args.intra_pos_code_type
-            self.intra_trans_config.pos_code_weight     = args.intra_pos_code_weight
+            self.intra_trans_config.num_modes           = args.intra_num_modes          # default: 4
+            self.intra_trans_config.pos_code_type       = args.intra_pos_code_type      # default: bias
+            self.intra_trans_config.pos_code_weight     = args.intra_pos_code_weight    # default: 1
             self.att = SelfAttVisPosTrans(self.intra_trans_config, "Intra-frame attention")
             self.args.intra_trans_config = self.intra_trans_config
             print0("Intra-frame trans config:\n{}".format(self.intra_trans_config.__dict__))

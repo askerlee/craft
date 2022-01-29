@@ -133,6 +133,7 @@ class Aggregate(nn.Module):
         out = einsum('b h i j, b h j d -> b h i d', attn, v)
         out = rearrange(out, 'b h (x y) d -> b (h d) x y', x=h, y=w)
 
+        # project is None for GMA. 
         if self.project is not None:
             out = self.project(out)
 
