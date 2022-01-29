@@ -1312,6 +1312,8 @@ if __name__ == '__main__':
                         help='Number of modes in inter-frame attention')
     parser.add_argument('--intramodes', dest='intra_num_modes', type=int, default=4, 
                         help='Number of modes in intra-frame attention')
+    parser.add_argument('--f2modes', dest='f2_num_modes',       type=int, default=4, 
+                        help='Number of modes in F2 Transformer')                        
    # In inter-frame attention, having QK biases performs slightly better.
     parser.add_argument('--interqknobias', dest='inter_qk_have_bias', action='store_false', 
                         help='Do not use biases in the QK projections in the inter-frame attention')
