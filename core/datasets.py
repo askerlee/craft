@@ -287,21 +287,27 @@ class KITTITrain(FlowDataset):
         images1 = sorted(glob(osp.join(root, 'image_2/*_10.png')))
         images2 = sorted(glob(osp.join(root, 'image_2/*_11.png')))
         flow_list = sorted(glob(osp.join(root, 'flow_occ/*_10.png')))
-
+        extra_info = []
         image_list = []
         for img1, img2 in zip(images1, images2):
             frame_id = img1.split('/')[-1]
             image_list += [ [img1, img2] ]
+            extra_info += [ [frame_id] ]
 
-        image_list_train, image_list_test, flow_list_train, flow_list_test = \
-                    train_test_split(image_list, flow_list, test_size=0.3, random_state=42)
+        image_list_train, image_list_test, flow_list_train, flow_list_test, \
+            extra_info_train, extra_info_test = \
+                    train_test_split(image_list, flow_list, extra_info, test_size=0.3, random_state=42)
 
         if split == 'training':
             self.image_list = image_list_train
             self.flow_list = flow_list_train
+            if debug:
+                self.extra_info = extra_info_train
         else:
             self.image_list = image_list_test
             self.flow_list = flow_list_test
+            if debug:
+                self.extra_info = extra_info_test
 
 class HD1K(FlowDataset):
     def __init__(self, aug_params=None, root='datasets/HD1k'):
