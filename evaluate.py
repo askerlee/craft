@@ -707,7 +707,8 @@ def validate_hd1k(model, iters=6, test_mode=1, seg_interval=-1):
     return results
 
 @torch.no_grad()
-def validate_kitti(model, iters=6, test_mode=1, use_kitti_train=False):
+def validate_kitti(model, iters=6, test_mode=1, batch_size=2, max_val_count=-1, use_kitti_train=False,
+                   verbose=False, seg_interval=100):
     """ Peform validation using the KITTI-2015 (train) split """
     model.eval()
     # use_kitti_train: use the test split within the official training split. 
@@ -717,38 +718,147 @@ def validate_kitti(model, iters=6, test_mode=1, use_kitti_train=False):
     else:    
         val_dataset = datasets.KITTI(split='training')
 
-    out_list, epe_list = [], []
+    val_loader  = data.DataLoader(val_dataset, batch_size=batch_size,
+                                  pin_memory=False, shuffle=False, num_workers=4, drop_last=False)
 
-    for val_id in range(len(val_dataset)):
-        image1, image2, flow_gt, valid_gt, _ = val_dataset[val_id]
-        image1 = image1[None].cuda()
-        image2 = image2[None].cuda()
+    out_list, epe_list = {}, {}
+    out_seg,  epe_seg  = [], []
+    if seg_interval == -1:
+        seg_interval = 100    
+    mag_endpoints = [3, 5, 10, np.inf]
+    segs_len = []
+    mags_seg = {}
+    mags_err = {}
+    mags_segs_err = {}
+    mags_segs_len = {}
 
+    if test_mode == 1:
+        its = [0]
+    elif test_mode == 2:
+        its = range(iters)
+    elif test_mode == 0:
+        breakpoint()
+    
+    val_count = 0
+    if max_val_count == -1:
+        max_val_count = len(val_dataset)
+    else:
+        max_val_count = min(max_val_count, len(val_dataset))
+        if max_val_count < len(val_dataset):
+            print(f"Evaluate first {max_val_count} of {len(val_dataset)}")
+
+    for data_blob in iter(val_loader):
+        image1, image2, flow_gt, valid_gt, _ = data_blob
+        image1 = image1.cuda()
+        image2 = image2.cuda()
+        
+        # (540, 960) => (544, 960), to be divided by 8.
         padder = InputPadder(image1.shape, mode='kitti')
         image1, image2 = padder.pad(image1, image2)
 
-        _, flow_pr = model(image1, image2, iters=iters, test_mode=test_mode)
-        flow = padder.unpad(flow_pr[0]).cpu()
+        _, flow_prs = model(image1, image2, iters=iters, test_mode=test_mode)
+        
+        # if test_mode == 2: list of 12 tensors, each is [1, 2, H, W].
+        # if test_mode == 1: a tensor of [1, 2, H, W].
+        if test_mode == 1:
+            flow_prs = [ flow_prs ]
 
-        epe = torch.sum((flow - flow_gt)**2, dim=0).sqrt()
-        mag = torch.sum(flow_gt**2, dim=0).sqrt()
+            
+        for it, flow_pr in enumerate(flow_prs):
+            flow = padder.unpad(flow_pr).cpu()
+            epe = torch.sum((flow - flow_gt)**2, dim=1).sqrt()
+            epe = epe.view(-1)
+            val = valid_gt.view(-1) >= 0.5
 
-        epe = epe.view(-1)
-        mag = mag.view(-1)
-        val = valid_gt.view(-1) >= 0.5
+            mag = torch.sum(flow_gt**2, dim=1).sqrt()
+            mag = mag.view(-1)
+            out = ((epe > 3.0) & ((epe/mag) > 0.05)).float()
+                        
+            epe_list.setdefault(it, [])
+            out_list.setdefault(it, [])
+            epe_list[it].append(epe[val].view(-1).numpy())
+            # epe_list[it].append(epe[val].mean().item())
+            out_list[it].append(out[val].view(-1).numpy())
 
-        out = ((epe > 3.0) & ((epe/mag) > 0.05)).float()
-        epe_list.append(epe[val].mean().item())
-        out_list.append(out[val].cpu().numpy())
+        # epe, out of the last iteration.
+        epe_seg.append(epe[val].view(-1).numpy())
+        out_seg.append(out[val].view(-1).numpy())
 
-    epe_list = np.array(epe_list)
-    out_list = np.concatenate(out_list)
+        prev_mag_endpoint = 0
+        for mag_endpoint in mag_endpoints:
+            mags_seg.setdefault(mag_endpoint, [])
+            # Use mag of the last it.
+            mag_in_range = (mag >= prev_mag_endpoint) & (mag < mag_endpoint)
+            mags_seg[mag_endpoint].append(mag_in_range.view(-1)[val].numpy())
+            prev_mag_endpoint = mag_endpoint
 
-    epe = np.mean(epe_list)
-    f1 = 100 * np.mean(out_list)
+        val_count += len(image1)
+        segs_len.append(len(image1))
 
-    print("Validation KITTI: %f, %f" % (epe, f1))
-    return {'kitti_epe': epe, 'kitti_f1': f1}
+        if (seg_interval > 0 and val_count % seg_interval == 0) or val_count >= max_val_count:
+            epe_seg     = np.concatenate(epe_seg)
+            out_seg     = np.concatenate(out_seg)
+            mean_epe    = np.mean(epe_seg)
+            px1 = np.mean(epe_seg < 1)
+            px3 = np.mean(epe_seg < 3)
+            px5 = np.mean(epe_seg < 5)
+                    
+            for mag_endpoint in mag_endpoints:
+                mag_seg = np.concatenate(mags_seg[mag_endpoint])
+                if mag_seg.sum() == 0:
+                    mag_err = 0
+                else:
+                    mag_err = np.mean(epe_seg[mag_seg])
+                mags_err[mag_endpoint] = mag_err
+                mags_segs_err.setdefault(mag_endpoint, [])
+                mags_segs_err[mag_endpoint].append(mags_err[mag_endpoint])
+                mags_segs_len.setdefault(mag_endpoint, [])
+                mags_segs_len[mag_endpoint].append(mag_seg.sum().item())
+
+            if verbose:
+                print(f"{val_count}/{max_val_count}: EPE {mean_epe:.4f}, "
+                        f"1px {px1:.4f}, 3px {px3:.4f}, 5px {px5:.4f}", end='')
+                prev_mag_endpoint = 0
+                for mag_endpoint in mag_endpoints:
+                    print(f", {prev_mag_endpoint}-{mag_endpoint} {mags_err[mag_endpoint]:.2f}", end='')
+                    prev_mag_endpoint = mag_endpoint
+                print()
+
+            epe_seg = []
+            out_seg = []
+            mags_seg = {}
+
+        # The validation data is too big. Just evaluate some.
+        if val_count >= max_val_count:
+            break
+                                                       
+    for it in its:
+        # epe_all = np.array(epe_list[it])
+        epe_all = np.concatenate(epe_list[it])
+        out_all = np.concatenate(out_list[it])
+        
+        epe = np.mean(epe_all)
+        px1 = np.mean(epe_all<1)
+        px3 = np.mean(epe_all<3)
+        px5 = np.mean(epe_all<5)
+
+        f1 = 100 * np.mean(out_all)
+        print("Iter %d, Valid EPE: %.4f, F1: %.4f, 1px: %.4f, 3px: %.4f, 5px: %.4f" % (it, epe, f1, px1, px3, px5), end='')
+
+    for mag_endpoint in mag_endpoints:
+        mag_errs = np.array(mags_segs_err[mag_endpoint])
+        mag_lens = np.array(mags_segs_len[mag_endpoint])
+        mag_err = np.sum(mag_errs * mag_lens) / np.sum(mag_lens)
+        mags_err[mag_endpoint] = mag_err
+
+    prev_mag_endpoint = 0
+    for mag_endpoint in mag_endpoints:
+        print(f", {prev_mag_endpoint}-{mag_endpoint} {mags_err[mag_endpoint]:.2f}", end='')
+        prev_mag_endpoint = mag_endpoint
+    print()
+
+    return {'epe': epe, 'f1': f1}
+
 
 # Set max_val_count=-1 to evaluate the whole dataset.
 @torch.no_grad()
@@ -814,7 +924,7 @@ def validate_viper(model, iters=6, test_mode=1, batch_size=2, max_val_count=500,
             epe = epe.view(-1)
             val = valid_gt.view(-1) >= 0.5
 
-            mag = torch.sum(flow_gt**2, dim=0).sqrt()
+            mag = torch.sum(flow_gt**2, dim=1).sqrt()
             mag = mag.view(-1)
             out = ((epe > 3.0) & ((epe/mag) > 0.05)).float()
                         
@@ -1429,9 +1539,14 @@ if __name__ == '__main__':
                 validate_sintel_occ(model.module, iters=args.iters, test_mode=args.test_mode)
 
             elif args.dataset == 'kitti':
-                validate_kitti(model.module, iters=args.iters, test_mode=args.test_mode)
+                validate_kitti(model.module, iters=args.iters, test_mode=args.test_mode,
+                            max_val_count=args.max_val_count, batch_size=args.batch_size,
+                            verbose=args.verbose, seg_interval=args.seg_interval)
             elif args.dataset == 'kittitrain':
-                validate_kitti(model.module, iters=args.iters, test_mode=args.test_mode, use_kitti_train=True)
+                validate_kitti(model.module, iters=args.iters, test_mode=args.test_mode, 
+                            max_val_count=args.max_val_count, batch_size=args.batch_size,
+                            verbose=args.verbose, seg_interval=args.seg_interval, 
+                            use_kitti_train=True)
 
             elif args.dataset == 'viper':
                 validate_viper(model.module, iters=args.iters, test_mode=args.test_mode, 
