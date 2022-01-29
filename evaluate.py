@@ -707,10 +707,15 @@ def validate_hd1k(model, iters=6, test_mode=1, seg_interval=-1):
     return results
 
 @torch.no_grad()
-def validate_kitti(model, iters=6, test_mode=1):
+def validate_kitti(model, iters=6, test_mode=1, use_kitti_train=False):
     """ Peform validation using the KITTI-2015 (train) split """
     model.eval()
-    val_dataset = datasets.KITTI(split='training')
+    # use_kitti_train: use the test split within the official training split. 
+    # Otherwise evaluation is done on the training data.
+    if use_kitti_train:
+        val_dataset = datasets.KITTITrain(split='testing')
+    else:    
+        val_dataset = datasets.KITTI(split='training')
 
     out_list, epe_list = [], []
 
@@ -1425,6 +1430,8 @@ if __name__ == '__main__':
 
             elif args.dataset == 'kitti':
                 validate_kitti(model.module, iters=args.iters, test_mode=args.test_mode)
+            elif args.dataset == 'kittitrain':
+                validate_kitti(model.module, iters=args.iters, test_mode=args.test_mode, use_kitti_train=True)
 
             elif args.dataset == 'viper':
                 validate_viper(model.module, iters=args.iters, test_mode=args.test_mode, 
