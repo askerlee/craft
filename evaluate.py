@@ -707,7 +707,7 @@ def validate_hd1k(model, iters=6, test_mode=1, seg_interval=-1):
     return results
 
 @torch.no_grad()
-def validate_kitti(model, iters=6, test_mode=1, batch_size=2, max_val_count=-1, use_kitti_train=False,
+def validate_kitti(model, iters=6, test_mode=1, batch_size=1, max_val_count=-1, use_kitti_train=False,
                    verbose=False, seg_interval=100):
     """ Peform validation using the KITTI-2015 (train) split """
     model.eval()
