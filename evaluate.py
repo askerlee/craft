@@ -231,19 +231,33 @@ def create_viper_submission_vis(model_name, model, output_path='viper_submission
         print("Created VIPER submission.")
 
 @torch.no_grad()
-def validate_chairs(model, iters=6, test_mode=1):
+def validate_chairs(model, iters=6, test_mode=1, xy_shift=None, batch_size=1):
     """ Perform evaluation on the FlyingChairs (test) split """
     model.eval()
     epe_list = []
 
+    if xy_shift is not None:
+        x_shift, y_shift = xy_shift
+        print(f"Apply x,y shift {x_shift},{y_shift}")
+    else:
+        x_shift, y_shift = (0, 0)
+    # the format of flow is u, v, i.e., x, y, not y, x.
+    offset_tensor = torch.tensor([x_shift, y_shift], dtype=torch.float32).reshape(2, 1, 1)
+
     val_dataset = datasets.FlyingChairs(split='validation')
-    for val_id in range(len(val_dataset)):
-        image1, image2, flow_gt, _, _ = val_dataset[val_id]
-        image1 = image1[None].cuda()
-        image2 = image2[None].cuda()
+    val_loader  = data.DataLoader(val_dataset, batch_size=batch_size,
+                                    pin_memory=False, shuffle=False, num_workers=4, drop_last=False)
+
+    for data_blob in iter(val_loader):  
+        image1, image2, flow_gt, _, _ = data_blob
+        image1 = image1.cuda()
+        image2 = image2.cuda()
+
+        image1, flow_gt, val_mask = shift_pixels(image1, flow_gt, xy_shift)
+        val_mask = val_mask.unsqueeze(0).expand(image1.shape[0], -1, -1)
 
         _, flow_pr = model(image1, image2, iters=iters, test_mode=test_mode)
-        epe = torch.sum((flow_pr[0].cpu() - flow_gt)**2, dim=0).sqrt()
+        epe = torch.sum((flow_pr[0].cpu() - flow_gt)**2, dim=1)[val_mask].sqrt()
         epe_list.append(epe.view(-1).numpy())
 
     epe = np.mean(np.concatenate(epe_list))
@@ -1522,7 +1536,8 @@ if __name__ == '__main__':
     for xy_shift in args.xy_shifts:
         with torch.no_grad():
             if args.dataset == 'chairs':
-                validate_chairs(model.module, iters=args.iters, test_mode=args.test_mode)
+                validate_chairs(model.module, iters=args.iters, test_mode=args.test_mode, 
+                                xy_shift=xy_shift, batch_size=args.batch_size)
 
             elif args.dataset == 'things':
                 validate_things(model.module, iters=args.iters, test_mode=args.test_mode, 
