@@ -1,4 +1,4 @@
-# CRAFT: Cross-Attentional Flow Transformers for Optical Flow Estimation
+# CRAFT: Cross-Attentional Flow Transformers for Robust Optical Flow
 This repository contains the source code for our optical flow estimation method:
 
 [CRAFT: Cross-Attentional Flow Transformers for Robust Optical Flow](https://arxiv.org/abs/xxxx)<br/>
