@@ -725,7 +725,7 @@ def validate_kitti(model, iters=6, test_mode=1, batch_size=1, max_val_count=-1, 
     out_seg,  epe_seg  = [], []
     if seg_interval == -1:
         seg_interval = 100    
-    mag_endpoints = [3, 5, 10, np.inf]
+    mag_endpoints = [1, 10, 20, 30, np.inf]
     segs_len = []
     mags_seg = {}
     mags_err = {}
@@ -881,7 +881,7 @@ def validate_viper(model, iters=6, test_mode=1, batch_size=2, max_val_count=500,
     out_seg,  epe_seg  = [], []
     if seg_interval == -1:
         seg_interval = 100    
-    mag_endpoints = [3, 5, 10, np.inf]
+    mag_endpoints = [1, 10, 20, 30, np.inf]
     segs_len = []
     mags_seg = {}
     mags_err = {}
@@ -1027,7 +1027,7 @@ def validate_slowflow(model, iters=6, test_mode=1, xy_shift=None,
 
     out_list, epe_list = {}, {}
     out_seg,  epe_seg  = [], []  
-    mag_endpoints = [3, 5, 10, np.inf]
+    mag_endpoints = [1, 10, 20, 30, np.inf]
     segs_len = []
     mags_seg = {}
     mags_err = {}
