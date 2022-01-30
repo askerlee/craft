@@ -13,7 +13,7 @@ import torch.nn.functional as F
 
 class FlowAugmentor:
     def __init__(self, crop_size, min_scale=-0.2, max_scale=0.5, spatial_aug_prob=0.8, 
-                 blur_kernel=5, blur_sigma=-1, do_flip=True):
+                 blur_kernel=5, blur_sigma=-1, do_flip=True, do_shift=False):
         
         # spatial augmentation params
         self.crop_size = crop_size
@@ -28,6 +28,9 @@ class FlowAugmentor:
         self.h_flip_prob = 0.5
         self.v_flip_prob = 0.1
 
+        # shift augmentation
+        self.do_shift = do_shift
+        
         # photometric augmentation params
         self.photo_aug = ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.5/3.14)
         self.asymmetric_color_aug_prob = 0.2

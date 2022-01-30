@@ -3,7 +3,6 @@
 import numpy as np
 import torch
 import torch.utils.data as data
-from torch.utils.data import DistributedSampler
 import torch.nn.functional as F
 
 import os
@@ -15,9 +14,7 @@ import re
 
 from utils import frame_utils
 from utils.augmentor import FlowAugmentor, SparseFlowAugmentor
-from utils.utils import print0
 from sklearn.model_selection import train_test_split
-
 # sparse: sparse (kitti .png) format of flow data
 class FlowDataset(data.Dataset):
     def __init__(self, aug_params=None, sparse=False):
@@ -44,9 +41,8 @@ class FlowDataset(data.Dataset):
             extra_info = self.extra_info[index]
         else:
             extra_info = 0
-            
         # if is_test, do not return flow (only for LB submission).
-        # If there's groundtruth flow, then is_test=False, e.g. on chairs and things.
+        # If there's groundtruth flow, then is_test=False, e.g. on chairs and things.            
         if self.is_test:
             img1 = frame_utils.read_gen(self.image_list[index][0])
             img2 = frame_utils.read_gen(self.image_list[index][1])
@@ -166,7 +162,6 @@ class MpiSintel(FlowDataset):
         if split == 'test':
             self.is_test = True
 
-        
         for scene in sorted(os.listdir(image_root)):
             image_list = sorted(glob(osp.join(image_root, scene, '*.png')))
             for i in range(len(image_list)-1):
@@ -183,6 +178,7 @@ class MpiSintel(FlowDataset):
                 if self.segmentation:
                     self.seg_list += sorted(glob(osp.join(seg_root, scene, '*.png')))
                     self.seg_inv_list += sorted(glob(osp.join(seg_inv_root, scene, '*.png')))
+
 
 class FlyingChairs(FlowDataset):
     def __init__(self, aug_params=None, split='training', root='datasets/FlyingChairs_release/data'):
@@ -257,7 +253,6 @@ class KITTI(FlowDataset):
         super(KITTI, self).__init__(aug_params, sparse=True)
         if debug:
             self.extra_info = []
-
         if split == 'testing':
             self.is_test = True
 
@@ -305,6 +300,7 @@ class KITTITrain(FlowDataset):
             self.flow_list = flow_list_test
             if debug:
                 self.extra_info = extra_info_test
+
 
 class HD1K(FlowDataset):
     def __init__(self, aug_params=None, root='datasets/HD1k'):
@@ -357,7 +353,6 @@ class VIPER(FlowDataset):
         skip_count = 0
         if debug:
             self.extra_info = []
-
         if split == 'test':
             # 001_00001, 001_00076, ...
             TEST_FRAMES = open(osp.join(root, "test_frames.txt"))
@@ -365,7 +360,7 @@ class VIPER(FlowDataset):
             for frame_trunk in TEST_FRAMES:
                 frame_trunk = frame_trunk.strip()
                 test_frames_dict[frame_trunk] = 1
-            print0("{} test frame names loaded".format(len(test_frames_dict)))
+            print("{} test frame names loaded".format(len(test_frames_dict)))
             self.is_test = True
             
         for i, scene in enumerate(sorted(os.listdir(split_img_root))):
@@ -411,7 +406,7 @@ class VIPER(FlowDataset):
                 if debug:
                     self.extra_info += [ [img0_trunk] ]
 
-        print0(f"{skip_count} files skipped")
+        print(f"{skip_count} files skipped")
 
 class SlowFlow(FlowDataset):
     def __init__(self, aug_params=None, split='test', root='datasets/slowflow/', filetype='png', 
@@ -419,7 +414,7 @@ class SlowFlow(FlowDataset):
         super(SlowFlow, self).__init__(aug_params, sparse=False)
         sequence_folder = "sequence" if blur_num_frames == 0 else f"sequence_R0{blur_num_frames}"
         sequence_root = osp.join(root, str(blur_mag), sequence_folder)
-        print0(sequence_root)
+        print(sequence_root)
         flow_root = osp.join(root, str(blur_mag), 'flow')
         skip_count = 0
         if debug:
@@ -456,7 +451,7 @@ class SlowFlow(FlowDataset):
                 if debug:
                     self.extra_info += [ [scene, img0_trunk] ]
 
-        print0(f"{len(self.image_list)} pairs loaded. {skip_count} skipped")
+        print(f"{len(self.image_list)} pairs loaded. {skip_count} skipped")
 
 # 'crop_size' is first used to bound the minimal size of images after resizing. Then it's used to crop the image.
 def fetch_dataloader(args, SINTEL_TRAIN_DS='C+T+K+S+H'):
@@ -464,7 +459,7 @@ def fetch_dataloader(args, SINTEL_TRAIN_DS='C+T+K+S+H'):
 
     if args.stage == 'chairs':
         aug_params = {'crop_size': args.image_size, 'min_scale': -0.1, 'max_scale': 1.0, 
-                      'do_flip': True, 'do_shift': args.do_shift_aug }
+                      'do_flip': True, 'do_shift': args.do_shift_aug }        
         train_dataset = FlyingChairs(aug_params, split='training')
     
     elif args.stage == 'things':
@@ -506,16 +501,9 @@ def fetch_dataloader(args, SINTEL_TRAIN_DS='C+T+K+S+H'):
                       'spatial_aug_prob': 1, 'do_flip': False}
         train_dataset = VIPER(aug_params, split='training')
 
-    if args.ddp:
-        train_sampler = DistributedSampler(train_dataset, shuffle=True)
-        shuffle = False
-    else:
-        train_sampler = None
-        shuffle = True
+    train_loader = data.DataLoader(train_dataset, batch_size=args.batch_size,
+                                   pin_memory=True, shuffle=True, num_workers=4, drop_last=True)
 
-    train_loader = data.DataLoader(train_dataset, batch_size=args.batch_size, sampler=train_sampler,
-                                   pin_memory=True, shuffle=shuffle, num_workers=args.num_workers, drop_last=True)
-
-    print0('Training with %d image pairs' % len(train_dataset))
+    print('Training with %d image pairs' % len(train_dataset))
     return train_loader
 

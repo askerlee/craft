@@ -787,7 +787,7 @@ def validate_kitti(model, iters=6, test_mode=1, batch_size=1, max_val_count=-1, 
         prev_mag_endpoint = 0
         for mag_endpoint in mag_endpoints:
             mags_seg.setdefault(mag_endpoint, [])
-            # Use mag of the last it.
+            # prev_mag_endpoint: mag of the last iteration.
             mag_in_range = (mag >= prev_mag_endpoint) & (mag < mag_endpoint)
             mags_seg[mag_endpoint].append(mag_in_range.view(-1)[val].numpy())
             prev_mag_endpoint = mag_endpoint
@@ -848,6 +848,7 @@ def validate_kitti(model, iters=6, test_mode=1, batch_size=1, max_val_count=-1, 
     for mag_endpoint in mag_endpoints:
         mag_errs = np.array(mags_segs_err[mag_endpoint])
         mag_lens = np.array(mags_segs_len[mag_endpoint])
+        # Average EPE in this magnitude range.
         mag_err = np.sum(mag_errs * mag_lens) / np.sum(mag_lens)
         mags_err[mag_endpoint] = mag_err
 
