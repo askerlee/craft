@@ -257,9 +257,9 @@ def validate_chairs(model, iters=6, test_mode=1, xy_shift=None, batch_size=1):
         val_mask = val_mask.unsqueeze(0).expand(image1.shape[0], -1, -1)
 
         _, flow_pr = model(image1, image2, iters=iters, test_mode=test_mode)
-        flow = flow_pr[0]
+        flow = flow_pr[0].cpu()
         flow += offset_tensor
-        epe = torch.sum((flow.cpu() - flow_gt)**2, dim=1)[val_mask].sqrt()
+        epe = torch.sum((flow - flow_gt)**2, dim=1)[val_mask].sqrt()
         epe_list.append(epe.view(-1).numpy())
 
     epe = np.mean(np.concatenate(epe_list))
