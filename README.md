@@ -2,7 +2,7 @@
 This repository contains the source code for our optical flow estimation method:
 
 [CRAFT: Cross-Attentional Flow Transformers for Robust Optical Flow](https://arxiv.org/abs/xxxx)<br/>
-Xiuchao Sui, Shaohua Li, Xue Geng, Yan Wu, Xinxing Xu, 
+Xiuchao Sui, Shaohua Li, Xue Geng, Yan Wu, Xinxing Xu, Yong Liu, Rick Goh, Hongyuan Zhu
 
 ## Environments
 You will have to choose cudatoolkit version to match your compute environment. 
