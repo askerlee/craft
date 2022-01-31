@@ -125,7 +125,7 @@ class FlowAugmentor:
     def random_shift(self, img, flow):
         x_shift = np.random.randint(-self.max_u_shift, self.max_u_shift)
         y_shift = np.random.randint(-self.max_v_shift, self.max_v_shift)
-        print(f"Shift x: {x_shift}, y: {y_shift}")
+        # print(f"Shift x: {x_shift}, y: {y_shift}")
         offset = np.array([x_shift, y_shift], dtype=np.float32)
         offset = offset.reshape((1, 1, 2))
 
