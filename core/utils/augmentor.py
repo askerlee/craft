@@ -126,33 +126,32 @@ class FlowAugmentor:
         x_shift = np.random.randint(-self.max_u_shift, self.max_u_shift)
         y_shift = np.random.randint(-self.max_v_shift, self.max_v_shift)
         print(f"Shift x: {x_shift}, y: {y_shift}")
-        
+        offset = np.array([x_shift, y_shift], dtype=np.float32)
+        offset = offset.reshape((1, 1, 2))
+
         img2  = np.zeros_like(img)
         flow2 = np.zeros_like(flow)
 
         mask = np.zeros(img.shape[:2], dtype=bool)
 
-        if x_shift > 0 and y_shift > 0:
+        if x_shift >= 0 and y_shift >= 0:
             img2[y_shift:, x_shift:] = img[:-y_shift, :-x_shift]
             mask[y_shift:, x_shift:] = True
-            if flow is not None:
-                flow2[y_shift:, x_shift:] = flow[:-y_shift, :-x_shift]
-        if x_shift > 0 and y_shift < 0:
+            flow2[y_shift:, x_shift:] = flow[:-y_shift, :-x_shift]
+        if x_shift >= 0 and y_shift < 0:
             img2[:y_shift, x_shift:] = img[-y_shift:, :-x_shift]
             mask[:y_shift, x_shift:] = True
-            if flow is not None:
-                flow2[:y_shift, x_shift:] = flow[-y_shift:, :-x_shift]
-        if x_shift < 0 and y_shift > 0:
+            flow2[:y_shift, x_shift:] = flow[-y_shift:, :-x_shift]
+        if x_shift < 0 and y_shift >= 0:
             img2[y_shift:, :x_shift] = img[:-y_shift, -x_shift:]
             mask[y_shift:, :x_shift] = True
-            if flow is not None:
-                flow2[y_shift:, :x_shift] = flow[:-y_shift, -x_shift:]
+            flow2[y_shift:, :x_shift] = flow[:-y_shift, -x_shift:]
         if x_shift < 0 and y_shift < 0:
             img2[:y_shift, :x_shift] = img[-y_shift:, -x_shift:]
             mask[:y_shift, :x_shift] = True
-            if flow is not None:
-                flow2[:y_shift, :x_shift] = flow[-y_shift:, -x_shift:]
+            flow2[:y_shift, :x_shift] = flow[-y_shift:, -x_shift:]
 
+        flow2 -= offset
         return img2, flow2, mask
         
     def __call__(self, img1, img2, flow):
