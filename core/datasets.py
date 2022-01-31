@@ -67,6 +67,7 @@ class FlowDataset(data.Dataset):
         index = index % len(self.image_list)
         valid = None
         # KITTI flow is saved as image files. 
+        # KITTI, HD1K, VIPER are sparse format.
         if self.sparse:
             flow, valid = frame_utils.readFlowKITTI(self.flow_list[index])
         else:
@@ -111,7 +112,8 @@ class FlowDataset(data.Dataset):
             if self.sparse:
                 img1, img2, flow, valid = self.augmentor(img1, img2, flow, valid)
             else:
-                img1, img2, flow = self.augmentor(img1, img2, flow)
+                # shift augmentation will return valid. Otherwise valid is None.
+                img1, img2, flow, valid = self.augmentor(img1, img2, flow)
 
         img1 = torch.from_numpy(img1).permute(2, 0, 1).float()
         img2 = torch.from_numpy(img2).permute(2, 0, 1).float()
@@ -464,11 +466,16 @@ def fetch_dataloader(args, SINTEL_TRAIN_DS='C+T+K+S+H'):
 
     if args.stage == 'chairs':
         aug_params = {'crop_size': args.image_size, 'min_scale': -0.1, 'max_scale': 1.0, 
-                      'do_flip': True, 'do_shift': args.do_shift_aug }
+                      'do_flip': True }
         train_dataset = FlyingChairs(aug_params, split='training')
     
     elif args.stage == 'things':
-        aug_params = {'crop_size': args.image_size, 'min_scale': -0.4, 'max_scale': 0.8, 'do_flip': True}
+        # For experiments to understand inborn vs. acquired robustness against image shifting, 
+        # only do image shifting augmentation on Things.
+        # Things is non-sparse. So only need to work on FlowAugmentor 
+        # (no need to work on SparseFlowAugmentor).
+        aug_params = {'crop_size': args.image_size, 'min_scale': -0.4, 'max_scale': 0.8, 'do_flip': True,
+                      'do_shift': args.do_shift_aug}
         clean_dataset = FlyingThings3D(aug_params, dstype='frames_cleanpass', split='training')
         final_dataset = FlyingThings3D(aug_params, dstype='frames_finalpass', split='training')
         train_dataset = clean_dataset + final_dataset

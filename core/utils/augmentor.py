@@ -30,7 +30,12 @@ class FlowAugmentor:
 
         # shift augmentation
         self.do_shift = do_shift
-        
+        if self.do_shift:
+            print("Do image shifting augmentation")
+            self.max_u_shift = 320
+            self.max_v_shift = 160
+            self.shift_prob  = 0.3
+
         # photometric augmentation params
         self.photo_aug = ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.5/3.14)
         self.asymmetric_color_aug_prob = 0.2
@@ -114,10 +119,51 @@ class FlowAugmentor:
 
         return img1, img2, flow
 
+    # img and flow are 3D np array. img: (H, W, 3). flow: (H, W, 2)
+    # mask: (H, W).
+    # The flow values at mask==True are valid and will be used to compute EPE.
+    def random_shift(self, img, flow):
+        x_shift = np.random.randint(-self.max_u_shift, self.max_u_shift)
+        y_shift = np.random.randint(-self.max_v_shift, self.max_v_shift)
+        print(f"Shift x: {x_shift}, y: {y_shift}")
+        
+        img2  = np.zeros_like(img)
+        flow2 = np.zeros_like(flow)
+
+        mask = np.zeros(img.shape[:2], dtype=bool)
+
+        if x_shift > 0 and y_shift > 0:
+            img2[y_shift:, x_shift:] = img[:-y_shift, :-x_shift]
+            mask[y_shift:, x_shift:] = True
+            if flow is not None:
+                flow2[y_shift:, x_shift:] = flow[:-y_shift, :-x_shift]
+        if x_shift > 0 and y_shift < 0:
+            img2[:y_shift, x_shift:] = img[-y_shift:, :-x_shift]
+            mask[:y_shift, x_shift:] = True
+            if flow is not None:
+                flow2[:y_shift, x_shift:] = flow[-y_shift:, :-x_shift]
+        if x_shift < 0 and y_shift > 0:
+            img2[y_shift:, :x_shift] = img[:-y_shift, -x_shift:]
+            mask[y_shift:, :x_shift] = True
+            if flow is not None:
+                flow2[y_shift:, :x_shift] = flow[:-y_shift, -x_shift:]
+        if x_shift < 0 and y_shift < 0:
+            img2[:y_shift, :x_shift] = img[-y_shift:, -x_shift:]
+            mask[:y_shift, :x_shift] = True
+            if flow is not None:
+                flow2[:y_shift, :x_shift] = flow[-y_shift:, -x_shift:]
+
+        return img2, flow2, mask
+        
     def __call__(self, img1, img2, flow):
         img1, img2 = self.color_transform(img1, img2)
         img1, img2 = self.eraser_transform(img1, img2)
         img1, img2, flow = self.spatial_transform(img1, img2, flow)
+
+        if self.do_shift and np.random.rand() < self.shift_prob:
+            img1, flow, valid = self.random_shift(img1, flow)
+        else:
+            valid = None
 
         if self.blur_sigma > 0:
             K = self.blur_kernel
@@ -128,7 +174,7 @@ class FlowAugmentor:
         img2 = np.ascontiguousarray(img2)
         flow = np.ascontiguousarray(flow)
 
-        return img1, img2, flow
+        return img1, img2, flow, valid
 
 
 class SparseFlowAugmentor:

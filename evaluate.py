@@ -43,6 +43,13 @@ class Logger:
 def shift_pixels(img, flow, xy_shift):
     if xy_shift is not None:
         x_shift, y_shift = xy_shift
+        # the format of flow is u, v, i.e., x, y, not y, x.
+        offset_tensor = torch.tensor([x_shift, y_shift], dtype=torch.float32, device=flow.device)
+        if flow.ndim == 4:
+            offset_tensor = offset_tensor.reshape([1, 2, 1, 1])
+        else:
+            offset_tensor = offset_tensor.reshape([2, 1, 1])
+
     if xy_shift is None or (x_shift == 0 and y_shift == 0):
         mask = torch.ones(img.shape[-2:], dtype=bool, device=img.device)
         return img, flow, mask
@@ -76,6 +83,8 @@ def shift_pixels(img, flow, xy_shift):
         if flow is not None:
             flow2[..., :y_shift, :x_shift] = flow[..., -y_shift:, -x_shift:]
 
+    if flow2 is not None:
+        flow2 -= offset_tensor
     return img2, flow2, mask
 
 def shift_flow(flow, xy_shift):
@@ -239,10 +248,6 @@ def validate_chairs(model, iters=6, test_mode=1, xy_shift=None, batch_size=1):
     if xy_shift is not None:
         x_shift, y_shift = xy_shift
         print(f"Apply x,y shift {x_shift},{y_shift}")
-    else:
-        x_shift, y_shift = (0, 0)
-    # the format of flow is u, v, i.e., x, y, not y, x.
-    offset_tensor = torch.tensor([x_shift, y_shift], dtype=torch.float32).reshape(2, 1, 1)
 
     val_dataset = datasets.FlyingChairs(split='validation')
     val_loader  = data.DataLoader(val_dataset, batch_size=batch_size,
@@ -258,7 +263,6 @@ def validate_chairs(model, iters=6, test_mode=1, xy_shift=None, batch_size=1):
 
         _, flow_pr = model(image1, image2, iters=iters, test_mode=test_mode)
         flow = flow_pr[0].cpu()
-        flow += offset_tensor
         epe = torch.sum((flow - flow_gt)**2, dim=1)[val_mask].sqrt()
         epe_list.append(epe.view(-1).numpy())
 
@@ -279,10 +283,6 @@ def validate_things(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, ma
     if xy_shift is not None:
         x_shift, y_shift = xy_shift
         print(f"Apply x,y shift {x_shift},{y_shift}")
-    else:
-        x_shift, y_shift = (0, 0)
-    # the format of flow is u, v, i.e., x, y, not y, x.
-    offset_tensor = torch.tensor([x_shift, y_shift], dtype=torch.float32).reshape(2, 1, 1)
 
     for dstype in ['frames_cleanpass', 'frames_finalpass']:
         epe_list = {}
@@ -342,7 +342,6 @@ def validate_things(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, ma
             
             for it, flow_pr in enumerate(flow_prs):
                 flow = padder.unpad(flow_pr).cpu()
-                flow += offset_tensor
                 epe = torch.sum((flow - flow_gt)**2, dim=1)[val_mask].sqrt()
                 epe_list.setdefault(it, [])
                 epe_list[it].append(epe.view(-1).numpy())
@@ -434,11 +433,7 @@ def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, ma
     if xy_shift is not None:
         x_shift, y_shift = xy_shift
         print(f"Apply x,y shift {x_shift},{y_shift}")
-    else:
-        x_shift, y_shift = (0, 0)
-    # the format of flow is u, v, i.e., x, y, not y, x.
-    offset_tensor = torch.tensor([x_shift, y_shift], dtype=torch.float32).reshape(2, 1, 1)
-    
+
     for dstype in ['clean', 'final']:
         val_dataset = datasets.MpiSintel(split='training', aug_params=None, dstype=dstype)
         # Use multiple workers to push GPU utility to near 100%.
@@ -495,7 +490,6 @@ def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, ma
 
             for it, flow_pr in enumerate(flow_prs):
                 flow = padder.unpad(flow_pr).cpu()
-                flow += offset_tensor
                 epe = torch.sum((flow - flow_gt)**2, dim=1)[val_mask].sqrt()
                 epe_list.setdefault(it, [])
                 epe_list[it].append(epe.view(-1).numpy())
@@ -1064,10 +1058,6 @@ def validate_slowflow(model, iters=6, test_mode=1, xy_shift=None,
     if xy_shift is not None:
         x_shift, y_shift = xy_shift
         print(f"Apply x,y shift {x_shift},{y_shift}")
-    else:
-        x_shift, y_shift = (0, 0)
-    # the format of flow is u, v, i.e., x, y, not y, x.
-    offset_tensor = torch.tensor([x_shift, y_shift], dtype=torch.float32).reshape(2, 1, 1)
 
     for val_id in range(len(val_dataset)):
         image1, image2, flow_gt, _, (scene, img1_trunk) = val_dataset[val_id]
@@ -1096,7 +1086,6 @@ def validate_slowflow(model, iters=6, test_mode=1, xy_shift=None,
 
         for it, flow_pr in enumerate(flow_prs):
             flow = padder.unpad(flow_pr[0]).cpu()
-            flow += offset_tensor
             epe = torch.sum((flow - flow_gt)**2, dim=0)[val_mask].sqrt()
             epe = epe.view(-1)
 
