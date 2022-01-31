@@ -129,26 +129,30 @@ class FlowAugmentor:
         offset = np.array([x_shift, y_shift], dtype=np.float32)
         offset = offset.reshape((1, 1, 2))
 
+        # Do not bother to make a special case to handle 0 offsets. 
+        # Just discard such shift params.
+        if x_shift == 0 or y_shift == 0:
+            return img, flow, None
+
         img2  = np.zeros_like(img)
         flow2 = np.zeros_like(flow)
-
         mask = np.zeros(img.shape[:2], dtype=bool)
-
-        if x_shift >= 0 and y_shift >= 0:
+            
+        if x_shift > 0 and y_shift > 0:
             img2[y_shift:, x_shift:] = img[:-y_shift, :-x_shift]
-            mask[y_shift:, x_shift:] = True
+            mask[y_shift:, x_shift:] = 1
             flow2[y_shift:, x_shift:] = flow[:-y_shift, :-x_shift]
-        if x_shift >= 0 and y_shift < 0:
+        if x_shift > 0 and y_shift < 0:
             img2[:y_shift, x_shift:] = img[-y_shift:, :-x_shift]
-            mask[:y_shift, x_shift:] = True
+            mask[:y_shift, x_shift:] = 1
             flow2[:y_shift, x_shift:] = flow[-y_shift:, :-x_shift]
-        if x_shift < 0 and y_shift >= 0:
+        if x_shift < 0 and y_shift > 0:
             img2[y_shift:, :x_shift] = img[:-y_shift, -x_shift:]
-            mask[y_shift:, :x_shift] = True
+            mask[y_shift:, :x_shift] = 1
             flow2[y_shift:, :x_shift] = flow[:-y_shift, -x_shift:]
         if x_shift < 0 and y_shift < 0:
             img2[:y_shift, :x_shift] = img[-y_shift:, -x_shift:]
-            mask[:y_shift, :x_shift] = True
+            mask[:y_shift, :x_shift] = 1
             flow2[:y_shift, :x_shift] = flow[-y_shift:, -x_shift:]
 
         flow2 -= offset
