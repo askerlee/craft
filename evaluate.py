@@ -277,7 +277,7 @@ def validate_chairs(model, iters=6, test_mode=1, xy_shift=None, batch_size=1):
 
 @torch.no_grad()
 def validate_things(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, max_val_count=-1, 
-                    verbose=False, seg_interval=-1):
+                    verbose=False, seg_interval=-1, subset='both'):
     """ Perform evaluation on the FlyingThings (test) split """
     model.eval()
     results = {}
@@ -292,8 +292,14 @@ def validate_things(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, ma
         offset_tensor = torch.tensor([0, 0], dtype=torch.float32)
 
     offset_tensor = offset_tensor.reshape([1, 2, 1, 1])
+    if subset == 'both':
+        dstypes = ['frames_cleanpass', 'frames_finalpass']
+    if subset == 'clean':
+        dstypes = ['frames_cleanpass']
+    if subset == 'final':
+        dstypes = ['frames_finalpass']
 
-    for dstype in ['frames_cleanpass', 'frames_finalpass']:
+    for dstype in dstypes:
         epe_list = {}
         segs_len  = []
         epe_seg  = []
@@ -1377,6 +1383,7 @@ if __name__ == '__main__':
     parser.add_argument('--model', help="restore checkpoint")
     parser.add_argument('--dataset', help="dataset for evaluation")
     parser.add_argument('--split', type=str, default="test", help="split of dataset for evaluation")
+    parser.add_argument('--subset', type=str, default="both", help="subset (clean, final, or both) of dataset for evaluation")
     parser.add_argument('--slowset', type=str, help="slowflow set for evaluation, e.g. 300,3")
     parser.add_argument('--img1', type=str, default=None, help="first image for evaluation")
     parser.add_argument('--img2', type=str, default=None, help="second image for evaluation")
@@ -1551,7 +1558,8 @@ if __name__ == '__main__':
                 validate_things(model.module, iters=args.iters, test_mode=args.test_mode, 
                                 xy_shift=xy_shift, batch_size=args.batch_size,
                                 max_val_count=args.max_val_count, 
-                                verbose=args.verbose, seg_interval=args.seg_interval)
+                                verbose=args.verbose, seg_interval=args.seg_interval,
+                                subset=args.subset)
 
             elif args.dataset == 'sintel':
                 validate_sintel(model.module, iters=args.iters, test_mode=args.test_mode, 
