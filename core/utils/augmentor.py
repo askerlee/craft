@@ -32,9 +32,9 @@ class FlowAugmentor:
         self.do_shift = do_shift
         if self.do_shift:
             print("Do image shifting augmentation")
-            self.max_u_shift = 320
-            self.max_v_shift = 160
-            self.shift_prob  = 0.3
+            self.max_u_shift = 240
+            self.max_v_shift = 120
+            self.shift_prob  = 0.2
 
         # photometric augmentation params
         self.photo_aug = ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.5/3.14)
@@ -181,7 +181,7 @@ class FlowAugmentor:
 
 
 class SparseFlowAugmentor:
-    def __init__(self, crop_size, min_scale=-0.2, max_scale=0.5, spatial_aug_prob=0.8, do_flip=False):
+    def __init__(self, crop_size, min_scale=-0.2, max_scale=0.5, spatial_aug_prob=0.8, do_flip=False, do_shift=False):
         # spatial augmentation params
         self.crop_size = crop_size
         self.min_scale = min_scale
@@ -199,7 +199,15 @@ class SparseFlowAugmentor:
         self.photo_aug = ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3, hue=0.3/3.14)
         self.asymmetric_color_aug_prob = 0.2
         self.eraser_aug_prob = 0.5
-        
+
+        # shift augmentation
+        self.do_shift = do_shift
+        if self.do_shift:
+            # print("Do image shifting augmentation")
+            self.max_u_shift = 240
+            self.max_v_shift = 120
+            self.shift_prob  = 0.2
+
     def color_transform(self, img1, img2):
         image_stack = np.concatenate([img1, img2], axis=0)
         image_stack = np.array(self.photo_aug(Image.fromarray(image_stack)), dtype=np.uint8)
