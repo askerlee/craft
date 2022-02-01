@@ -252,6 +252,7 @@ def validate_chairs(model, iters=6, test_mode=1, xy_shift=None, batch_size=1):
         offset_tensor = torch.tensor([x_shift, y_shift], dtype=torch.float32)
     else:
         offset_tensor = torch.tensor([0, 0], dtype=torch.float32)
+    offset_tensor = offset_tensor.reshape([1, 2, 1, 1])
 
     val_dataset = datasets.FlyingChairs(split='validation')
     val_loader  = data.DataLoader(val_dataset, batch_size=batch_size,
@@ -290,8 +291,8 @@ def validate_things(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, ma
         offset_tensor = torch.tensor([x_shift, y_shift], dtype=torch.float32)
     else:
         offset_tensor = torch.tensor([0, 0], dtype=torch.float32)
-
     offset_tensor = offset_tensor.reshape([1, 2, 1, 1])
+
     if subset == 'both':
         dstypes = ['frames_cleanpass', 'frames_finalpass']
     if subset == 'clean':
@@ -451,6 +452,7 @@ def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, ma
         offset_tensor = torch.tensor([x_shift, y_shift], dtype=torch.float32)
     else:
         offset_tensor = torch.tensor([0, 0], dtype=torch.float32)
+    offset_tensor = offset_tensor.reshape([1, 2, 1, 1])
 
     for dstype in ['clean', 'final']:
         val_dataset = datasets.MpiSintel(split='training', aug_params=None, dstype=dstype)
@@ -753,7 +755,8 @@ def validate_kitti(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, max
         offset_tensor = torch.tensor([x_shift, y_shift], dtype=torch.float32)
     else:
         offset_tensor = torch.tensor([0, 0], dtype=torch.float32)
-
+    offset_tensor = offset_tensor.reshape([1, 2, 1, 1])
+    
     val_loader  = data.DataLoader(val_dataset, batch_size=batch_size,
                                   pin_memory=False, shuffle=False, num_workers=4, drop_last=False)
 
