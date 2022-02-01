@@ -736,7 +736,7 @@ def validate_hd1k(model, iters=6, test_mode=1, seg_interval=-1):
     return results
 
 @torch.no_grad()
-def validate_kitti(model, iters=6, test_mode=1, batch_size=1, max_val_count=-1, use_kitti_train=False,
+def validate_kitti(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, max_val_count=-1, use_kitti_train=False,
                    verbose=False, seg_interval=100):
     """ Peform validation using the KITTI-2015 (train) split """
     model.eval()
@@ -746,6 +746,13 @@ def validate_kitti(model, iters=6, test_mode=1, batch_size=1, max_val_count=-1, 
         val_dataset = datasets.KITTITrain(split='testing')
     else:    
         val_dataset = datasets.KITTI(split='training')
+
+    if xy_shift is not None:
+        x_shift, y_shift = xy_shift
+        print(f"Apply x,y shift {x_shift},{y_shift}")
+        offset_tensor = torch.tensor([x_shift, y_shift], dtype=torch.float32)
+    else:
+        offset_tensor = torch.tensor([0, 0], dtype=torch.float32)
 
     val_loader  = data.DataLoader(val_dataset, batch_size=batch_size,
                                   pin_memory=False, shuffle=False, num_workers=4, drop_last=False)
@@ -780,7 +787,12 @@ def validate_kitti(model, iters=6, test_mode=1, batch_size=1, max_val_count=-1, 
         image1, image2, flow_gt, valid_gt, _ = data_blob
         image1 = image1.cuda()
         image2 = image2.cuda()
-        
+
+        # Shift image1 pixels along x and y axes.
+        image1, flow_gt, val_mask = shift_pixels(image1, flow_gt, xy_shift)
+        val_mask = val_mask.unsqueeze(0).expand(image1.shape[0], -1, -1)
+        valid_gt[~val_mask] = 0
+
         # (540, 960) => (544, 960), to be divided by 8.
         padder = InputPadder(image1.shape, mode='kitti')
         image1, image2 = padder.pad(image1, image2)
@@ -799,7 +811,8 @@ def validate_kitti(model, iters=6, test_mode=1, batch_size=1, max_val_count=-1, 
             epe = epe.view(-1)
             val = valid_gt.view(-1) >= 0.5
 
-            mag = torch.sum(flow_gt**2, dim=1).sqrt()
+            orig_flow_gt = flow_gt.cpu() + offset_tensor
+            mag = torch.sum(orig_flow_gt**2, dim=1).sqrt()
             mag = mag.view(-1)
             out = ((epe > 3.0) & ((epe/mag) > 0.05)).float()
                         
@@ -1572,13 +1585,13 @@ if __name__ == '__main__':
 
             elif args.dataset == 'kitti':
                 validate_kitti(model.module, iters=args.iters, test_mode=args.test_mode,
-                            max_val_count=args.max_val_count, batch_size=args.batch_size,
-                            verbose=args.verbose, seg_interval=args.seg_interval)
+                               xy_shift=xy_shift, max_val_count=args.max_val_count, batch_size=args.batch_size,
+                               verbose=args.verbose, seg_interval=args.seg_interval)
             elif args.dataset == 'kittitrain':
                 validate_kitti(model.module, iters=args.iters, test_mode=args.test_mode, 
-                            max_val_count=args.max_val_count, batch_size=args.batch_size,
-                            verbose=args.verbose, seg_interval=args.seg_interval, 
-                            use_kitti_train=True)
+                               xy_shift=xy_shift, max_val_count=args.max_val_count, batch_size=args.batch_size,
+                               verbose=args.verbose, seg_interval=args.seg_interval, 
+                               use_kitti_train=True)
 
             elif args.dataset == 'viper':
                 validate_viper(model.module, iters=args.iters, test_mode=args.test_mode, 
