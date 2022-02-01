@@ -466,7 +466,8 @@ def fetch_dataloader(args, SINTEL_TRAIN_DS='C+T+K+S+H'):
 
     if args.stage == 'chairs':
         aug_params = {'crop_size': args.image_size, 'min_scale': -0.1, 'max_scale': 1.0, 
-                      'do_flip': True }
+                      'do_flip': True,
+                      'do_shift': args.do_shift_aug }
         train_dataset = FlyingChairs(aug_params, split='training')
     
     elif args.stage == 'things':
@@ -484,33 +485,40 @@ def fetch_dataloader(args, SINTEL_TRAIN_DS='C+T+K+S+H'):
         # autoflow image size: (488, 576)
         # minimal scale = 2**0.42 = 1.338. 576*1.338=770.6 > 768. Otherwise there'll be exceptions.
         train_dataset = Autoflow({'crop_size': args.image_size, 'min_scale': -0.2, 'max_scale': 0.8, 
-                                  'spatial_aug_prob': 1, 'do_flip': True})
+                                  'spatial_aug_prob': 1, 'do_flip': True,
+                                  'do_shift': args.do_shift_aug})
 
     elif args.stage == 'sintel':
-        aug_params = {'crop_size': args.image_size, 'min_scale': -0.2, 'max_scale': 0.6, 'do_flip': True}
+        aug_params = {'crop_size': args.image_size, 'min_scale': -0.2, 'max_scale': 0.6, 'do_flip': True,
+                      'do_shift': args.do_shift_aug}
         things = FlyingThings3D(aug_params, dstype='frames_cleanpass')
         sintel_clean = MpiSintel(aug_params, split='training', dstype='clean')
         sintel_final = MpiSintel(aug_params, split='training', dstype='final')        
 
         if SINTEL_TRAIN_DS == 'C+T+K+S+H':
-            kitti = KITTI({'crop_size': args.image_size, 'min_scale': -0.3, 'max_scale': 0.5, 'do_flip': True})
-            hd1k = HD1K({'crop_size': args.image_size, 'min_scale': -0.5, 'max_scale': 0.2, 'do_flip': True})
+            kitti = KITTI({'crop_size': args.image_size, 'min_scale': -0.3, 'max_scale': 0.5, 'do_flip': True,
+                           'do_shift': args.do_shift_aug})
+            hd1k = HD1K({'crop_size': args.image_size, 'min_scale': -0.5, 'max_scale': 0.2, 'do_flip': True,
+                         'do_shift': args.do_shift_aug})
             train_dataset = 100*sintel_clean + 100*sintel_final + 200*kitti + 5*hd1k + things
 
         elif SINTEL_TRAIN_DS == 'C+T+K/S':
             train_dataset = 100*sintel_clean + 100*sintel_final + things
 
     elif args.stage == 'kitti':
-        aug_params = {'crop_size': args.image_size, 'min_scale': -0.2, 'max_scale': 0.4, 'do_flip': False}
+        aug_params = {'crop_size': args.image_size, 'min_scale': -0.2, 'max_scale': 0.4, 'do_flip': False,
+                      'do_shift': args.do_shift_aug}
         train_dataset = KITTI(aug_params, split='training')
 
     elif args.stage == 'kittitrain':
-        aug_params = {'crop_size': args.image_size, 'min_scale': -0.2, 'max_scale': 0.4, 'do_flip': False}
+        aug_params = {'crop_size': args.image_size, 'min_scale': -0.2, 'max_scale': 0.4, 'do_flip': False,
+                      'do_shift': args.do_shift_aug}
         train_dataset = KITTITrain(aug_params, split='training')
 
     elif args.stage == 'viper':
         aug_params = {'crop_size': args.image_size, 'min_scale': -1, 'max_scale': -0.5, 
-                      'spatial_aug_prob': 1, 'do_flip': False}
+                      'spatial_aug_prob': 1, 'do_flip': False,
+                      'do_shift': args.do_shift_aug}
         train_dataset = VIPER(aug_params, split='training')
 
     if args.ddp:
