@@ -262,6 +262,8 @@ def validate(model, args, logger):
     for val_dataset in args.validation:
         if val_dataset == 'chairs':
             results.update(evaluate.validate_chairs(model.module, args.iters))
+        if val_dataset == 'things':
+            results.update(evaluate.validate_things(model.module, args.iters))            
         elif val_dataset == 'sintel':
             results.update(evaluate.validate_sintel(model.module, args.iters))
         elif val_dataset == 'kitti':

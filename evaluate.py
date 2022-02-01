@@ -26,6 +26,7 @@ from utils import frame_utils
 
 from utils.utils import InputPadder, forward_interpolate
 from fvcore.nn import FlopCountAnalysis
+# np.seterr(all='raise')
 
 # Just an empty Logger definition to satisfy torch.load().
 class Logger:
@@ -248,6 +249,9 @@ def validate_chairs(model, iters=6, test_mode=1, xy_shift=None, batch_size=1):
     if xy_shift is not None:
         x_shift, y_shift = xy_shift
         print(f"Apply x,y shift {x_shift},{y_shift}")
+        offset_tensor = torch.tensor([x_shift, y_shift], dtype=torch.float32)
+    else:
+        offset_tensor = torch.tensor([0, 0], dtype=torch.float32)
 
     val_dataset = datasets.FlyingChairs(split='validation')
     val_loader  = data.DataLoader(val_dataset, batch_size=batch_size,
@@ -283,6 +287,11 @@ def validate_things(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, ma
     if xy_shift is not None:
         x_shift, y_shift = xy_shift
         print(f"Apply x,y shift {x_shift},{y_shift}")
+        offset_tensor = torch.tensor([x_shift, y_shift], dtype=torch.float32)
+    else:
+        offset_tensor = torch.tensor([0, 0], dtype=torch.float32)
+
+    offset_tensor = offset_tensor.reshape([1, 2, 1, 1])
 
     for dstype in ['frames_cleanpass', 'frames_finalpass']:
         epe_list = {}
@@ -318,7 +327,6 @@ def validate_things(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, ma
         # else:
         #     GaussianBlur = None
 
-
         for data_blob in iter(val_loader):  
             image1, image2, flow_gt, _, _ = data_blob
             image1 = image1.cuda()
@@ -347,7 +355,8 @@ def validate_things(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, ma
                 epe_list[it].append(epe.view(-1).numpy())
 
             epe_seg.append(epe.view(-1).numpy())
-            mag = torch.sum(flow_gt**2, dim=1)[val_mask].sqrt()
+            orig_flow_gt = flow_gt.cpu() + offset_tensor
+            mag = torch.sum(orig_flow_gt**2, dim=1)[val_mask].sqrt()
 
             prev_mag_endpoint = 0
             for mag_endpoint in mag_endpoints:
@@ -433,6 +442,9 @@ def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, ma
     if xy_shift is not None:
         x_shift, y_shift = xy_shift
         print(f"Apply x,y shift {x_shift},{y_shift}")
+        offset_tensor = torch.tensor([x_shift, y_shift], dtype=torch.float32)
+    else:
+        offset_tensor = torch.tensor([0, 0], dtype=torch.float32)
 
     for dstype in ['clean', 'final']:
         val_dataset = datasets.MpiSintel(split='training', aug_params=None, dstype=dstype)
@@ -495,7 +507,8 @@ def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, ma
                 epe_list[it].append(epe.view(-1).numpy())
 
             epe_seg.append(epe.view(-1).numpy())
-            mag = torch.sum(flow_gt**2, dim=1)[val_mask].sqrt()
+            orig_flow_gt = flow_gt.cpu() + offset_tensor
+            mag = torch.sum(orig_flow_gt**2, dim=1)[val_mask].sqrt()
 
             prev_mag_endpoint = 0
             for mag_endpoint in mag_endpoints:
@@ -1058,6 +1071,9 @@ def validate_slowflow(model, iters=6, test_mode=1, xy_shift=None,
     if xy_shift is not None:
         x_shift, y_shift = xy_shift
         print(f"Apply x,y shift {x_shift},{y_shift}")
+        offset_tensor = torch.tensor([x_shift, y_shift], dtype=torch.float32)
+    else:
+        offset_tensor = torch.tensor([0, 0], dtype=torch.float32)
 
     for val_id in range(len(val_dataset)):
         image1, image2, flow_gt, _, (scene, img1_trunk) = val_dataset[val_id]
@@ -1089,7 +1105,8 @@ def validate_slowflow(model, iters=6, test_mode=1, xy_shift=None,
             epe = torch.sum((flow - flow_gt)**2, dim=0)[val_mask].sqrt()
             epe = epe.view(-1)
 
-            mag = torch.sum(flow_gt**2, dim=0)[val_mask].sqrt()
+            orig_flow_gt = flow_gt.cpu() + offset_tensor
+            mag = torch.sum(orig_flow_gt**2, dim=0)[val_mask].sqrt()
             mag = mag.view(-1)
             out = ((epe > 3.0) & ((epe/mag) > 0.05)).float()
                         
