@@ -12,9 +12,9 @@ from torchvision.transforms import ColorJitter
 import torch.nn.functional as F
 
 class FlowAugmentor:
-    def __init__(self, crop_size, min_scale=-0.2, max_scale=0.5, spatial_aug_prob=0.8, 
+    def __init__(self, ds_name, crop_size, min_scale=-0.2, max_scale=0.5, spatial_aug_prob=0.8, 
                  blur_kernel=5, blur_sigma=-1, do_flip=True, do_shift=False):
-        
+        self.ds_name = ds_name
         # spatial augmentation params
         self.crop_size = crop_size
         self.min_scale = min_scale
@@ -38,8 +38,8 @@ class FlowAugmentor:
             self.max_u_shift = min(240, self.crop_size[1] // 8)
             self.max_v_shift = min(120, self.crop_size[0] // 8)
             self.shift_prob  = 0.2
-            print("Do shifting aug, max_u: {}, max_v: {}, prob: {}".format( \
-                    self.max_u_shift, self.max_v_shift, self.shift_prob))
+            print("{} shifting aug, max_u: {}, max_v: {}, prob: {}".format( \
+                    self.ds_name, self.max_u_shift, self.max_v_shift, self.shift_prob))
 
         # photometric augmentation params
         self.photo_aug = ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.5/3.14)
@@ -186,7 +186,9 @@ class FlowAugmentor:
 
 
 class SparseFlowAugmentor:
-    def __init__(self, crop_size, min_scale=-0.2, max_scale=0.5, spatial_aug_prob=0.8, do_flip=False, do_shift=False):
+    def __init__(self, ds_name, crop_size, min_scale=-0.2, max_scale=0.5, 
+                 spatial_aug_prob=0.8, do_flip=False, do_shift=False):
+        self.ds_name = ds_name
         # spatial augmentation params
         self.crop_size = crop_size
         self.min_scale = min_scale
@@ -215,8 +217,8 @@ class SparseFlowAugmentor:
             self.max_u_shift = min(240, self.crop_size[1] // 8)
             self.max_v_shift = min(120, self.crop_size[0] // 8)
             self.shift_prob  = 0.2
-            print("Do shifting aug, max_u: {}, max_v: {}, prob: {}".format( \
-                    self.max_u_shift, self.max_v_shift, self.shift_prob))
+            print("{} shifting aug, max_u: {}, max_v: {}, prob: {}".format( \
+                    self.ds_name, self.max_u_shift, self.max_v_shift, self.shift_prob))
 
     def color_transform(self, img1, img2):
         image_stack = np.concatenate([img1, img2], axis=0)

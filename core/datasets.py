@@ -25,9 +25,9 @@ class FlowDataset(data.Dataset):
         self.sparse = sparse
         if aug_params is not None:
             if sparse:
-                self.augmentor = SparseFlowAugmentor(**aug_params)
+                self.augmentor = SparseFlowAugmentor(self.ds_name, **aug_params)
             else:
-                self.augmentor = FlowAugmentor(**aug_params)
+                self.augmentor = FlowAugmentor(self.ds_name, **aug_params)
 
         # if is_test, do not return flow (only for LB submission).
         self.is_test = False
@@ -145,7 +145,9 @@ class FlowDataset(data.Dataset):
 class MpiSintel(FlowDataset):
     def __init__(self, aug_params=None, split='training', root='datasets/Sintel', dstype='clean',
                  occlusion=False, segmentation=False, debug=False):
+        self.ds_name = f'sintel-{split}'
         super(MpiSintel, self).__init__(aug_params)
+
         flow_root = osp.join(root, split, 'flow')
         image_root = osp.join(root, split, dstype)
         occ_root = osp.join(root, split, 'occlusions')
@@ -188,6 +190,7 @@ class MpiSintel(FlowDataset):
 
 class FlyingChairs(FlowDataset):
     def __init__(self, aug_params=None, split='training', root='datasets/FlyingChairs_release/data'):
+        self.ds_name = f'chairs-{split}'
         super(FlyingChairs, self).__init__(aug_params)
 
         images = sorted(glob(osp.join(root, '*.ppm')))
@@ -204,6 +207,7 @@ class FlyingChairs(FlowDataset):
 
 class FlyingThings3D(FlowDataset):
     def __init__(self, aug_params=None, root='datasets/FlyingThings3D', split='training', dstype='frames_cleanpass'):
+        self.ds_name = f'things-{split}'
         super(FlyingThings3D, self).__init__(aug_params)
 
         if split == 'training':
@@ -256,7 +260,9 @@ class FlyingThings3D(FlowDataset):
 class KITTI(FlowDataset):
     def __init__(self, aug_params=None, split='training', root='datasets/KITTI',
                  debug=False):
+        self.ds_name = f'kitti-{split}'
         super(KITTI, self).__init__(aug_params, sparse=True)
+
         if debug:
             self.extra_info = []
 
@@ -280,6 +286,7 @@ class KITTI(FlowDataset):
 class KITTITrain(FlowDataset):
     def __init__(self, aug_params=None, split='training', root='datasets/KITTI',
                  debug=False):
+        self.ds_name = f'kittitrain-{split}'
         super(KITTITrain, self).__init__(aug_params, sparse=True)
 
         root = osp.join(root, "training")
@@ -310,6 +317,7 @@ class KITTITrain(FlowDataset):
 
 class HD1K(FlowDataset):
     def __init__(self, aug_params=None, root='datasets/HD1k'):
+        self.ds_name = f'hd1k'
         super(HD1K, self).__init__(aug_params, sparse=True)
 
         seq_ix = 0
@@ -329,7 +337,9 @@ class HD1K(FlowDataset):
 class Autoflow(FlowDataset):
     def __init__(self, aug_params=None, split='training', root='datasets/autoflow',
                  debug=False):
+        self.ds_name = f'autoflow-{split}'
         super(Autoflow, self).__init__(aug_params)
+
         scene_count = len(os.listdir(root))
         training_size = int(scene_count * 0.9)
         if debug:
@@ -351,7 +361,9 @@ class Autoflow(FlowDataset):
 class VIPER(FlowDataset):
     def __init__(self, aug_params=None, split='training', root='datasets/viper/', filetype='jpg',
                  debug=False):
+        self.ds_name = f'viper-{split}'
         super(VIPER, self).__init__(aug_params, sparse=True)
+
         split_map = { 'training': 'train', 'validation': 'val', 'test': 'test' }
         split = split_map[split]
         split_img_root  = osp.join(root, filetype, split, 'img')
@@ -418,7 +430,9 @@ class VIPER(FlowDataset):
 class SlowFlow(FlowDataset):
     def __init__(self, aug_params=None, split='test', root='datasets/slowflow/', filetype='png', 
                  blur_mag=100, blur_num_frames=0, debug=True):
+        self.ds_name = f'slowflow-{split}'
         super(SlowFlow, self).__init__(aug_params, sparse=False)
+
         sequence_folder = "sequence" if blur_num_frames == 0 else f"sequence_R0{blur_num_frames}"
         sequence_root = osp.join(root, str(blur_mag), sequence_folder)
         print0(sequence_root)
