@@ -492,9 +492,9 @@ def fetch_dataloader(args, SINTEL_TRAIN_DS='C+T+K+S+H'):
         # (no need to work on SparseFlowAugmentor).
         aug_params = {'crop_size': args.image_size, 'min_scale': -0.4, 'max_scale': 0.8, 'do_flip': True,
                       'do_shift': args.do_shift_aug}
-        clean_dataset = FlyingThings3D(aug_params, dstype='frames_cleanpass', split='training')
-        final_dataset = FlyingThings3D(aug_params, dstype='frames_finalpass', split='training')
-        train_dataset = clean_dataset + final_dataset
+        things_clean  = FlyingThings3D(aug_params, dstype='frames_cleanpass', split='training')
+        things_final  = FlyingThings3D(aug_params, dstype='frames_finalpass', split='training')
+        train_dataset = things_clean + things_final
 
     elif args.stage == 'autoflow':
         # autoflow image size: (488, 576)
@@ -506,7 +506,7 @@ def fetch_dataloader(args, SINTEL_TRAIN_DS='C+T+K+S+H'):
     elif args.stage == 'sintel':
         aug_params = {'crop_size': args.image_size, 'min_scale': -0.2, 'max_scale': 0.6, 'do_flip': True,
                       'do_shift': args.do_shift_aug}
-        things = FlyingThings3D(aug_params, dstype='frames_cleanpass')
+        things_clean = FlyingThings3D(aug_params, dstype='frames_cleanpass')
         sintel_clean = MpiSintel(aug_params, split='training', dstype='clean')
         sintel_final = MpiSintel(aug_params, split='training', dstype='final')        
 
@@ -515,10 +515,10 @@ def fetch_dataloader(args, SINTEL_TRAIN_DS='C+T+K+S+H'):
                            'do_shift': args.do_shift_aug})
             hd1k = HD1K({'crop_size': args.image_size, 'min_scale': -0.5, 'max_scale': 0.2, 'do_flip': True,
                          'do_shift': args.do_shift_aug})
-            train_dataset = 100*sintel_clean + 100*sintel_final + 200*kitti + 5*hd1k + things
+            train_dataset = 100*sintel_clean + 100*sintel_final + 200*kitti + 5*hd1k + things_clean
 
         elif SINTEL_TRAIN_DS == 'C+T+K/S':
-            train_dataset = 100*sintel_clean + 100*sintel_final + things
+            train_dataset = 100*sintel_clean + 100*sintel_final + things_clean
 
     elif args.stage == 'kitti':
         aug_params = {'crop_size': args.image_size, 'min_scale': -0.2, 'max_scale': 0.4, 'do_flip': False,
