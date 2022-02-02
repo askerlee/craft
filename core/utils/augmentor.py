@@ -208,10 +208,15 @@ class SparseFlowAugmentor:
         # shift augmentation
         self.do_shift = do_shift
         if self.do_shift:
-            # print("Do image shifting augmentation")
-            self.max_u_shift = 240
-            self.max_v_shift = 120
+            # Shift at most 1/9 of the image, to avoid too much 
+            # loss of valid supervision.
+            # Sintel: crop_size = (368, 768).
+            # max_u_shift, max_v_shift = (96, 46)
+            self.max_u_shift = min(240, self.crop_size[1] // 8)
+            self.max_v_shift = min(120, self.crop_size[0] // 8)
             self.shift_prob  = 0.2
+            print("Do shifting aug, max_u: {}, max_v: {}, prob: {}".format( \
+                    self.max_u_shift, self.max_v_shift, self.shift_prob))
 
     def color_transform(self, img1, img2):
         image_stack = np.concatenate([img1, img2], axis=0)
@@ -310,10 +315,54 @@ class SparseFlowAugmentor:
         # print(img1.shape)
         return img1, img2, flow, valid
 
+    # img and flow are 3D np array. img: (H, W, 3). flow: (H, W, 2)
+    # mask: (H, W).
+    # The flow values at mask==True are valid and will be used to compute EPE.
+    def random_shift(self, img, flow):
+        x_shift = np.random.randint(-self.max_u_shift, self.max_u_shift)
+        y_shift = np.random.randint(-self.max_v_shift, self.max_v_shift)
+        # print(f"Shift x: {x_shift}, y: {y_shift}")
+        offset = np.array([x_shift, y_shift], dtype=np.float32)
+        offset = offset.reshape((1, 1, 2))
+
+        # Do not bother to make a special case to handle 0 offsets. 
+        # Just discard such shift params.
+        if x_shift == 0 or y_shift == 0:
+            return img, flow, None
+
+        img2  = np.zeros_like(img)
+        flow2 = np.zeros_like(flow)
+        mask = np.zeros(img.shape[:2], dtype=bool)
+            
+        if x_shift > 0 and y_shift > 0:
+            img2[y_shift:, x_shift:] = img[:-y_shift, :-x_shift]
+            mask[y_shift:, x_shift:] = 1
+            flow2[y_shift:, x_shift:] = flow[:-y_shift, :-x_shift]
+        if x_shift > 0 and y_shift < 0:
+            img2[:y_shift, x_shift:] = img[-y_shift:, :-x_shift]
+            mask[:y_shift, x_shift:] = 1
+            flow2[:y_shift, x_shift:] = flow[-y_shift:, :-x_shift]
+        if x_shift < 0 and y_shift > 0:
+            img2[y_shift:, :x_shift] = img[:-y_shift, -x_shift:]
+            mask[y_shift:, :x_shift] = 1
+            flow2[y_shift:, :x_shift] = flow[:-y_shift, -x_shift:]
+        if x_shift < 0 and y_shift < 0:
+            img2[:y_shift, :x_shift] = img[-y_shift:, -x_shift:]
+            mask[:y_shift, :x_shift] = 1
+            flow2[:y_shift, :x_shift] = flow[-y_shift:, -x_shift:]
+
+        flow2 -= offset
+        return img2, flow2, mask
+
     def __call__(self, img1, img2, flow, valid):
         img1, img2 = self.color_transform(img1, img2)
         img1, img2 = self.eraser_transform(img1, img2)
         img1, img2, flow, valid = self.spatial_transform(img1, img2, flow, valid)
+
+        if self.do_shift and np.random.rand() < self.shift_prob:
+            img1, flow, valid2 = self.random_shift(img1, flow)
+            # valid is of np.float32. valid2 is of bool.
+            valid = valid * valid2
 
         img1 = np.ascontiguousarray(img1)
         img2 = np.ascontiguousarray(img2)
