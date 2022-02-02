@@ -145,7 +145,7 @@ class FlowDataset(data.Dataset):
 class MpiSintel(FlowDataset):
     def __init__(self, aug_params=None, split='training', root='datasets/Sintel', dstype='clean',
                  occlusion=False, segmentation=False, debug=False):
-        self.ds_name = f'sintel-{split}'
+        self.ds_name = f'sintel-{split}-{dstype}'
         super(MpiSintel, self).__init__(aug_params)
 
         flow_root = osp.join(root, split, 'flow')
@@ -207,7 +207,8 @@ class FlyingChairs(FlowDataset):
 
 class FlyingThings3D(FlowDataset):
     def __init__(self, aug_params=None, root='datasets/FlyingThings3D', split='training', dstype='frames_cleanpass'):
-        self.ds_name = f'things-{split}'
+        ds_type_short = {'frames_cleanpass': 'clean', 'frames_final': 'final'}
+        self.ds_name = f'things-{split}-{ds_type_short[dstype]}'
         super(FlyingThings3D, self).__init__(aug_params)
 
         if split == 'training':
@@ -430,7 +431,7 @@ class VIPER(FlowDataset):
 class SlowFlow(FlowDataset):
     def __init__(self, aug_params=None, split='test', root='datasets/slowflow/', filetype='png', 
                  blur_mag=100, blur_num_frames=0, debug=True):
-        self.ds_name = f'slowflow-{split}'
+        self.ds_name = f'slowflow-{split}-{blur_mag}-{blur_num_frames}'
         super(SlowFlow, self).__init__(aug_params, sparse=False)
 
         sequence_folder = "sequence" if blur_num_frames == 0 else f"sequence_R0{blur_num_frames}"
