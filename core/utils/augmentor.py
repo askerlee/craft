@@ -31,7 +31,6 @@ class FlowAugmentor:
         # shift augmentation
         self.do_shift = do_shift
         if self.do_shift:
-            print("Do image shifting augmentation")
             # Shift at most 1/9 of the image, to avoid too much 
             # loss of valid supervision.
             # Sintel: crop_size = (368, 768).
@@ -39,6 +38,8 @@ class FlowAugmentor:
             self.max_u_shift = min(240, self.crop_size[1] // 8)
             self.max_v_shift = min(120, self.crop_size[0] // 8)
             self.shift_prob  = 0.2
+            print("Do shifting aug, max_u: {}, max_v: {}, prob: {}".format( \
+                    self.max_u_shift, self.max_v_shift, self.shift_prob))
 
         # photometric augmentation params
         self.photo_aug = ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.5/3.14)
