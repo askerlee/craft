@@ -362,7 +362,8 @@ class SparseFlowAugmentor:
         if self.do_shift and np.random.rand() < self.shift_prob:
             img1, flow, valid2 = self.random_shift(img1, flow)
             # valid is of np.float32. valid2 is of bool.
-            valid = valid * valid2
+            if valid2 is not None:
+                valid = valid * valid2
 
         img1 = np.ascontiguousarray(img1)
         img2 = np.ascontiguousarray(img2)
