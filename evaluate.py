@@ -455,11 +455,11 @@ def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, ma
     offset_tensor = offset_tensor.reshape([1, 2, 1, 1])
 
     if dstype == 'both':
-        dstypes = ['frames_cleanpass', 'frames_finalpass']
+        dstypes = ['clean', 'final']
     if dstype == 'clean':
-        dstypes = ['frames_cleanpass']
+        dstypes = ['clean']
     if dstype == 'final':
-        dstypes = ['frames_finalpass']
+        dstypes = ['final']
 
     for dstype in dstypes:
         val_dataset = datasets.MpiSintel(split='training', aug_params=None, dstype=dstype)
