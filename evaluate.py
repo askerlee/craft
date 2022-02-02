@@ -439,7 +439,7 @@ def validate_things(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, ma
 
 @torch.no_grad()
 def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, max_val_count=-1, 
-                    verbose=False, seg_interval=-1):
+                    verbose=False, seg_interval=-1, subset='both'):
     """ Peform validation using the Sintel (train) split """
     model.eval()
     results = {}
@@ -454,7 +454,14 @@ def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, ma
         offset_tensor = torch.tensor([0, 0], dtype=torch.float32)
     offset_tensor = offset_tensor.reshape([1, 2, 1, 1])
 
-    for dstype in ['clean', 'final']:
+    if subset == 'both':
+        dstypes = ['frames_cleanpass', 'frames_finalpass']
+    if subset == 'clean':
+        dstypes = ['frames_cleanpass']
+    if subset == 'final':
+        dstypes = ['frames_finalpass']
+
+    for dstype in dstypes:
         val_dataset = datasets.MpiSintel(split='training', aug_params=None, dstype=dstype)
         # Use multiple workers to push GPU utility to near 100%.
         val_loader  = data.DataLoader(val_dataset, batch_size=batch_size,
@@ -756,7 +763,7 @@ def validate_kitti(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, max
     else:
         offset_tensor = torch.tensor([0, 0], dtype=torch.float32)
     offset_tensor = offset_tensor.reshape([1, 2, 1, 1])
-    
+
     val_loader  = data.DataLoader(val_dataset, batch_size=batch_size,
                                   pin_memory=False, shuffle=False, num_workers=4, drop_last=False)
 
@@ -1581,7 +1588,8 @@ if __name__ == '__main__':
                 validate_sintel(model.module, iters=args.iters, test_mode=args.test_mode, 
                                 xy_shift=xy_shift, batch_size=args.batch_size,
                                 max_val_count=args.max_val_count, 
-                                verbose=args.verbose, seg_interval=args.seg_interval)
+                                verbose=args.verbose, seg_interval=args.seg_interval,
+                                subset=args.subset)
 
             elif args.dataset == 'sintel_occ':
                 validate_sintel_occ(model.module, iters=args.iters, test_mode=args.test_mode)
