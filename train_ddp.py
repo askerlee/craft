@@ -367,7 +367,8 @@ if __name__ == '__main__':
                         help='If True, use learned upsampling, otherwise, use bilinear upsampling.')
     parser.add_argument('--gamma', type=float, default=0.8, help='exponential loss weighting of the sequential predictions')
     parser.add_argument('--add_noise', action='store_true')
-    parser.add_argument('--shiftaug', dest='do_shift_aug', action='store_true')
+    parser.add_argument('--shiftprob', dest='shift_aug_prob', default=0.0, help='Probability of shifting augmentation')
+
     
     # default: not to freeze bn.
     parser.add_argument('--freeze_bn', action='store_true')

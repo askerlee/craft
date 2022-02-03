@@ -33,7 +33,7 @@ class FlowDataset(data.Dataset):
                 self.augmentor = FlowAugmentor(self.ds_name, **aug_params)
 
             global shift_info_printed
-            if not shift_info_printed and aug_params['do_shift']:
+            if not shift_info_printed and aug_params['shift_prob']:
                 print("Shift aug: ({}, {}), prob {}".format( \
                       self.augmentor.max_u_shift, self.augmentor.max_v_shift, self.augmentor.shift_prob))
                 shift_info_printed = True
@@ -510,7 +510,7 @@ def fetch_dataloader(args, SINTEL_TRAIN_DS='C+T+K+S+H'):
     if args.stage == 'chairs':
         aug_params = {'crop_size': args.image_size, 'min_scale': -0.1, 'max_scale': 1.0, 
                       'do_flip': True,
-                      'do_shift': args.do_shift_aug }
+                      'shift_prob': args.shift_aug_prob }
         train_dataset = FlyingChairs(aug_params, split='training')
     
     elif args.stage == 'things':
@@ -519,7 +519,7 @@ def fetch_dataloader(args, SINTEL_TRAIN_DS='C+T+K+S+H'):
         # Things is non-sparse. So only need to work on FlowAugmentor 
         # (no need to work on SparseFlowAugmentor).
         aug_params = {'crop_size': args.image_size, 'min_scale': -0.4, 'max_scale': 0.8, 'do_flip': True,
-                      'do_shift': args.do_shift_aug}
+                      'shift_prob': args.shift_aug_prob }
         things_clean  = FlyingThings3D(aug_params, dstype='frames_cleanpass', split='training')
         things_final  = FlyingThings3D(aug_params, dstype='frames_finalpass', split='training')
         train_dataset = things_clean + things_final
@@ -529,20 +529,20 @@ def fetch_dataloader(args, SINTEL_TRAIN_DS='C+T+K+S+H'):
         # minimal scale = 2**0.42 = 1.338. 576*1.338=770.6 > 768. Otherwise there'll be exceptions.
         train_dataset = Autoflow({'crop_size': args.image_size, 'min_scale': -0.2, 'max_scale': 0.8, 
                                   'spatial_aug_prob': 1, 'do_flip': True,
-                                  'do_shift': args.do_shift_aug})
+                                  'shift_prob': args.shift_aug_prob })
 
     elif args.stage == 'sintel':
         aug_params = {'crop_size': args.image_size, 'min_scale': -0.2, 'max_scale': 0.6, 'do_flip': True,
-                      'do_shift': args.do_shift_aug}
+                      'shift_prob': args.shift_aug_prob }
         things_clean = FlyingThings3D(aug_params, dstype='frames_cleanpass')
         sintel_clean = MpiSintel(aug_params, split='training', dstype='clean')
         sintel_final = MpiSintel(aug_params, split='training', dstype='final')        
 
         if SINTEL_TRAIN_DS == 'C+T+K+S+H':
             kitti = KITTI({'crop_size': args.image_size, 'min_scale': -0.3, 'max_scale': 0.5, 'do_flip': True,
-                           'do_shift': args.do_shift_aug})
+                           'shift_prob': args.shift_aug_prob })
             hd1k = HD1K({'crop_size': args.image_size, 'min_scale': -0.5, 'max_scale': 0.2, 'do_flip': True,
-                         'do_shift': args.do_shift_aug})
+                         'shift_prob': args.shift_aug_prob })
             train_dataset = 100*sintel_clean + 100*sintel_final + 200*kitti + 5*hd1k + things_clean
 
         elif SINTEL_TRAIN_DS == 'C+T+K/S':
@@ -550,18 +550,18 @@ def fetch_dataloader(args, SINTEL_TRAIN_DS='C+T+K+S+H'):
 
     elif args.stage == 'kitti':
         aug_params = {'crop_size': args.image_size, 'min_scale': -0.2, 'max_scale': 0.4, 'do_flip': False,
-                      'do_shift': args.do_shift_aug}
+                      'shift_prob': args.shift_aug_prob }
         train_dataset = KITTI(aug_params, split='training')
 
     elif args.stage == 'kittitrain':
         aug_params = {'crop_size': args.image_size, 'min_scale': -0.2, 'max_scale': 0.4, 'do_flip': False,
-                      'do_shift': args.do_shift_aug}
+                      'shift_prob': args.shift_aug_prob }
         train_dataset = KITTITrain(aug_params, split='training')
 
     elif args.stage == 'viper':
         aug_params = {'crop_size': args.image_size, 'min_scale': -1, 'max_scale': -0.5, 
                       'spatial_aug_prob': 1, 'do_flip': False,
-                      'do_shift': args.do_shift_aug}
+                      'shift_prob': args.shift_aug_prob }
         train_dataset = VIPER(aug_params, split='training')
 
     if args.ddp:

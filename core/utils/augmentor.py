@@ -13,7 +13,7 @@ import torch.nn.functional as F
 
 class FlowAugmentor:
     def __init__(self, ds_name, crop_size, min_scale=-0.2, max_scale=0.5, spatial_aug_prob=0.8, 
-                 blur_kernel=5, blur_sigma=-1, do_flip=True, do_shift=False):
+                 blur_kernel=5, blur_sigma=-1, do_flip=True, shift_prob=0):
         self.ds_name = ds_name
         # spatial augmentation params
         self.crop_size = crop_size
@@ -29,15 +29,14 @@ class FlowAugmentor:
         self.v_flip_prob = 0.1
 
         # shift augmentation
-        self.do_shift = do_shift
-        if self.do_shift:
+        self.shift_prob = shift_prob
+        if self.shift_prob > 0:
             # Shift at most 1/8 of the image, to avoid too much 
             # loss of valid supervision.
             # Sintel: crop_size = (368, 768).
             # max_u_shift, max_v_shift = (96, 46)
             self.max_u_shift = self.crop_size[1] // 8
             self.max_v_shift = self.crop_size[0] // 8
-            self.shift_prob  = 0.1
 
         # photometric augmentation params
         self.photo_aug = ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.5/3.14)
@@ -166,7 +165,7 @@ class FlowAugmentor:
         img1, img2 = self.eraser_transform(img1, img2)
         img1, img2, flow = self.spatial_transform(img1, img2, flow)
 
-        if self.do_shift and np.random.rand() < self.shift_prob:
+        if self.shift_prob > 0 and np.random.rand() < self.shift_prob:
             img1, flow, valid = self.random_shift(img1, flow)
         else:
             valid = None
@@ -185,7 +184,7 @@ class FlowAugmentor:
 
 class SparseFlowAugmentor:
     def __init__(self, ds_name, crop_size, min_scale=-0.2, max_scale=0.5, 
-                 spatial_aug_prob=0.8, do_flip=False, do_shift=False):
+                 spatial_aug_prob=0.8, do_flip=False, shift_prob=0):
         self.ds_name = ds_name
         # spatial augmentation params
         self.crop_size = crop_size
@@ -206,8 +205,8 @@ class SparseFlowAugmentor:
         self.eraser_aug_prob = 0.5
 
         # shift augmentation
-        self.do_shift = do_shift
-        if self.do_shift:
+        self.shift_prob = shift_prob
+        if self.shift_prob > 0:
             # Shift at most 1/8 of the image, to avoid too much 
             # loss of valid supervision.
             # Sintel: crop_size = (368, 768).
@@ -357,7 +356,7 @@ class SparseFlowAugmentor:
         img1, img2 = self.eraser_transform(img1, img2)
         img1, img2, flow, valid = self.spatial_transform(img1, img2, flow, valid)
 
-        if self.do_shift and np.random.rand() < self.shift_prob:
+        if self.shift_prob > 0 and np.random.rand() < self.shift_prob:
             img1, flow, valid2 = self.random_shift(img1, flow)
             # valid is of np.float32. valid2 is of bool.
             if valid2 is not None:
