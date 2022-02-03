@@ -31,13 +31,13 @@ class FlowAugmentor:
         # shift augmentation
         self.do_shift = do_shift
         if self.do_shift:
-            # Shift at most 1/9 of the image, to avoid too much 
+            # Shift at most 1/8 of the image, to avoid too much 
             # loss of valid supervision.
             # Sintel: crop_size = (368, 768).
             # max_u_shift, max_v_shift = (96, 46)
             self.max_u_shift = min(240, self.crop_size[1] // 8)
             self.max_v_shift = min(120, self.crop_size[0] // 8)
-            self.shift_prob  = 0.2
+            self.shift_prob  = 0.1
 
         # photometric augmentation params
         self.photo_aug = ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.5/3.14)
@@ -208,13 +208,13 @@ class SparseFlowAugmentor:
         # shift augmentation
         self.do_shift = do_shift
         if self.do_shift:
-            # Shift at most 1/9 of the image, to avoid too much 
+            # Shift at most 1/8 of the image, to avoid too much 
             # loss of valid supervision.
             # Sintel: crop_size = (368, 768).
             # max_u_shift, max_v_shift = (96, 46)
             self.max_u_shift = min(240, self.crop_size[1] // 8)
             self.max_v_shift = min(120, self.crop_size[0] // 8)
-            self.shift_prob  = 0.2
+            self.shift_prob  = 0.1
 
     def color_transform(self, img1, img2):
         image_stack = np.concatenate([img1, img2], axis=0)
