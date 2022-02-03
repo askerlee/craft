@@ -1,5 +1,6 @@
 # Data loading based on https://github.com/NVIDIA/flownet2-pytorch
 
+from ast import NotEq
 import numpy as np
 import torch
 import torch.utils.data as data
@@ -18,6 +19,8 @@ from utils.augmentor import FlowAugmentor, SparseFlowAugmentor
 from utils.utils import print0
 from sklearn.model_selection import train_test_split
 
+shift_info_printed = False
+
 # sparse: sparse (kitti .png) format of flow data
 class FlowDataset(data.Dataset):
     def __init__(self, aug_params=None, sparse=False):
@@ -29,9 +32,11 @@ class FlowDataset(data.Dataset):
             else:
                 self.augmentor = FlowAugmentor(self.ds_name, **aug_params)
 
-            if aug_params['do_shift']:
+            global shift_info_printed
+            if not shift_info_printed and aug_params['do_shift']:
                 print("Shift aug: ({}, {}), prob {}".format( \
                       self.augmentor.max_u_shift, self.augmentor.max_v_shift, self.augmentor.shift_prob))
+                shift_info_printed = True
 
         # if is_test, do not return flow (only for LB submission).
         self.is_test = False
