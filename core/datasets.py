@@ -188,6 +188,8 @@ class MpiSintel(FlowDataset):
                     self.seg_list += sorted(glob(osp.join(seg_root, scene, '*.png')))
                     self.seg_inv_list += sorted(glob(osp.join(seg_inv_root, scene, '*.png')))
 
+        print(f"{self.ds_name}: {len(self.image_list)} image pairs.")
+
 class FlyingChairs(FlowDataset):
     def __init__(self, aug_params=None, split='training', root='datasets/FlyingChairs_release/data'):
         self.ds_name = f'chairs-{split}'
@@ -204,6 +206,7 @@ class FlyingChairs(FlowDataset):
                 self.flow_list += [ flows[i] ]
                 self.image_list += [ [images[2*i], images[2*i+1]] ]
 
+        print(f"{self.ds_name}: {len(self.image_list)} image pairs.")
 
 class FlyingThings3D(FlowDataset):
     def __init__(self, aug_params=None, root='datasets/FlyingThings3D', split='training', dstype='frames_cleanpass'):
@@ -257,6 +260,7 @@ class FlyingThings3D(FlowDataset):
                 self.image_list = [self.image_list[ind] for ind, sel in enumerate(valid_list) if sel]
                 self.flow_list = [self.flow_list[ind] for ind, sel in enumerate(valid_list) if sel]
       
+        print(f"{self.ds_name}: {len(self.image_list)} image pairs.")
 
 class KITTI(FlowDataset):
     def __init__(self, aug_params=None, split='training', root='datasets/KITTI',
@@ -282,6 +286,8 @@ class KITTI(FlowDataset):
 
         if split == 'training':
             self.flow_list = sorted(glob(osp.join(root, 'flow_occ/*_10.png')))
+
+        print(f"{self.ds_name}: {len(self.image_list)} image pairs.")
 
 # Further split KITTI training data into training and testing sets.
 class KITTITrain(FlowDataset):
@@ -316,6 +322,8 @@ class KITTITrain(FlowDataset):
             if debug:
                 self.extra_info = extra_info_test
 
+        print(f"{self.ds_name}: {len(self.image_list)} image pairs.")
+
 class HD1K(FlowDataset):
     def __init__(self, aug_params=None, root='datasets/HD1k'):
         self.ds_name = f'hd1k'
@@ -334,6 +342,8 @@ class HD1K(FlowDataset):
                 self.image_list += [ [images[i], images[i+1]] ]
 
             seq_ix += 1
+
+        print(f"{self.ds_name}: {len(self.image_list)} image pairs.")
 
 class Autoflow(FlowDataset):
     def __init__(self, aug_params=None, split='training', root='datasets/autoflow',
@@ -357,6 +367,8 @@ class Autoflow(FlowDataset):
                 self.flow_list  += [ flow_path ]
                 if debug:
                     self.extra_info += [ [scene] ]
+
+        print(f"{self.ds_name}: {len(self.image_list)} image pairs.")
 
 # The VIPER .npz flow files have been converted to KITTI .png format.
 class VIPER(FlowDataset):
@@ -426,7 +438,7 @@ class VIPER(FlowDataset):
                 if debug:
                     self.extra_info += [ [img0_trunk] ]
 
-        print0(f"{skip_count} files skipped")
+        print0(f"{self.ds_name}: {len(self.image_list)} image pairs. {skip_count} files skipped.")
 
 class SlowFlow(FlowDataset):
     def __init__(self, aug_params=None, split='test', root='datasets/slowflow/', filetype='png', 
@@ -473,7 +485,8 @@ class SlowFlow(FlowDataset):
                 if debug:
                     self.extra_info += [ [scene, img0_trunk] ]
 
-        print0(f"{len(self.image_list)} pairs loaded. {skip_count} skipped")
+        print0(f"{self.ds_name}: {len(self.image_list)} image pairs. {skip_count} skipped")
+
 
 # 'crop_size' is first used to bound the minimal size of images after resizing. Then it's used to crop the image.
 def fetch_dataloader(args, SINTEL_TRAIN_DS='C+T+K+S+H'):

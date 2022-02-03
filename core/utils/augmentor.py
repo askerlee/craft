@@ -38,7 +38,7 @@ class FlowAugmentor:
             self.max_u_shift = min(240, self.crop_size[1] // 8)
             self.max_v_shift = min(120, self.crop_size[0] // 8)
             self.shift_prob  = 0.2
-            print("{} shift aug, max_u: {}, max_v: {}, prob: {}".format( \
+            print("{} shift aug, max ({}, {}), prob: {}".format( \
                     self.ds_name, self.max_u_shift, self.max_v_shift, self.shift_prob))
 
         # photometric augmentation params
@@ -217,7 +217,7 @@ class SparseFlowAugmentor:
             self.max_u_shift = min(240, self.crop_size[1] // 8)
             self.max_v_shift = min(120, self.crop_size[0] // 8)
             self.shift_prob  = 0.2
-            print("{} shift aug, max_u: {}, max_v: {}, prob: {}".format( \
+            print("{} shift aug, max ({}, {}), prob: {}".format( \
                     self.ds_name, self.max_u_shift, self.max_v_shift, self.shift_prob))
 
     def color_transform(self, img1, img2):
