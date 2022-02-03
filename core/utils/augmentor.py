@@ -35,8 +35,8 @@ class FlowAugmentor:
             # loss of valid supervision.
             # Sintel: crop_size = (368, 768).
             # max_u_shift, max_v_shift = (96, 46)
-            self.max_u_shift = min(240, self.crop_size[1] // 8)
-            self.max_v_shift = min(120, self.crop_size[0] // 8)
+            self.max_u_shift = self.crop_size[1] // 8
+            self.max_v_shift = self.crop_size[0] // 8
             self.shift_prob  = 0.1
 
         # photometric augmentation params
@@ -212,8 +212,8 @@ class SparseFlowAugmentor:
             # loss of valid supervision.
             # Sintel: crop_size = (368, 768).
             # max_u_shift, max_v_shift = (96, 46)
-            self.max_u_shift = min(240, self.crop_size[1] // 8)
-            self.max_v_shift = min(120, self.crop_size[0] // 8)
+            self.max_u_shift = self.crop_size[1] // 8
+            self.max_v_shift = self.crop_size[0] // 8
             self.shift_prob  = 0.1
 
     def color_transform(self, img1, img2):
