@@ -29,6 +29,10 @@ class FlowDataset(data.Dataset):
             else:
                 self.augmentor = FlowAugmentor(self.ds_name, **aug_params)
 
+            if aug_params['do_shift']:
+                print("Shift aug: ({}, {}), prob {}".format( \
+                      self.augmentor.max_u_shift, self.augmentor.max_v_shift, self.augmentor.shift_prob))
+
         # if is_test, do not return flow (only for LB submission).
         self.is_test = False
         self.init_seed = False
