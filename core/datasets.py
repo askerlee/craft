@@ -236,6 +236,9 @@ class FlyingThings3D(FlowDataset):
                         images = sorted(glob(osp.join(idir, '*.png')) )
                         # We converted pfm to flo to reduce half of the space.
                         flows = sorted(glob(osp.join(fdir, '*.flo')) )
+                        if len(flows) == 0:
+                            flows = sorted(glob(osp.join(fdir, '*.pfm')) )
+
                         for i in range(len(flows)-1):
                             if direction == 'into_future':
                                 self.image_list += [ [images[i], images[i+1]] ]
@@ -257,6 +260,9 @@ class FlyingThings3D(FlowDataset):
                         images = sorted(glob(osp.join(idir, '*.png')))
                         # We converted pfm to flo to reduce half of the space.
                         flows = sorted(glob(osp.join(fdir, '*.flo')))
+                        if len(flows) == 0:
+                            flows = sorted(glob(osp.join(fdir, '*.pfm')))
+
                         for i in range(len(flows) - 1):
                             if direction == 'into_future':
                                 self.image_list += [[images[i], images[i + 1]]]
