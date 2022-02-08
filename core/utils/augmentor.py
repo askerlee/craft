@@ -28,32 +28,37 @@ def random_shift(img0, img1, flow, reversed_01=False, shift_sigmas=(16,10)):
     if dx == 0 or dy == 0:
         return img0, img1, flow, None
 
+    if reversed_01:
+        flow_delta = (-dx, -dy)
+    else:
+        flow_delta = (dx,  dy)
+
     if dx > 0 and dy > 0:
         # img0 is cropped at the bottom-right corner. 
         img0a   = img0[:-dy, :-dx]
         # flow is cropped at the bottom-right corner, then minus by (dx, dy).
-        flowa   = flow[:-dy, :-dx] - (dx, dy)
+        flowa   = flow[:-dy, :-dx] - flow_delta
         # img1 is shifted by (dx, dy) to the left and up. pixels at (dy, dx) ->(0, 0).
         img1a   = img1[dy:,  dx:]
     if dx > 0 and dy < 0:
         # img0 is cropped at the right side, and shifted to the up.
         img0a   = img0[-dy:, :-dx]
         # flow is cropped at the right side, and shifted to the up, then minus by (dx, dy).
-        flowa   = flow[-dy:, :-dx] - (dx, dy)
+        flowa   = flow[-dy:, :-dx] - flow_delta
         # img1 is shifted to the left and cropped at the bottom.
         img1a   = img1[:dy,  dx:]
     if dx < 0 and dy > 0:
         # img0 is shifted to the left, and cropped at the bottom.
         img0a   = img0[:-dy, -dx:]
         # flow is shifted to the left, and cropped at the bottom, then minus by (dx, dy).
-        flowa   = flow[:-dy, -dx:] - (dx, dy)
+        flowa   = flow[:-dy, -dx:] - flow_delta
         # img1 is cropped at the right side, and shifted to the up.
         img1a   = img1[dy:,  :dx]
     if dx < 0 and dy < 0:
         # img0 is shifted by (-dx, -dy) to the left and up.
         img0a   = img0[-dy:, -dx:]
         # flow is shifted by (-dx, -dy) to the left and up, then minus by (dx, dy).
-        flowa   = flow[-dy:, -dx:] - (dx, dy)
+        flowa   = flow[-dy:, -dx:] - flow_delta
         # img1 is cropped at the bottom-right corner.
         img1a   = img1[:dy,  :dx]
 
