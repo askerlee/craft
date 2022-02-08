@@ -11,8 +11,8 @@ import torch
 from torchvision.transforms import ColorJitter
 import torch.nn.functional as F
 
-# img0, img1 are 3D np arrays of (H, W, 3). flow is (H, W, 2).
-def random_shift(img0, img1, flow, reversed_01=False, shift_sigmas=(16,10)):
+# img1, img2 are 3D np arrays of (H, W, 3). flow is (H, W, 2).
+def random_shift(img1, img2, flow, shift_sigmas=(16,10)):
     u_shift_sigma, v_shift_sigma = shift_sigmas
     # 90% of dx and dy are within [-2*u_shift_sigma, 2*u_shift_sigma] 
     # and [-2*v_shift_sigma, 2*v_shift_sigma].
@@ -26,58 +26,55 @@ def random_shift(img0, img1, flow, reversed_01=False, shift_sigmas=(16,10)):
     # Just discard such shift params.
     # valid_mask == None: such a valid_mask will be ignored by downsteam processing.
     if dx == 0 or dy == 0:
-        if reversed_01:
-            return img1, img0, flow, None
-        else:
-            return img0, img1, flow, None
+        return img1, img2, flow, None
 
-    if reversed_01:
+    if dx > 0 and dy > 0:
+        # img1 is cropped at the bottom-right corner.               img1[:-dy, :-dx]
+        img1_bound = (0,  img1.shape[0] - dy,  0,  img1.shape[1] - dx)
+        # img2 is shifted by (dx, dy) to the left and up. pixels at (dy, dx) ->(0, 0).
+        #                                                           img2[dy:,  dx:]
+        img2_bound = (dy, img1.shape[0],       dx, img1.shape[1])
+    if dx > 0 and dy < 0:
+        # img1 is cropped at the right side, and shifted to the up. img1[-dy:, :-dx]
+        img1_bound = (-dy, img1.shape[0],      0,  img1.shape[1] - dx)
+        # img2 is shifted to the left and cropped at the bottom.    img2[:dy,  dx:]
+        img2_bound = (0,   img1.shape[0] + dy, dx, img1.shape[1])
+    if dx < 0 and dy > 0:
+        # img1 is shifted to the left, and cropped at the bottom.   img1[:-dy, -dx:]
+        img1_bound = (0,   img1.shape[0] - dy, -dx, img1.shape[1])
+        # img2 is cropped at the right side, and shifted to the up. img2[dy:,  :dx]
+        img2_bound = (dy,  img1.shape[0],      0,   img1.shape[1] + dx)
+    if dx < 0 and dy < 0:
+        # img1 is shifted by (-dx, -dy) to the left and up. img1[-dy:, -dx:]
+        img1_bound = (-dy, img1.shape[0],      -dx, img1.shape[1])
+        # img2 is cropped at the bottom-right corner.       img2[:dy,  :dx]
+        img2_bound = (0,   img1.shape[0] + dy, 0,   img1.shape[1] + dx)
+
+    reversed_12 = random.random() > 0.5
+
+    if reversed_12:
+        img1_bound, img2_bound = img2_bound, img1_bound
         flow_delta = (-dx, -dy)
     else:
         flow_delta = (dx,  dy)
 
-    if dx > 0 and dy > 0:
-        # img0 is cropped at the bottom-right corner. 
-        img0a   = img0[:-dy, :-dx]
-        # flow is cropped at the bottom-right corner, then minus by (dx, dy).
-        flowa   = flow[:-dy, :-dx] - flow_delta
-        # img1 is shifted by (dx, dy) to the left and up. pixels at (dy, dx) ->(0, 0).
-        img1a   = img1[dy:,  dx:]
-    if dx > 0 and dy < 0:
-        # img0 is cropped at the right side, and shifted to the up.
-        img0a   = img0[-dy:, :-dx]
-        # flow is cropped at the right side, and shifted to the up, then minus by (dx, dy).
-        flowa   = flow[-dy:, :-dx] - flow_delta
-        # img1 is shifted to the left and cropped at the bottom.
-        img1a   = img1[:dy,  dx:]
-    if dx < 0 and dy > 0:
-        # img0 is shifted to the left, and cropped at the bottom.
-        img0a   = img0[:-dy, -dx:]
-        # flow is shifted to the left, and cropped at the bottom, then minus by (dx, dy).
-        flowa   = flow[:-dy, -dx:] - flow_delta
-        # img1 is cropped at the right side, and shifted to the up.
-        img1a   = img1[dy:,  :dx]
-    if dx < 0 and dy < 0:
-        # img0 is shifted by (-dx, -dy) to the left and up.
-        img0a   = img0[-dy:, -dx:]
-        # flow is shifted by (-dx, -dy) to the left and up, then minus by (dx, dy).
-        flowa   = flow[-dy:, -dx:] - flow_delta
-        # img1 is cropped at the bottom-right corner.
-        img1a   = img1[:dy,  :dx]
+    T1, B1, L1, R1 = img1_bound
+    T2, B2, L2, R2 = img2_bound
+    img1a = img1[T1:B1, L1:R1]
+    flowa = flow[T1:B1, L1:R1] - flow_delta
+    img2a = img2[T2:B2, L2:R2]
 
-    # Pad img0, img1 and flow by half of (dy, dx).
+    # Pad img1, img2 and flow by half of (dy, dx).
     dx2, dy2 = abs(dx) // 2, abs(dy) // 2
     # valid_mask: boolean array that indicates the remaining area after cropping/shifting.
-    valid_mask = np.ones(img0a.shape[:2], dtype=bool)
+    valid_mask = np.ones(img1a.shape[:2], dtype=bool)
 
-    img0a       = np.pad(img0a,         ((dy2, dy2), (dx2, dx2), (0, 0)), 'constant')
     img1a       = np.pad(img1a,         ((dy2, dy2), (dx2, dx2), (0, 0)), 'constant')
+    img2a       = np.pad(img2a,         ((dy2, dy2), (dx2, dx2), (0, 0)), 'constant')
     flowa       = np.pad(flowa,         ((dy2, dy2), (dx2, dx2), (0, 0)), 'constant')
     valid_mask  = np.pad(valid_mask,    ((dy2, dy2), (dx2, dx2)), 'constant', constant_values=False)
 
-    if reversed_01:
-        img0a, img1a = img1a, img0a
-    return img0a, img1a, flowa, valid_mask
+    return img1a, img2a, flowa, valid_mask
     
 class FlowAugmentor:
     def __init__(self, ds_name, crop_size, min_scale=-0.2, max_scale=0.5, spatial_aug_prob=0.8, 
@@ -190,12 +187,9 @@ class FlowAugmentor:
         img1, img2 = self.eraser_transform(img1, img2)
         img1, img2, flow = self.spatial_transform(img1, img2, flow)
 
-        rand = random.random()
         valid = None
-        if rand < self.shift_prob / 2:
-            img1, img2, flow, valid = random_shift(img1, img2, flow, False, self.shift_sigmas)
-        elif rand >= self.shift_prob / 2 and rand < self.shift_prob:
-            img1, img2, flow, valid = random_shift(img2, img1, flow, True,  self.shift_sigmas)
+        if random.random() < self.shift_prob:
+            img1, img2, flow, valid = random_shift(img1, img2, flow, self.shift_sigmas)
 
         if self.blur_sigma > 0:
             K = self.blur_kernel
@@ -340,12 +334,9 @@ class SparseFlowAugmentor:
         img1, img2 = self.eraser_transform(img1, img2)
         img1, img2, flow, valid = self.spatial_transform(img1, img2, flow, valid)
 
-        rand = random.random()
         valid2 = None
-        if rand < self.shift_prob / 2:
-            img1, img2, flow, valid2 = random_shift(img1, img2, flow, False, self.shift_sigmas)
-        elif rand >= self.shift_prob / 2 and rand < self.shift_prob:
-            img1, img2, flow, valid2 = random_shift(img2, img1, flow, True,  self.shift_sigmas)
+        if random.random() < self.shift_prob:
+            img1, img2, flow, valid2 = random_shift(img1, img2, flow, self.shift_sigmas)
 
         if valid2 is not None:
             valid = valid * valid2
