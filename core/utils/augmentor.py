@@ -188,7 +188,7 @@ class FlowAugmentor:
         img1, img2, flow = self.spatial_transform(img1, img2, flow)
 
         valid = None
-        if random.random() < self.shift_prob:
+        if self.shift_prob > 0 and random.random() < self.shift_prob:
             img1, img2, flow, valid = random_shift(img1, img2, flow, self.shift_sigmas)
 
         if self.blur_sigma > 0:
@@ -335,7 +335,7 @@ class SparseFlowAugmentor:
         img1, img2, flow, valid = self.spatial_transform(img1, img2, flow, valid)
 
         valid2 = None
-        if random.random() < self.shift_prob:
+        if self.shift_prob > 0 and random.random() < self.shift_prob:
             img1, img2, flow, valid2 = random_shift(img1, img2, flow, self.shift_sigmas)
 
         if valid2 is not None:
