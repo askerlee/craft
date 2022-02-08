@@ -26,7 +26,10 @@ def random_shift(img0, img1, flow, reversed_01=False, shift_sigmas=(16,10)):
     # Just discard such shift params.
     # valid_mask == None: such a valid_mask will be ignored by downsteam processing.
     if dx == 0 or dy == 0:
-        return img0, img1, flow, None
+        if reversed_01:
+            return img1, img0, flow, None
+        else:
+            return img0, img1, flow, None
 
     if reversed_01:
         flow_delta = (-dx, -dy)
