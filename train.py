@@ -413,6 +413,7 @@ if __name__ == '__main__':
     if not os.path.isdir(args.output):
         os.makedirs(args.output)
 
+    args.shift_sigmas = [ int(s) for s in args.shift_sigmas.split(",") ]    
     timestamp = datetime.now().strftime("%m%d%H%M")
     print("Time: {}".format(timestamp))
     print("Args:\n{}".format(args))
