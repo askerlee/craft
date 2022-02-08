@@ -34,8 +34,8 @@ class FlowDataset(data.Dataset):
 
             global shift_info_printed
             if not shift_info_printed and aug_params['shift_prob']:
-                print("Shift aug: ({}, {}), prob {}".format( \
-                      self.augmentor.max_u_shift, self.augmentor.max_v_shift, self.augmentor.shift_prob))
+                print("Shift aug: {}, prob {}".format( \
+                      self.augmentor.shift_sigmas, self.augmentor.shift_prob))
                 shift_info_printed = True
 
         # if is_test, do not return flow (only for LB submission).
