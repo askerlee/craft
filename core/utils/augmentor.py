@@ -24,7 +24,7 @@ def random_shift(img0, img1, flow, reversed_01=False, shift_sigmas=(16,10)):
 
     # Do not bother to make a special case to handle 0 offsets. 
     # Just discard such shift params.
-    # mask == None: such a mask will be ignored by downsteam processing.
+    # valid_mask == None: such a valid_mask will be ignored by downsteam processing.
     if dx == 0 or dy == 0:
         return img0, img1, flow, None
 
@@ -59,13 +59,17 @@ def random_shift(img0, img1, flow, reversed_01=False, shift_sigmas=(16,10)):
 
     # Pad img0, img1 and flow by half of (dy, dx).
     dx2, dy2 = abs(dx) // 2, abs(dy) // 2
-    img0a = np.pad(img0a, ((dy2, dy2), (dx2, dx2), (0, 0)), 'constant')
-    img1a = np.pad(img1a, ((dy2, dy2), (dx2, dx2), (0, 0)), 'constant')
-    flowa = np.pad(flowa, ((dy2, dy2), (dx2, dx2), (0, 0)), 'constant')
+    # valid_mask: boolean array that indicates the remaining area after cropping/shifting.
+    valid_mask = np.ones(img0a.shape[:2], dtype=bool)
+
+    img0a       = np.pad(img0a,         ((dy2, dy2), (dx2, dx2), (0, 0)), 'constant')
+    img1a       = np.pad(img1a,         ((dy2, dy2), (dx2, dx2), (0, 0)), 'constant')
+    flowa       = np.pad(flowa,         ((dy2, dy2), (dx2, dx2), (0, 0)), 'constant')
+    valid_mask  = np.pad(valid_mask,    ((dy2, dy2), (dx2, dx2)), 'constant', constant_values=False)
 
     if reversed_01:
         img0a, img1a = img1a, img0a
-    return img0a, img1a, flowa
+    return img0a, img1a, flowa, valid_mask
     
 class FlowAugmentor:
     def __init__(self, ds_name, crop_size, min_scale=-0.2, max_scale=0.5, spatial_aug_prob=0.8, 
@@ -322,12 +326,12 @@ class SparseFlowAugmentor:
         # print(img1.shape)
         return img1, img2, flow, valid
 
+    # img1, img2: (H, W, 3). valid: (H, W)
     def __call__(self, img1, img2, flow, valid):
         img1, img2 = self.color_transform(img1, img2)
         img1, img2 = self.eraser_transform(img1, img2)
         img1, img2, flow, valid = self.spatial_transform(img1, img2, flow, valid)
-        breakpoint()
-        
+
         rand = random.random()
         valid2 = None
         if rand < self.shift_prob / 2:
