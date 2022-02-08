@@ -11,9 +11,65 @@ import torch
 from torchvision.transforms import ColorJitter
 import torch.nn.functional as F
 
+# img0, img1 are 3D np arrays of (H, W, 3). flow is (H, W, 2).
+def random_shift(img0, img1, flow, reversed_01=False, shift_sigmas=(16,10)):
+    u_shift_sigma, v_shift_sigma = shift_sigmas
+    # 90% of dx and dy are within [-2*u_shift_sigma, 2*u_shift_sigma] 
+    # and [-2*v_shift_sigma, 2*v_shift_sigma].
+    dx = np.random.laplace(0, u_shift_sigma)
+    dy = np.random.laplace(0, v_shift_sigma)
+    # Make sure dx and dy are even numbers.
+    dx = (int(dx) // 2) * 2
+    dy = (int(dy) // 2) * 2
+
+    # Do not bother to make a special case to handle 0 offsets. 
+    # Just discard such shift params.
+    # mask == None: such a mask will be ignored by downsteam processing.
+    if dx == 0 or dy == 0:
+        return img0, img1, flow, None
+
+    if dx > 0 and dy > 0:
+        # img0 is cropped at the bottom-right corner. 
+        img0a   = img0[:-dy, :-dx]
+        # flow is cropped at the bottom-right corner, then minus by (dx, dy).
+        flowa   = flow[:-dy, :-dx] - (dx, dy)
+        # img1 is shifted by (dx, dy) to the left and up. pixels at (dy, dx) ->(0, 0).
+        img1a   = img1[dy:,  dx:]
+    if dx > 0 and dy < 0:
+        # img0 is cropped at the right side, and shifted to the up.
+        img0a   = img0[-dy:, :-dx]
+        # flow is cropped at the right side, and shifted to the up, then minus by (dx, dy).
+        flowa   = flow[-dy:, :-dx] - (dx, dy)
+        # img1 is shifted to the left and cropped at the bottom.
+        img1a   = img1[:dy,  dx:]
+    if dx < 0 and dy > 0:
+        # img0 is shifted to the left, and cropped at the bottom.
+        img0a   = img0[:-dy, -dx:]
+        # flow is shifted to the left, and cropped at the bottom, then minus by (dx, dy).
+        flowa   = flow[:-dy, -dx:] - (dx, dy)
+        # img1 is cropped at the right side, and shifted to the up.
+        img1a   = img1[dy:,  :dx]
+    if dx < 0 and dy < 0:
+        # img0 is shifted by (-dx, -dy) to the left and up.
+        img0a   = img0[-dy:, -dx:]
+        # flow is shifted by (-dx, -dy) to the left and up, then minus by (dx, dy).
+        flowa   = flow[-dy:, -dx:] - (dx, dy)
+        # img1 is cropped at the bottom-right corner.
+        img1a   = img1[:dy,  :dx]
+
+    # Pad img0, img1 and flow by half of (dy, dx).
+    dx2, dy2 = abs(dx) // 2, abs(dy) // 2
+    img0a = np.pad(img0a, ((dy2, dy2), (dx2, dx2), (0, 0)), 'constant')
+    img1a = np.pad(img1a, ((dy2, dy2), (dx2, dx2), (0, 0)), 'constant')
+    flowa = np.pad(flowa, ((dy2, dy2), (dx2, dx2), (0, 0)), 'constant')
+
+    if reversed_01:
+        img0a, img1a = img1a, img0a
+    return img0a, img1a, flowa
+    
 class FlowAugmentor:
     def __init__(self, ds_name, crop_size, min_scale=-0.2, max_scale=0.5, spatial_aug_prob=0.8, 
-                 blur_kernel=5, blur_sigma=-1, do_flip=True, shift_prob=0):
+                 blur_kernel=5, blur_sigma=-1, do_flip=True, shift_prob=0, shift_sigmas=(16,10)):
         self.ds_name = ds_name
         # spatial augmentation params
         self.crop_size = crop_size
@@ -30,13 +86,9 @@ class FlowAugmentor:
 
         # shift augmentation
         self.shift_prob = shift_prob
-        if self.shift_prob > 0:
-            # Shift at most 1/8 of the image, to avoid too much 
-            # loss of valid supervision.
-            # Sintel: crop_size = (368, 768).
-            # max_u_shift, max_v_shift = (96, 46)
-            self.max_u_shift = self.crop_size[1] // 8
-            self.max_v_shift = self.crop_size[0] // 8
+        # 90% of dx and dy are within [-2*u_shift_sigma, 2*u_shift_sigma] 
+        # and [-2*v_shift_sigma, 2*v_shift_sigma].
+        self.shift_sigmas = shift_sigmas        
 
         # photometric augmentation params
         self.photo_aug = ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.5/3.14)
@@ -120,55 +172,18 @@ class FlowAugmentor:
         flow = flow[y0:y0+self.crop_size[0], x0:x0+self.crop_size[1]]
 
         return img1, img2, flow
-
-    # img and flow are 3D np array. img: (H, W, 3). flow: (H, W, 2)
-    # mask: (H, W).
-    # The flow values at mask==True are valid and will be used to compute EPE.
-    def random_shift(self, img, flow):
-        x_shift = np.random.randint(-self.max_u_shift, self.max_u_shift)
-        y_shift = np.random.randint(-self.max_v_shift, self.max_v_shift)
-        # print(f"Shift x: {x_shift}, y: {y_shift}")
-        offset = np.array([x_shift, y_shift], dtype=np.float32)
-        offset = offset.reshape((1, 1, 2))
-
-        # Do not bother to make a special case to handle 0 offsets. 
-        # Just discard such shift params.
-        if x_shift == 0 or y_shift == 0:
-            return img, flow, None
-
-        img2  = np.zeros_like(img)
-        flow2 = np.zeros_like(flow)
-        mask = np.zeros(img.shape[:2], dtype=bool)
-            
-        if x_shift > 0 and y_shift > 0:
-            img2[y_shift:, x_shift:] = img[:-y_shift, :-x_shift]
-            mask[y_shift:, x_shift:] = 1
-            flow2[y_shift:, x_shift:] = flow[:-y_shift, :-x_shift]
-        if x_shift > 0 and y_shift < 0:
-            img2[:y_shift, x_shift:] = img[-y_shift:, :-x_shift]
-            mask[:y_shift, x_shift:] = 1
-            flow2[:y_shift, x_shift:] = flow[-y_shift:, :-x_shift]
-        if x_shift < 0 and y_shift > 0:
-            img2[y_shift:, :x_shift] = img[:-y_shift, -x_shift:]
-            mask[y_shift:, :x_shift] = 1
-            flow2[y_shift:, :x_shift] = flow[:-y_shift, -x_shift:]
-        if x_shift < 0 and y_shift < 0:
-            img2[:y_shift, :x_shift] = img[-y_shift:, -x_shift:]
-            mask[:y_shift, :x_shift] = 1
-            flow2[:y_shift, :x_shift] = flow[-y_shift:, -x_shift:]
-
-        flow2 -= offset
-        return img2, flow2, mask
         
     def __call__(self, img1, img2, flow):
         img1, img2 = self.color_transform(img1, img2)
         img1, img2 = self.eraser_transform(img1, img2)
         img1, img2, flow = self.spatial_transform(img1, img2, flow)
 
-        if self.shift_prob > 0 and np.random.rand() < self.shift_prob:
-            img1, flow, valid = self.random_shift(img1, flow)
-        else:
-            valid = None
+        rand = random.random()
+        valid = None
+        if rand < self.shift_prob / 2:
+            img1, img2, flow, valid = random_shift(img1, img2, flow, False, self.shift_sigmas)
+        elif rand >= self.shift_prob / 2 and rand < self.shift_prob:
+            img1, img2, flow, valid = random_shift(img2, img1, flow, True,  self.shift_sigmas)
 
         if self.blur_sigma > 0:
             K = self.blur_kernel
@@ -184,7 +199,7 @@ class FlowAugmentor:
 
 class SparseFlowAugmentor:
     def __init__(self, ds_name, crop_size, min_scale=-0.2, max_scale=0.5, 
-                 spatial_aug_prob=0.8, do_flip=False, shift_prob=0):
+                 spatial_aug_prob=0.8, do_flip=False, shift_prob=0, shift_sigmas=(16,10)):
         self.ds_name = ds_name
         # spatial augmentation params
         self.crop_size = crop_size
@@ -206,14 +221,9 @@ class SparseFlowAugmentor:
 
         # shift augmentation
         self.shift_prob = shift_prob
-        if self.shift_prob > 0:
-            # Shift at most 1/8 of the image, to avoid too much 
-            # loss of valid supervision.
-            # Sintel: crop_size = (368, 768).
-            # max_u_shift, max_v_shift = (96, 46)
-            self.max_u_shift = self.crop_size[1] // 8
-            self.max_v_shift = self.crop_size[0] // 8
-            self.shift_prob  = 0.1
+        # 90% of dx and dy are within [-2*u_shift_sigma, 2*u_shift_sigma] 
+        # and [-2*v_shift_sigma, 2*v_shift_sigma].
+        self.shift_sigmas = shift_sigmas
 
     def color_transform(self, img1, img2):
         image_stack = np.concatenate([img1, img2], axis=0)
@@ -312,55 +322,21 @@ class SparseFlowAugmentor:
         # print(img1.shape)
         return img1, img2, flow, valid
 
-    # img and flow are 3D np array. img: (H, W, 3). flow: (H, W, 2)
-    # mask: (H, W).
-    # The flow values at mask==True are valid and will be used to compute EPE.
-    def random_shift(self, img, flow):
-        x_shift = np.random.randint(-self.max_u_shift, self.max_u_shift)
-        y_shift = np.random.randint(-self.max_v_shift, self.max_v_shift)
-        # print(f"Shift x: {x_shift}, y: {y_shift}")
-        offset = np.array([x_shift, y_shift], dtype=np.float32)
-        offset = offset.reshape((1, 1, 2))
-
-        # Do not bother to make a special case to handle 0 offsets. 
-        # Just discard such shift params.
-        if x_shift == 0 or y_shift == 0:
-            return img, flow, None
-
-        img2  = np.zeros_like(img)
-        flow2 = np.zeros_like(flow)
-        mask = np.zeros(img.shape[:2], dtype=bool)
-            
-        if x_shift > 0 and y_shift > 0:
-            img2[y_shift:, x_shift:] = img[:-y_shift, :-x_shift]
-            mask[y_shift:, x_shift:] = 1
-            flow2[y_shift:, x_shift:] = flow[:-y_shift, :-x_shift]
-        if x_shift > 0 and y_shift < 0:
-            img2[:y_shift, x_shift:] = img[-y_shift:, :-x_shift]
-            mask[:y_shift, x_shift:] = 1
-            flow2[:y_shift, x_shift:] = flow[-y_shift:, :-x_shift]
-        if x_shift < 0 and y_shift > 0:
-            img2[y_shift:, :x_shift] = img[:-y_shift, -x_shift:]
-            mask[y_shift:, :x_shift] = 1
-            flow2[y_shift:, :x_shift] = flow[:-y_shift, -x_shift:]
-        if x_shift < 0 and y_shift < 0:
-            img2[:y_shift, :x_shift] = img[-y_shift:, -x_shift:]
-            mask[:y_shift, :x_shift] = 1
-            flow2[:y_shift, :x_shift] = flow[-y_shift:, -x_shift:]
-
-        flow2 -= offset
-        return img2, flow2, mask
-
     def __call__(self, img1, img2, flow, valid):
         img1, img2 = self.color_transform(img1, img2)
         img1, img2 = self.eraser_transform(img1, img2)
         img1, img2, flow, valid = self.spatial_transform(img1, img2, flow, valid)
+        breakpoint()
+        
+        rand = random.random()
+        valid2 = None
+        if rand < self.shift_prob / 2:
+            img1, img2, flow, valid2 = random_shift(img1, img2, flow, False, self.shift_sigmas)
+        elif rand >= self.shift_prob / 2 and rand < self.shift_prob:
+            img1, img2, flow, valid2 = random_shift(img2, img1, flow, True,  self.shift_sigmas)
 
-        if self.shift_prob > 0 and np.random.rand() < self.shift_prob:
-            img1, flow, valid2 = self.random_shift(img1, flow)
-            # valid is of np.float32. valid2 is of bool.
-            if valid2 is not None:
-                valid = valid * valid2
+        if valid2 is not None:
+            valid = valid * valid2
 
         img1 = np.ascontiguousarray(img1)
         img2 = np.ascontiguousarray(img2)

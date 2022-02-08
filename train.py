@@ -350,7 +350,9 @@ if __name__ == '__main__':
     parser.add_argument('--add_noise', action='store_true')
     parser.add_argument('--shiftprob', dest='shift_aug_prob', type=float,
                         default=0.0, help='Probability of shifting augmentation')
-    
+    parser.add_argument('--shiftsigmas', dest='shift_sigmas', default="16,10", type=str,
+                        help='Stds of shifts for shifting consistency loss')
+                            
     # default: not to freeze bn.
     parser.add_argument('--freeze_bn', action='store_true')
     
