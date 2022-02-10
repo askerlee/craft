@@ -22,24 +22,18 @@ def random_shift(img1, img2, flow, shift_sigmas=(16,10)):
     dx = (int(dx) // 2) * 2
     dy = (int(dy) // 2) * 2
 
-    # Do not bother to make a special case to handle 0 offsets. 
-    # Just discard such shift params.
-    # valid_mask == None: such a valid_mask will be ignored by downsteam processing.
-    if dx == 0 or dy == 0:
-        return img1, img2, flow, None
-
-    if dx > 0 and dy > 0:
+    if dx >= 0 and dy >= 0:
         # img1 is cropped at the bottom-right corner.               img1[:-dy, :-dx]
         img1_bound = (0,  img1.shape[0] - dy,  0,  img1.shape[1] - dx)
         # img2 is shifted by (dx, dy) to the left and up. pixels at (dy, dx) ->(0, 0).
         #                                                           img2[dy:,  dx:]
         img2_bound = (dy, img1.shape[0],       dx, img1.shape[1])
-    if dx > 0 and dy < 0:
+    if dx >= 0 and dy < 0:
         # img1 is cropped at the right side, and shifted to the up. img1[-dy:, :-dx]
         img1_bound = (-dy, img1.shape[0],      0,  img1.shape[1] - dx)
         # img2 is shifted to the left and cropped at the bottom.    img2[:dy,  dx:]
         img2_bound = (0,   img1.shape[0] + dy, dx, img1.shape[1])
-    if dx < 0 and dy > 0:
+    if dx < 0 and dy >= 0:
         # img1 is shifted to the left, and cropped at the bottom.   img1[:-dy, -dx:]
         img1_bound = (0,   img1.shape[0] - dy, -dx, img1.shape[1])
         # img2 is cropped at the right side, and shifted to the up. img2[dy:,  :dx]
