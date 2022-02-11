@@ -16,8 +16,13 @@ def random_shift(img1, img2, flow, shift_sigmas=(16,10)):
     u_shift_sigma, v_shift_sigma = shift_sigmas
     # 90% of dx and dy are within [-2*u_shift_sigma, 2*u_shift_sigma] 
     # and [-2*v_shift_sigma, 2*v_shift_sigma].
-    dx = np.random.uniform(-u_shift_sigma, u_shift_sigma)
-    dy = np.random.uniform(-u_shift_sigma, v_shift_sigma)
+    # Make sure at most one of dx, dy is large. Otherwise the shift is too difficult.
+    if random.random() > 0.5:
+        dx = np.random.laplace(0, u_shift_sigma / 4)
+        dy = np.random.laplace(0, v_shift_sigma)
+    else:
+        dx = np.random.laplace(0, u_shift_sigma)
+        dy = np.random.laplace(0, v_shift_sigma / 4)
     # Make sure dx and dy are even numbers.
     dx = (int(dx) // 2) * 2
     dy = (int(dy) // 2) * 2
