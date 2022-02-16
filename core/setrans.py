@@ -775,8 +775,12 @@ class SETransInputFeatEncoder(nn.Module):
                 # pos_biases: [1, 1, H*W, H*W]
                 pos_biases  = pos_biases.reshape(1, 1, ht*wd, ht*wd)
             else:
-                # if 'bias', return_pos_biases should always be True, i.e., always return pos_biases. 
-                breakpoint()
+                # Simply discard pos_biases. Used when encoding the 2nd frame.
+                # As for cross-frame attention, only one group of pos_biases is required 
+                # (added to the cross-frame attentio scores).
+                # When encoding the 1st frame, pos_biases is already returned, no need 
+                # another group of pos_biases.  
+                pass
 
         vis_feat    = vis_feat.view(batch, dim, ht * wd).transpose(1, 2)
             
