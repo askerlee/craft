@@ -445,7 +445,7 @@ class CrossAttFeatTrans(SETransInitWeights):
         print0("{}: in_feat_dim: {}, feat_dim: {}, modes: {}, qk_have_bias: {}".format(
               self.name, self.in_feat_dim, self.feat_dim, self.num_modes, config.qk_have_bias))
 
-        # if using SlidingPosBiases, then add positional embeddings here.
+        # if using SlidingPosBiases2D, then add positional embeddings in CrossAttFeatTrans.forward().
         if config.pos_code_type == 'bias':
             self.pos_code_weight = config.pos_code_weight
             print0("Positional biases weight: {:.3}".format(self.pos_code_weight))
@@ -641,7 +641,7 @@ class LearnedSinuPosEmbedder(nn.Module):
 
         return pos_embed_out
 
-class SlidingPosBiases(nn.Module):
+class SlidingPosBiases2D(nn.Module):
     def __init__(self, pos_dim=2, pos_bias_radius=7, max_pos_size=(200, 200)):
         super().__init__()
         self.pos_dim = pos_dim
@@ -687,13 +687,12 @@ class SlidingPosBiases(nn.Module):
         self.register_buffer('all_w2s', all_w2s, persistent=False)
         print0(f"Sliding-window Positional Biases, r: {R}, max size: {max_pos_size}")
         
-    def forward(self, feat):
-        feat_shape = feat.shape
+    def forward(self, feat_shape, device):
         R = self.R
         spatial_shape = feat_shape[-self.pos_dim:]
         # [H, W, H, W] => [H+2R, W+2R, H+2R, W+2R].
         padded_pos_shape  = list(spatial_shape) + [ 2*R + spatial_shape[i] for i in range(self.pos_dim) ]
-        padded_pos_biases = torch.zeros(padded_pos_shape, device=feat.device)
+        padded_pos_biases = torch.zeros(padded_pos_shape, device=device)
         
         if self.pos_dim == 2:
             H, W = spatial_shape
@@ -717,7 +716,7 @@ class SETransInputFeatEncoder(nn.Module):
         self.comb_norm_layer  = nn.LayerNorm(self.feat_dim, eps=1e-12, elementwise_affine=False)
         self.pos_code_type    = config.pos_code_type
         
-        # if using SlidingPosBiases, do not add positional embeddings here.
+        # if using SlidingPosBiases2D, do not add positional embeddings here.
         if config.pos_code_type != 'bias':
             self.pos_code_weight = config.pos_code_weight
             print0("Positional embedding weight: {:.3}".format(self.pos_code_weight))
@@ -735,8 +734,25 @@ class SETransInputFeatEncoder(nn.Module):
         elif config.pos_code_type == 'zero':
             self.pos_coder = ZeroEmbedder(self.pos_embed_dim)
         elif config.pos_code_type == 'bias':
-            self.pos_coder = SlidingPosBiases(config.pos_dim, config.pos_bias_radius)
-            
+            self.pos_coder = SlidingPosBiases2D(config.pos_dim, config.pos_bias_radius)
+
+        self.cached_pos_code   = None
+        self.cached_feat_shape = None
+
+    def pos_code_lookup_cache(self, vis_feat_shape, device, voxels_pos_normed):
+        if self.pos_code_type == 'bias':
+            # Cache miss for 'bias' type of positional codes.
+            if self.cached_pos_code is None or self.cached_feat_shape != vis_feat_shape:
+                self.cached_pos_code    = self.pos_coder(vis_feat_shape, device)
+                self.cached_feat_shape  = vis_feat_shape            
+        else:
+            # Cache miss for all other type of positional codes.
+            if self.cached_pos_code is None or self.cached_feat_shape != voxels_pos_normed.shape:
+                self.cached_pos_code    = self.pos_coder(voxels_pos_normed)
+                self.cached_feat_shape  = voxels_pos_normed.shape
+
+        return self.cached_pos_code
+
     # return: [B0, num_voxels, 256]
     def forward(self, vis_feat, voxels_pos, return_pos_biases=True):
         # vis_feat:  [8, 256, 46, 62]
@@ -748,22 +764,25 @@ class SETransInputFeatEncoder(nn.Module):
             # voxels_pos_normed: [B0, num_voxels, 2]
             # pos_embed:         [B0, num_voxels, 256]
             voxels_pos_normed = voxels_pos_normed.view(batch, ht * wd, -1)
-            pos_embed   = self.pos_coder(voxels_pos_normed)
+            pos_embed   = self.pos_code_lookup_cache(vis_feat.shape, vis_feat.device, voxels_pos_normed)
             pos_biases  = None
         else:
             pos_embed   = 0
-            # SlidingPosBiases() may be a bit slow. So only generate when necessary.
+            # SlidingPosBiases2D() may be a bit slow. So only generate when necessary.
             if return_pos_biases:
                 # pos_biases: [1, 1, H, W, H, W]
-                pos_biases  = self.pos_coder(vis_feat)
+                pos_biases  = self.pos_code_lookup_cache(vis_feat.shape, vis_feat.device, None)
                 # pos_biases: [1, 1, H*W, H*W]
                 pos_biases  = pos_biases.reshape(1, 1, ht*wd, ht*wd)
-                   
+            else:
+                # if 'bias', return_pos_biases should always be True, i.e., always return pos_biases. 
+                breakpoint()
+
         vis_feat    = vis_feat.view(batch, dim, ht * wd).transpose(1, 2)
             
-        feat_comb           = vis_feat + self.pos_code_weight * pos_embed
-        feat_normed         = self.comb_norm_layer(feat_comb)
-        feat_normed         = self.dropout(feat_normed)
+        feat_comb   = vis_feat + self.pos_code_weight * pos_embed
+        feat_normed = self.comb_norm_layer(feat_comb)
+        feat_normed = self.dropout(feat_normed)
                   
         if return_pos_biases:
             return feat_normed, pos_biases
