@@ -744,13 +744,16 @@ class SETransInputFeatEncoder(nn.Module):
             # Cache miss for 'bias' type of positional codes.
             if self.cached_pos_code is None or self.cached_feat_shape != vis_feat_shape:
                 self.cached_pos_code    = self.pos_coder(vis_feat_shape, device)
-                self.cached_feat_shape  = vis_feat_shape            
+                self.cached_feat_shape  = vis_feat_shape    \
+            # else: self.cached_pos_code exists, and self.cached_feat_shape == vis_feat_shape.
+            # Just return the cached pos_code.
         else:
             # Cache miss for all other type of positional codes.
             if self.cached_pos_code is None or self.cached_feat_shape != voxels_pos_normed.shape:
                 self.cached_pos_code    = self.pos_coder(voxels_pos_normed)
                 self.cached_feat_shape  = voxels_pos_normed.shape
-
+            # else: self.cached_pos_code exists, and self.cached_feat_shape == voxels_pos_normed.shape.
+            # Just return the cached pos_code.
         return self.cached_pos_code
 
     # return: [B0, num_voxels, 256]
