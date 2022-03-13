@@ -738,18 +738,21 @@ class SETransInputFeatEncoder(nn.Module):
 
         self.cached_pos_code   = None
         self.cached_feat_shape = None
-
+        
+    # Cache the pos_code and feat_shape to avoid unnecessary generation time.
+    # This is only used during inference. During training, pos_code is always generated each time it's used.
+    # Otherwise the cached pos_code cannot receive proper gradients.
     def pos_code_lookup_cache(self, vis_feat_shape, device, voxels_pos_normed):
         if self.pos_code_type == 'bias':
             # Cache miss for 'bias' type of positional codes.
-            if self.cached_pos_code is None or self.cached_feat_shape != vis_feat_shape:
+            if self.training or self.cached_pos_code is None or self.cached_feat_shape != vis_feat_shape:
                 self.cached_pos_code    = self.pos_coder(vis_feat_shape, device)
                 self.cached_feat_shape  = vis_feat_shape    \
             # else: self.cached_pos_code exists, and self.cached_feat_shape == vis_feat_shape.
             # Just return the cached pos_code.
         else:
             # Cache miss for all other type of positional codes.
-            if self.cached_pos_code is None or self.cached_feat_shape != voxels_pos_normed.shape:
+            if self.training or self.cached_pos_code is None or self.cached_feat_shape != voxels_pos_normed.shape:
                 self.cached_pos_code    = self.pos_coder(voxels_pos_normed)
                 self.cached_feat_shape  = voxels_pos_normed.shape
             # else: self.cached_pos_code exists, and self.cached_feat_shape == voxels_pos_normed.shape.

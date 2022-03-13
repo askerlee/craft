@@ -219,7 +219,8 @@ class FlyingChairs(FlowDataset):
 
 class FlyingThings3D(FlowDataset):
     def __init__(self, aug_params=None, root='datasets/FlyingThings3D', split='training', dstype='frames_cleanpass'):
-        ds_type_short = {'frames_cleanpass': 'clean', 'frames_final': 'final'}
+        ds_type_short = { 'frames_cleanpass': 'clean', 
+                          'frames_finalpass': 'final' }
         self.ds_name = f'things-{split}-{ds_type_short[dstype]}'
         super(FlyingThings3D, self).__init__(aug_params)
 
