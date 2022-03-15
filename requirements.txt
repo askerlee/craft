@@ -3,3 +3,4 @@ torchvision
 einops
 fvcore
 sklearn
+opencv-python
