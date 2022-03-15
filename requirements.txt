@@ -4,3 +4,4 @@ einops
 fvcore
 sklearn
 opencv-python
+matplotlib
