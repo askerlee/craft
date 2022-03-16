@@ -197,7 +197,7 @@ def create_viper_submission_vis(model_name, model, output_path='viper_submission
                                 test_mode=1, do_vis=False):
     """ Create submission for the viper leaderboard """
     model.eval()
-    test_dataset = datasets.VIPER(split='test', aug_params=None)
+    test_dataset = datasets.VIPER(split='test', aug_params=None, debug=True)
 
     if not os.path.exists(output_path):
         os.makedirs(output_path)
