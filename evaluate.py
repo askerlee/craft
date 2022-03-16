@@ -169,7 +169,7 @@ def create_kitti_submission_vis(model_name, model, output_path='kitti_submission
         os.makedirs(f'vis_kitti/{model_name}')
 
     for test_id in range(len(test_dataset)):
-        image1, image2, (frame_id, ) = test_dataset[test_id]
+        image1, image2, frame_id = test_dataset[test_id]
         padder = InputPadder(image1.shape, mode='kitti')
         image1, image2 = padder.pad(image1[None].to(f'cuda:{model.device_ids[0]}'), image2[None].to(f'cuda:{model.device_ids[0]}'))
 
