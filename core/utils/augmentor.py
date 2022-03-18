@@ -12,6 +12,7 @@ from torchvision.transforms import ColorJitter
 import torch.nn.functional as F
 
 # img1, img2 are 3D np arrays of (H, W, 3). flow is (H, W, 2).
+# shift_sigmas is (u, v), i.e., (W, H).
 def random_shift(img1, img2, flow, shift_sigmas=(16,10)):
     u_shift_sigma, v_shift_sigma = shift_sigmas
     # 90% of dx and dy are within [-2*u_shift_sigma, 2*u_shift_sigma] 
@@ -27,10 +28,11 @@ def random_shift(img1, img2, flow, shift_sigmas=(16,10)):
     dx = (int(dx) // 2) * 2
     dy = (int(dy) // 2) * 2
 
+    # If flow=0, pixels at (dy, dx)_1a <-> (0, 0)_2a.
     if dx >= 0 and dy >= 0:
         # img1 is cropped at the bottom-right corner.               img1[:-dy, :-dx]
         img1_bound = (0,  img1.shape[0] - dy,  0,  img1.shape[1] - dx)
-        # img2 is shifted by (dx, dy) to the left and up. pixels at (dy, dx) ->(0, 0).
+        # img2 is shifted by (dx, dy) to the left and up. 
         #                                                           img2[dy:,  dx:]
         img2_bound = (dy, img1.shape[0],       dx, img1.shape[1])
     if dx >= 0 and dy < 0:
@@ -38,11 +40,15 @@ def random_shift(img1, img2, flow, shift_sigmas=(16,10)):
         img1_bound = (-dy, img1.shape[0],      0,  img1.shape[1] - dx)
         # img2 is shifted to the left and cropped at the bottom.    img2[:dy,  dx:]
         img2_bound = (0,   img1.shape[0] + dy, dx, img1.shape[1])
+        # (dx, 0)_1 => (dx, dy)_1a, (dx, 0)_2 => (0, 0)_2a.
+        # So if flow=0, i.e., (dx, dy)_1 == (dx, dy)_2, then (dx, dy)_1a => (0, 0)_2a.
     if dx < 0 and dy >= 0:
         # img1 is shifted to the left, and cropped at the bottom.   img1[:-dy, -dx:]
         img1_bound = (0,   img1.shape[0] - dy, -dx, img1.shape[1])
         # img2 is cropped at the right side, and shifted to the up. img2[dy:,  :dx]
         img2_bound = (dy,  img1.shape[0],      0,   img1.shape[1] + dx)
+        # (0, dy)_1 => (dx, dy)_1a, (0, dy)_2 => (0, 0)_2a.
+        # So if flow=0, i.e., (dx, dy)_1 == (dx, dy)_2, then (dx, dy)_1a => (0, 0)_2a.        
     if dx < 0 and dy < 0:
         # img1 is shifted by (-dx, -dy) to the left and up. img1[-dy:, -dx:]
         img1_bound = (-dy, img1.shape[0],      -dx, img1.shape[1])
@@ -57,13 +63,14 @@ def random_shift(img1, img2, flow, shift_sigmas=(16,10)):
     else:
         flow_delta = (dx,  dy)
 
+    # T, B, L, R: top, bottom, left, right.
     T1, B1, L1, R1 = img1_bound
     T2, B2, L2, R2 = img2_bound
     img1a = img1[T1:B1, L1:R1]
     flowa = flow[T1:B1, L1:R1] - flow_delta
     img2a = img2[T2:B2, L2:R2]
 
-    # Pad img1, img2 and flow by half of (dy, dx).
+    # Pad img1, img2 and flow by half of (dy, dx). Padding doesn't impact flow.
     dx2, dy2 = abs(dx) // 2, abs(dy) // 2
     # valid_mask: boolean array that indicates the remaining area after cropping/shifting.
     valid_mask = np.ones(img1a.shape[:2], dtype=bool)
@@ -71,6 +78,7 @@ def random_shift(img1, img2, flow, shift_sigmas=(16,10)):
     img1a       = np.pad(img1a,         ((dy2, dy2), (dx2, dx2), (0, 0)), 'constant')
     img2a       = np.pad(img2a,         ((dy2, dy2), (dx2, dx2), (0, 0)), 'constant')
     flowa       = np.pad(flowa,         ((dy2, dy2), (dx2, dx2), (0, 0)), 'constant')
+    # constant_values: valid_mask is a boolean array. Padded with "False".
     valid_mask  = np.pad(valid_mask,    ((dy2, dy2), (dx2, dx2)), 'constant', constant_values=False)
 
     return img1a, img2a, flowa, valid_mask

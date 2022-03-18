@@ -256,7 +256,7 @@ def validate_chairs(model, iters=6, test_mode=1, xy_shift=None, batch_size=1):
 
     val_dataset = datasets.FlyingChairs(split='validation')
     val_loader  = data.DataLoader(val_dataset, batch_size=batch_size,
-                                    pin_memory=False, shuffle=False, num_workers=4, drop_last=False)
+                                  pin_memory=False, shuffle=False, num_workers=4, drop_last=False)
 
     for data_blob in iter(val_loader):  
         image1, image2, flow_gt, _, _ = data_blob
