@@ -595,8 +595,7 @@ class SelfAttVisPosTrans(nn.Module):
         # otherwise, output features are in the same shape as the query features.
         # key features are recombined to get new query features by matmul(attention_probs, V(key features))
         #             frame1 frame2
-        # corr: [1, 1, 7040, 7040]
-        # x_vispos: [B0, num_voxels, 256]
+        # x_vispos, x_trans: [4, 2852, 256]
         # Here key_feat is omitted (None), i.e., key_feat = query_feat = x_vispos.
         x_trans = self.setrans(x_vispos, pos_biases=pos_biases, attention_mask=attn_mask)
 

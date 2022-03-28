@@ -117,7 +117,8 @@ class CRAFT(nn.Module):
         # if args.use_setrans, initialization of GMAUpdateBlock.aggregator needs to access self.args.intra_trans_config.
         # So GMAUpdateBlock() construction has to be done after initializing intra_trans_config.
         self.update_block = GMAUpdateBlock(self.args, hidden_dim=hdim)
- 
+        self.call_counter = 0
+
     def freeze_bn(self):
         for m in self.modules():
             if isinstance(m, nn.BatchNorm2d):
@@ -147,6 +148,7 @@ class CRAFT(nn.Module):
 
     def forward(self, image1, image2, iters=12, flow_init=None, upsample=True, test_mode=0):
         """ Estimate optical flow between pair of frames """
+        self.call_counter += 1
 
         # image1, image2: [1, 3, 440, 1024]
         # image1 mean: [-0.1528, -0.2493, -0.3334]
@@ -211,7 +213,8 @@ class CRAFT(nn.Module):
             with autocast(enabled=self.args.mixed_precision):
                 # only update() once, instead of dynamically updating coords1.
                 self.corr_fn.update(fmap1, fmap2, fmap1o, fmap2o, coords1, coords2=None)
-            
+                print(f"{self.call_counter} corr_fn.update()")
+
         flow_predictions = []
         for itr in range(iters):
             coords1 = coords1.detach()
