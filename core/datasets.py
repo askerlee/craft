@@ -28,6 +28,7 @@ class FlowDataset(data.Dataset):
         self.sparse = sparse
         if aug_params is not None:
             if sparse:
+                # Only KITTI, HD1k, VIPER are sparse.
                 self.augmentor = SparseFlowAugmentor(self.ds_name, **aug_params)
             else:
                 self.augmentor = FlowAugmentor(self.ds_name, **aug_params)

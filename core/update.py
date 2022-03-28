@@ -124,8 +124,8 @@ class GMAUpdateBlock(nn.Module):
             nn.ReLU(inplace=True),
             nn.Conv2d(256, 64*9, 1, padding=0))
 
-        self.setrans = args.setrans
-        if self.setrans:
+        self.use_setrans = args.use_setrans
+        if self.use_setrans:
             self.intra_trans_config = args.intra_trans_config
             self.aggregator = ExpandedFeatTrans(self.intra_trans_config, 'Motion Aggregator')
         else:
@@ -137,7 +137,7 @@ class GMAUpdateBlock(nn.Module):
         # corr: [3, 676, 50, 90]
         motion_features = self.encoder(flow, corr)
         # motion_features: 128-dim
-        if self.setrans:
+        if self.use_setrans:
             # attention is multi-mode. ExpandedFeatTrans takes multi-mode attention.
             B, C, H, W = motion_features.shape
             motion_features_3d = motion_features.view(B, C, H*W).permute(0, 2, 1)

@@ -1,0 +1,77 @@
+Apply x,y shift 100,50
+sintel-training-clean: 1041 image pairs.
+Dataset length 1041
+Iter 0, Valid (clean) EPE: 0.776029, 1px: 0.918583, 3px: 0.967966, 5px: 0.978750, 0-1 0.18, 1-10 0.29, 10-20 0.70, 20-30 1.29, 30-inf 3.60
+sintel-training-final: 1041 image pairs.
+Dataset length 1041
+Iter 0, Valid (final) EPE: 1.318118, 1px: 0.879115, 3px: 0.944794, 5px: 0.962477, 0-1 0.22, 1-10 0.37, 10-20 0.93, 20-30 1.90, 30-inf 7.10
+Apply x,y shift 120,60
+sintel-training-clean: 1041 image pairs.
+Dataset length 1041
+Iter 0, Valid (clean) EPE: 0.811854, 1px: 0.915489, 3px: 0.966890, 5px: 0.977989, 0-1 0.18, 1-10 0.30, 10-20 0.73, 20-30 1.34, 30-inf 3.81
+sintel-training-final: 1041 image pairs.
+Dataset length 1041
+Iter 0, Valid (final) EPE: 1.367592, 1px: 0.876110, 3px: 0.943583, 5px: 0.961684, 0-1 0.22, 1-10 0.38, 10-20 0.97, 20-30 1.95, 30-inf 7.47
+Apply x,y shift 140,70
+sintel-training-clean: 1041 image pairs.
+Dataset length 1041
+Iter 0, Valid (clean) EPE: 0.845630, 1px: 0.912390, 3px: 0.966027, 5px: 0.977514, 0-1 0.20, 1-10 0.32, 10-20 0.76, 20-30 1.41, 30-inf 3.96
+sintel-training-final: 1041 image pairs.
+Dataset length 1041
+Iter 0, Valid (final) EPE: 1.524136, 1px: 0.871927, 3px: 0.941710, 5px: 0.959970, 0-1 0.27, 1-10 0.54, 10-20 1.09, 20-30 2.08, 30-inf 7.92
+Apply x,y shift 160,80
+sintel-training-clean: 1041 image pairs.
+Dataset length 1041
+Iter 0, Valid (clean) EPE: 0.982153, 1px: 0.908354, 3px: 0.964309, 5px: 0.976087, 0-1 0.21, 1-10 0.47, 10-20 0.88, 20-30 1.55, 30-inf 4.30
+sintel-training-final: 1041 image pairs.
+Dataset length 1041
+Iter 0, Valid (final) EPE: 2.187378, 1px: 0.867147, 3px: 0.938197, 5px: 0.956438, 0-1 0.26, 1-10 0.52, 10-20 1.71, 20-30 4.21, 30-inf 12.07
+Apply x,y shift 180,90
+sintel-training-clean: 1041 image pairs.
+Dataset length 1041
+Iter 0, Valid (clean) EPE: 1.749158, 1px: 0.900775, 3px: 0.959838, 5px: 0.972105, 0-1 0.27, 1-10 0.54, 10-20 1.19, 20-30 4.98, 30-inf 8.66
+sintel-training-final: 1041 image pairs.
+Dataset length 1041
+Iter 0, Valid (final) EPE: 2.578256, 1px: 0.860275, 3px: 0.934748, 5px: 0.953540, 0-1 0.32, 1-10 0.90, 10-20 2.01, 20-30 4.71, 30-inf 13.27
+Apply x,y shift 200,100
+sintel-training-clean: 1041 image pairs.
+Dataset length 1041
+Iter 0, Valid (clean) EPE: 3.036389, 1px: 0.890635, 3px: 0.953364, 5px: 0.965956, 0-1 0.30, 1-10 0.79, 10-20 3.08, 20-30 4.90, 30-inf 16.44
+sintel-training-final: 1041 image pairs.
+Dataset length 1041
+Iter 0, Valid (final) EPE: 3.604744, 1px: 0.850907, 3px: 0.928887, 5px: 0.947865, 0-1 0.38, 1-10 1.08, 10-20 3.25, 20-30 6.23, 30-inf 19.20
+Apply x,y shift 220,110
+sintel-training-clean: 1041 image pairs.
+Dataset length 1041
+Iter 0, Valid (clean) EPE: 5.341807, 1px: 0.880036, 3px: 0.944640, 5px: 0.957319, 0-1 0.33, 1-10 2.05, 10-20 3.24, 20-30 3.68, 30-inf 31.45
+sintel-training-final: 1041 image pairs.
+Dataset length 1041
+Iter 0, Valid (final) EPE: 5.478682, 1px: 0.841445, 3px: 0.921653, 5px: 0.940513, 0-1 0.39, 1-10 1.29, 10-20 3.09, 20-30 9.22, 30-inf 33.47
+Apply x,y shift 240,120
+sintel-training-clean: 1041 image pairs.
+Dataset length 1041
+Iter 0, Valid (clean) EPE: 10.827123, 1px: 0.853558, 3px: 0.923687, 5px: 0.937099, 0-1 0.68, 1-10 3.75, 10-20 11.36, 20-30 13.18, 30-inf 57.88
+sintel-training-final: 1041 image pairs.
+Dataset length 1041
+Iter 0, Valid (final) EPE: 11.798695, 1px: 0.813584, 3px: 0.896752, 5px: 0.915623, 0-1 1.42, 1-10 4.34, 10-20 14.30, 20-30 33.63, 30-inf 50.19
+Apply x,y shift 260,130
+sintel-training-clean: 1041 image pairs.
+Dataset length 1041
+Iter 0, Valid (clean) EPE: 34.831810, 1px: 0.759087, 3px: 0.831749, 5px: 0.845749, 0-1 10.79, 1-10 21.42, 10-20 48.32, 20-30 90.77, 30-inf 97.01
+sintel-training-final: 1041 image pairs.
+Dataset length 1041
+Iter 0, Valid (final) EPE: 25.869200, 1px: 0.760923, 3px: 0.845295, 5px: 0.864033, 0-1 8.31, 1-10 11.18, 10-20 32.65, 20-30 93.57, 30-inf 83.62
+Apply x,y shift 280,140
+sintel-training-clean: 1041 image pairs.
+Dataset length 1041
+Iter 0, Valid (clean) EPE: 92.515266, 1px: 0.568078, 3px: 0.636594, 5px: 0.651243, 0-1 52.29, 1-10 84.00, 10-20 115.61, 20-30 178.76, 30-inf 141.90
+sintel-training-final: 1041 image pairs.
+Dataset length 1041
+Iter 0, Valid (final) EPE: 56.387184, 1px: 0.660216, 3px: 0.740514, 5px: 0.758655, 0-1 24.98, 1-10 40.04, 10-20 72.72, 20-30 163.74, 30-inf 119.91
+Apply x,y shift 300,150
+sintel-training-clean: 1041 image pairs.
+Dataset length 1041
+Iter 0, Valid (clean) EPE: 174.364792, 1px: 0.350547, 3px: 0.403867, 5px: 0.416473, 0-1 139.09, 1-10 174.57, 10-20 180.37, 20-30 248.74, 30-inf 204.15
+sintel-training-final: 1041 image pairs.
+Dataset length 1041
+Iter 0, Valid (final) EPE: 105.538780, 1px: 0.518879, 3px: 0.591733, 5px: 0.608913, 0-1 43.36, 1-10 91.96, 10-20 145.81, 20-30 224.95, 30-inf 185.12

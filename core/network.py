@@ -46,6 +46,7 @@ class CRAFT(nn.Module):
             self.inter_trans_config.in_feat_dim = 256
             self.inter_trans_config.feat_dim    = 256
             self.inter_trans_config.max_pos_size     = 160
+            # out_attn_scores_only implies no FFN nor V projection.
             self.inter_trans_config.out_attn_scores_only    = True                  # implies no FFN and no skip.
             self.inter_trans_config.attn_diag_cycles = 1000
             self.inter_trans_config.num_modes       = args.inter_num_modes          # default: 4
@@ -72,6 +73,7 @@ class CRAFT(nn.Module):
             # f2trans(x) = attn_aggregate(v(x)) + x. Here attn_aggregate and v (first_linear) both have 4 modes.
             self.f2_trans_config.has_input_skip = True
             # No FFN. f2trans simply aggregates similar features.
+            # But there's still a V projection.
             self.f2_trans_config.has_FFN = False
             # When doing feature aggregation, set attn_mask_radius > 0 to exclude points that are too far apart, to reduce noises.
             # E.g., 64 corresponds to 64*8=512 pixels in the image space.
@@ -88,13 +90,13 @@ class CRAFT(nn.Module):
             print0("F2-trans config:\n{}".format(self.f2_trans_config.__dict__))
             self.args.f2_trans_config = self.f2_trans_config
                    
-        if args.setrans:
+        if args.use_setrans:
             self.intra_trans_config = SETransConfig()
             self.intra_trans_config.update_config(args)
             self.intra_trans_config.in_feat_dim = 128
             self.intra_trans_config.feat_dim  = 128
             # has_FFN & has_input_skip are for GMAUpdateBlock.aggregator.
-            # Having FFN reduces performance. GMA has no FFN.
+            # Having FFN reduces performance. FYI, GMA also has no FFN.
             self.intra_trans_config.has_FFN = False
             self.intra_trans_config.has_input_skip = True
             self.intra_trans_config.attn_mask_radius = -1
@@ -112,7 +114,7 @@ class CRAFT(nn.Module):
         else:
             self.att = Attention(args=self.args, dim=cdim, heads=self.args.num_heads, max_pos_size=160, dim_head=cdim)
 
-        # if args.setrans, initialization of GMAUpdateBlock.aggregator needs to access self.args.intra_trans_config.
+        # if args.use_setrans, initialization of GMAUpdateBlock.aggregator needs to access self.args.intra_trans_config.
         # So GMAUpdateBlock() construction has to be done after initializing intra_trans_config.
         self.update_block = GMAUpdateBlock(self.args, hidden_dim=hdim)
  
@@ -160,11 +162,12 @@ class CRAFT(nn.Module):
         # run the feature network
         with autocast(enabled=self.args.mixed_precision):
             fmap1, fmap2 = self.fnet([image1, image2])
-            # f1trans is for ablation. Not recommended.
-            if self.args.f1trans != 'none':
+            fmap1o, fmap2o = None, None
+            if self.args.f1trans == 'sym':
                 fmap12 = torch.cat([fmap1, fmap2], dim=0)
-                fmap12  = self.f2_trans(fmap12)
-                fmap1, fmap2 = torch.split(fmap12, [fmap1.shape[0], fmap2.shape[0]])
+                fmap12t  = self.f2_trans(fmap12)
+                fmap1o, fmap2o = fmap1, fmap2
+                fmap1, fmap2 = torch.split(fmap12t, [fmap1.shape[0], fmap2.shape[0]])
             elif self.args.f2trans != 'none':
                 fmap2  = self.f2_trans(fmap2)
 
@@ -172,7 +175,9 @@ class CRAFT(nn.Module):
         # correlation matrix: 7040*7040 (55*128=7040).
         fmap1 = fmap1.float()
         fmap2 = fmap2.float()
-            
+
+        # If not craft, the correlation volume is computed in the ctor.
+        # If craft, the correlation volume is computed in corr_fn.update().
         if not self.args.craft:
             self.corr_fn = CorrBlock(fmap1, fmap2, radius=self.args.corr_radius)
 
@@ -201,10 +206,11 @@ class CRAFT(nn.Module):
         if flow_init is not None:
             coords1 = coords1 + flow_init
 
+        # If craft, the correlation volume is computed in corr_fn.update().
         if self.args.craft:
             with autocast(enabled=self.args.mixed_precision):
                 # only update() once, instead of dynamically updating coords1.
-                self.corr_fn.update(fmap1, fmap2, coords1, coords2=None)
+                self.corr_fn.update(fmap1, fmap2, fmap1o, fmap2o, coords1, coords2=None)
             
         flow_predictions = []
         for itr in range(iters):

@@ -754,6 +754,7 @@ def validate_kitti(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, max
     if use_kitti_train:
         val_dataset = datasets.KITTITrain(split='testing')
     else:    
+        # Evaluate on training data, as ground truth is only available in training data.
         val_dataset = datasets.KITTI(split='training')
 
     if xy_shift is not None:
@@ -1464,15 +1465,14 @@ if __name__ == '__main__':
     parser.add_argument('--posr', dest='pos_bias_radius', type=int, default=7, 
                         help='The radius of positional biases')
 
-    # f1trans is for ablation only, not suggested.
     parser.add_argument('--f1', dest='f1trans', type=str, 
-                        choices=['none', 'full', 'half'], default='none',
+                        choices=['none', 'sym'], default='none',
                         help='Whether to use transformer on frame 1 features. '
-                             'Half: do self-attention only on half of the channels')                        
+                             'sym: symmetrically use the same self-attention as f2trans')
     parser.add_argument('--f2', dest='f2trans', type=str, 
-                        choices=['none', 'full', 'half'], default='none',
-                        help='Whether to use transformer on frame 2 features. '
-                             'Half: do self-attention only on half of the channels')
+                        choices=['none', 'full'], default='full',
+                        help='Whether to use transformer on frame 2 features.')  
+                        
     parser.add_argument('--f2posw', dest='f2_pos_code_weight', type=float, default=0.5)
     parser.add_argument('--f2radius', dest='f2_attn_mask_radius', type=int, default=-1)
                             

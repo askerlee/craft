@@ -428,6 +428,7 @@ class CrossAttFeatTrans(SETransInitWeights):
         self.out_attn_probs_only    = config.out_attn_probs_only
         self.ablate_multihead       = config.ablate_multihead
 
+        # out_attn_scores_only / out_attn_probs_only implies no FFN nor V projection.
         if self.out_attn_scores_only or self.out_attn_probs_only:
             self.out_trans  = None
             if self.num_modes > 1:

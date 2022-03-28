@@ -1,4 +1,5 @@
 *__pycache__
 .idea
 results
-visualization/*.pth
+logs/bad/*
+logs/trial/*
