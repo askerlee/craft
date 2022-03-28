@@ -148,8 +148,9 @@ class CRAFT(nn.Module):
 
     def forward(self, image1, image2, iters=12, flow_init=None, upsample=True, test_mode=0):
         """ Estimate optical flow between pair of frames """
-        self.call_counter += 1
-
+        self.call_counter = self.call_counter + 1
+        print(self.call_counter)
+        
         # image1, image2: [1, 3, 440, 1024]
         # image1 mean: [-0.1528, -0.2493, -0.3334]
         image1 = 2 * (image1 / 255.0) - 1.0
