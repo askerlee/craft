@@ -1421,7 +1421,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--craft', dest='craft', action='store_true', 
                         help='use craft (Cross-Attentional Flow Transformer)')
-    parser.add_argument('--setrans', dest='setrans', action='store_true', 
+    parser.add_argument('--setrans', dest='use_setrans', action='store_true', 
                         help='use setrans (Squeeze-Expansion Transformer)')
     parser.add_argument('--raft', action='store_true', 
                         help='use raft')
@@ -1472,7 +1472,7 @@ if __name__ == '__main__':
     parser.add_argument('--f2', dest='f2trans', type=str, 
                         choices=['none', 'full'], default='full',
                         help='Whether to use transformer on frame 2 features.')  
-                        
+
     parser.add_argument('--f2posw', dest='f2_pos_code_weight', type=float, default=0.5)
     parser.add_argument('--f2radius', dest='f2_attn_mask_radius', type=int, default=-1)
                             
