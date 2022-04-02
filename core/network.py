@@ -93,8 +93,10 @@ class CRAFT(nn.Module):
             
             if args.f1trans != 'none':
                 if args.f1trans == 'shared':
+                    # f1_trans and f2_trans are shared.
                     self.f1_trans = self.f2_trans
                 elif args.f1trans == 'private':
+                    # f1_trans is a private instance of SelfAttVisPosTrans.
                     self.f1_trans = SelfAttVisPosTrans(self.f2_trans_config, "F1 transformer")
                 else:
                     breakpoint()
