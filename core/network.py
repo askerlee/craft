@@ -50,6 +50,7 @@ class CRAFT(nn.Module):
             self.inter_trans_config.out_attn_scores_only    = True                  # implies no FFN and no skip.
             self.inter_trans_config.attn_diag_cycles = 1000
             self.inter_trans_config.num_modes       = args.inter_num_modes          # default: 4
+            self.inter_trans_config.tie_qk_scheme   = 'shared'                      # Symmetric Q/K
             self.inter_trans_config.qk_have_bias    = args.inter_qk_have_bias       # default: True
             self.inter_trans_config.pos_code_type   = args.inter_pos_code_type      # default: bias
             self.inter_trans_config.pos_code_weight = args.inter_pos_code_weight    # default: 0.5
@@ -89,7 +90,17 @@ class CRAFT(nn.Module):
             self.f2_trans = SelfAttVisPosTrans(self.f2_trans_config, "F2 transformer")
             print0("F2-trans config:\n{}".format(self.f2_trans_config.__dict__))
             self.args.f2_trans_config = self.f2_trans_config
-                   
+            
+            if args.f1trans != 'none':
+                if args.f1trans == 'shared':
+                    self.f1_trans = self.f2_trans
+                elif args.f1trans == 'private':
+                    self.f1_trans = SelfAttVisPosTrans(self.f2_trans_config, "F1 transformer")
+                else:
+                    breakpoint()
+            else:
+                self.f1_trans = None
+
         if args.use_setrans:
             self.intra_trans_config = SETransConfig()
             self.intra_trans_config.update_config(args)
@@ -164,12 +175,11 @@ class CRAFT(nn.Module):
         with autocast(enabled=self.args.mixed_precision):
             fmap1, fmap2 = self.fnet([image1, image2])
             fmap1o, fmap2o = None, None
-            if self.args.f1trans == 'sym':
-                fmap12 = torch.cat([fmap1, fmap2], dim=0)
-                fmap12t  = self.f2_trans(fmap12)
-                fmap1o, fmap2o = fmap1, fmap2
-                fmap1, fmap2 = torch.split(fmap12t, [fmap1.shape[0], fmap2.shape[0]])
-            elif self.args.f2trans != 'none':
+            if self.args.f1trans != 'none':
+                fmap1o = fmap1
+                fmap1 = self.f1_trans(fmap1)
+            if self.args.f2trans != 'none':
+                fmap2o = fmap2
                 fmap2  = self.f2_trans(fmap2)
 
         # fmap1, fmap2: [1, 256, 55, 128]. 1/8 size of the original image.

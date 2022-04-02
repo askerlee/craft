@@ -375,9 +375,10 @@ if __name__ == '__main__':
                         help='The radius of positional biases')
 
     parser.add_argument('--f1', dest='f1trans', type=str, 
-                        choices=['none', 'sym'], default='none',
+                        choices=['none', 'shared', 'private'], default='none',
                         help='Whether to use transformer on frame 1 features. '
-                             'sym: symmetrically use the same self-attention as f2trans')
+                             'shared:  use the same self-attention as f2trans. '
+                             'private: use a private self-attention.')
     parser.add_argument('--f2', dest='f2trans', type=str, 
                         choices=['none', 'full'], default='full',
                         help='Whether to use transformer on frame 2 features.')                        

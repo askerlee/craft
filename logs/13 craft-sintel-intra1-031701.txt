@@ -1,128 +1,30 @@
-Welcome to fish, the friendly interactive shell
-Type [32mhelp[m for instructions on how to use fish
-[?2004h]0;fish /home/li_shaohua/craft[30m[m(venv) [m[32mli_shaohua[m@[33mDGXA100[m [32m~/craft[m (main)[m> [K[42Cenv [46CCUDA_VISIBLE_DEVICES=0,2 [71Cpython3 [79C train.py M
-[8C--name M
-[15Ccraft-sintel M
-[28C--stage M
-[36Csintel M
-[43C--validation M
-[56Csintel M
-[63C--output M
-[72Cresults/sintel/craft-f2full MM
-
-[20C--restore_ckpt MM
-
-[35Cresults/things/craft-f2full-intra1/craft-things.pth MMM
-
-
-[7C--num_steps MMM
-
-
-[19C120000 MMM
-
-
-[26C--lr MMM
-
-
-[31C0.000125 MMM
-
-
-[40C--image_size MMM
-
-
-[53C368 MMM
-
-
-[57C7MMM
-
-
-[58CMMM[16D[36menv[30m[m [36mCUDA_VISIBLE_DEVICES=0,2[30m[m [36mpython3[30m[m [36m[4mtrain.py[30m[m [36m--name[30m[m [36m[4mcraft-sintel[30m[m [36m--stage[30m[m [36m[4msintel[30m[m [36m--validation[30m[m [36m[4msintel[30m[m [36m--output[30m[m [36m[4mresults/sintel/craft-f2full[30m[m [36m--restore_ckpt[30m[m [36m[4mresults/things/craft-f2full-intra1/craft-things.pth[30m[m [36m--num_steps[30m[m [36m120000[30m[m [36m--lr[30m[m [36m0.000125[30m[m [36m--image_size[30m[m [36m368[30m[m [36m7MMM
-
-
-[58C[30m[m[36m68 MMM
-
-
-[61C[30m[m[36m--wdecay MMM
-
-
-[70C[30m[m[36m0.00001 MMM
-
-
-[78C[30m[m[36m--gamma MMMM
-
-
-
-[6C[30m[m[36m0.85 MMMM
-
-
-
-[11C[30m[m[36m--batch_size MMMM
-
-
-
-[24C[30m[m[36m6 MMMM
-
-
-
-[26C[30m[m[36m--val_freq MMMM
-
-
-
-[37C[30m[m[36m10000 MMMM
-
-
-
-[43C[30m[m[36m--print_freq MMMM
-
-
-
-[56C[30m[m[36m100 MMMM
-
-
-
-[60C[30m[m[36m--mixed_precision MMMM
-
-
-
-[78C[30m[m[36m--craft MMMMM
-
-
-
-
-[6C[30m[m[36m--f2 MMMMM
-
-
-
-
-[11C[30m[m[36mfull MMMMM
-
-
-
-
-[16C[30m[m[36m--setrans MMMMM
-
-
-
-
-[26C[30m[m[36m--intramodes MMMMM
-
-
-
-
-[39C[30m[m[36m1MMMMM
-
-
-
-
-[40C[30m[mMMMMM[38C [36mtrain.py[30m[m [36m--name[30m[m [36mcraft-sintel[30m[m [36m--stage[30m[m [36msintel[30m[m [36m--validation[30m[m [36msintel[30m[m [36m--output[30m[m [36mresults/sintel/craft-f2full[30m[m [36m--restore_ckpt[30m[m [36mresults/things/craft-f2full-intra1/craft-things.pth[30m[m [36m--num_steps[30m[m [36m120000[30m[m [36m--lr[30m[m [36m0.000125[30m[m [36m--image_size[30m[m [36m368[30m[m [36m768[30m[m [36m--wdecay[30m[m [36m0.00001[30m[m [36m--
-[5C[30m[m [36m0.85[30m[m [36m--batch_size[30m[m [36m6[30m[m [36m--val_freq[30m[m [36m10000[30m[m [36m--print_freq[30m[m [36m100[30m[m [36m--mixed_precision[30m[m [36m--
-[5C[30m[m [36m--f2[30m[m [36mfull[30m[m [36m--setrans[30m[m [36m--intramodes[30m[m [36m1MMMMM
-
-
-
-
-[40C[30m[m
-[30m[m[?2004l]0;env CUDA_VISIBLE_DEVICES=0,2 python3 train.py --name craft-sintel --stage sintel --validation sintel --output results/sintel/craft-f2full --restore_ckpt results/things/craft-f2full-intra1/craft-things.pth --num_steps 120000 --lr 0.000125 --image_size 368 768 --wdecay 0.00001 --gamma 0.85 --batch_size 6 --val_freq 10000 --print_freq 100 --mixed_precision --craft --f2 full --setrans --intramodes 1 /home/li_shaohua/craft[30m[mTime: 03170141
+ 1 Valid (clean) EPE: 1.011184, 1px: 0.910487, 3px: 0.962242, 5px: 0.973837, 0-1 0.11, 1-10 0.28, 10-20 0.79, 20-30 1.53, 30-inf 5.21
+ 1 Valid (final) EPE: 1.951120, 1px: 0.870132, 3px: 0.933596, 5px: 0.951970, 0-1 0.15, 1-10 0.39, 10-20 1.26, 20-30 2.52, 30-inf 11.15
+ 2 Valid (clean) EPE: 0.902039, 1px: 0.914787, 3px: 0.965235, 5px: 0.976685, 0-1 0.11, 1-10 0.26, 10-20 0.72, 20-30 1.31, 30-inf 4.60
+ 2 Valid (final) EPE: 1.621217, 1px: 0.874320, 3px: 0.937946, 5px: 0.956421, 0-1 0.14, 1-10 0.35, 10-20 1.02, 20-30 2.08, 30-inf 9.19
+ 3 Valid (clean) EPE: 0.861453, 1px: 0.918101, 3px: 0.966573, 5px: 0.977464, 0-1 0.11, 1-10 0.25, 10-20 0.67, 20-30 1.24, 30-inf 4.41
+ 3 Valid (final) EPE: 1.504720, 1px: 0.879507, 3px: 0.941055, 5px: 0.958590, 0-1 0.14, 1-10 0.33, 10-20 0.92, 20-30 1.94, 30-inf 8.50
+ 4 Valid (clean) EPE: 0.826715, 1px: 0.919648, 3px: 0.967311, 5px: 0.978194, 0-1 0.10, 1-10 0.25, 10-20 0.65, 20-30 1.22, 30-inf 4.19
+ 4 Valid (final) EPE: 1.480690, 1px: 0.880554, 3px: 0.941790, 5px: 0.959250, 0-1 0.14, 1-10 0.37, 10-20 0.96, 20-30 2.04, 30-inf 8.13
+ 5 Valid (clean) EPE: 0.755487, 1px: 0.922135, 3px: 0.968454, 5px: 0.978945, 0-1 0.10, 1-10 0.24, 10-20 0.64, 20-30 1.15, 30-inf 3.71
+ 5 Valid (final) EPE: 1.317910, 1px: 0.883349, 3px: 0.944258, 5px: 0.961203, 0-1 0.13, 1-10 0.35, 10-20 0.91, 20-30 1.83, 30-inf 7.07
+ 6 Valid (clean) EPE: 0.731565, 1px: 0.923547, 3px: 0.968804, 5px: 0.979196, 0-1 0.09, 1-10 0.24, 10-20 0.64, 20-30 1.17, 30-inf 3.54
+ 6 Valid (final) EPE: 1.242555, 1px: 0.885641, 3px: 0.946383, 5px: 0.963773, 0-1 0.12, 1-10 0.32, 10-20 0.86, 20-30 1.71, 30-inf 6.69
+ 7 Valid (clean) EPE: 0.737006, 1px: 0.925040, 3px: 0.970281, 5px: 0.980441, 0-1 0.09, 1-10 0.23, 10-20 0.59, 20-30 1.11, 30-inf 3.69
+ 7 Valid (final) EPE: 1.218214, 1px: 0.886835, 3px: 0.946093, 5px: 0.963110, 0-1 0.11, 1-10 0.31, 10-20 0.84, 20-30 1.76, 30-inf 6.55
+ 8 Valid (clean) EPE: 0.684883, 1px: 0.926130, 3px: 0.970241, 5px: 0.980508, 0-1 0.09, 1-10 0.22, 10-20 0.60, 20-30 1.08, 30-inf 3.30
+ 8 Valid (final) EPE: 1.208115, 1px: 0.888155, 3px: 0.947409, 5px: 0.964011, 0-1 0.12, 1-10 0.32, 10-20 0.86, 20-30 1.74, 30-inf 6.42
+ 9 Valid (clean) EPE: 0.671961, 1px: 0.927498, 3px: 0.971437, 5px: 0.981349, 0-1 0.09, 1-10 0.22, 10-20 0.58, 20-30 1.01, 30-inf 3.28
+ 9 Valid (final) EPE: 1.152184, 1px: 0.890136, 3px: 0.948748, 5px: 0.965448, 0-1 0.11, 1-10 0.31, 10-20 0.80, 20-30 1.63, 30-inf 6.15
+10 Valid (clean) EPE: 0.637449, 1px: 0.928733, 3px: 0.971803, 5px: 0.981598, 0-1 0.09, 1-10 0.22, 10-20 0.56, 20-30 1.01, 30-inf 3.03
+10 Valid (final) EPE: 1.117583, 1px: 0.891685, 3px: 0.950062, 5px: 0.966347, 0-1 0.11, 1-10 0.30, 10-20 0.79, 20-30 1.62, 30-inf 5.93
+11 Valid (clean) EPE: 0.625411, 1px: 0.929378, 3px: 0.972341, 5px: 0.982019, 0-1 0.08, 1-10 0.21, 10-20 0.56, 20-30 0.98, 30-inf 2.97
+11 Valid (final) EPE: 1.103904, 1px: 0.893043, 3px: 0.950816, 5px: 0.966722, 0-1 0.11, 1-10 0.30, 10-20 0.77, 20-30 1.55, 30-inf 5.88
+12 Valid (clean) EPE: 0.623508, 1px: 0.929879, 3px: 0.972575, 5px: 0.982372, 0-1 0.08, 1-10 0.21, 10-20 0.55, 20-30 0.98, 30-inf 2.97
+12 Valid (final) EPE: 1.072002, 1px: 0.893673, 3px: 0.951572, 5px: 0.967526, 0-1 0.10, 1-10 0.30, 10-20 0.78, 20-30 1.56, 30-inf 5.64
+
+env CUDA_VISIBLE_DEVICES=0,2 python3 train.py --name craft-sintel --stage sintel --validation sintel --output results/sintel/craft-f2full --restore_ckpt results/things/craft-f2full-intra1/craft-things.pth --num_steps 120000 --lr 0.000125 --image_size 368 768 --wdecay 0.00001 --gamma 0.85 --batch_size 6 --val_freq 10000 --print_freq 100 --mixed_precision --craft --f2 full --setrans --intramodes 1
+Time: 03170141
 Args:
 Namespace(add_noise=False, batch_size=6, clip=1.0, corr_radius=4, craft=True, ddp=False, dropout=0.0, epsilon=1e-08, f1trans='none', f2_attn_mask_radius=-1, f2_num_modes=4, f2_pos_code_weight=0.5, f2trans='full', freeze_bn=False, gamma=0.85, gpus=[0, 1], image_size=[368, 768], inter_num_modes=4, inter_pos_code_type='bias', inter_pos_code_weight=0.5, inter_qk_have_bias=True, intra_num_modes=1, intra_pos_code_type='bias', intra_pos_code_weight=1.0, iters=12, load_optimizer_state=False, load_scheduler_state=False, lr=0.000125, mixed_precision=True, model_name='', name='craft-sintel', nogma=False, num_heads=1, num_steps=120000, num_workers=4, output='results/sintel/craft-f2full', pos_bias_radius=7, position_and_content=False, position_only=False, print_freq=100, raft=False, restore_ckpt='results/things/craft-f2full-intra1/craft-things.pth', setrans=True, shift_aug_prob=0.0, shift_sigmas=[16, 10], stage='sintel', upsample_learn=False, val_freq=10000, validation=['sintel'], wdecay=1e-05)
 Lookup radius: 4
@@ -263,17 +165,9 @@ train.py:234: FutureWarning: Non-finite norm encountered in torch.nn.utils.clip_
 results/sintel/craft-f2full/10000_craft-sintel.pth saved
 sintel-training-clean: 1041 image pairs.
 Dataset length 1041
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 Iter 0, Valid (clean) EPE: 1.011184, 1px: 0.910487, 3px: 0.962242, 5px: 0.973837, 0-1 0.11, 1-10 0.28, 10-20 0.79, 20-30 1.53, 30-inf 5.21
 sintel-training-final: 1041 image pairs.
 Dataset length 1041
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 Iter 0, Valid (final) EPE: 1.951120, 1px: 0.870132, 3px: 0.933596, 5px: 0.951970, 0-1 0.15, 1-10 0.39, 10-20 1.26, 20-30 2.52, 30-inf 11.15
 [ 10100,  0.0001205]     0.8496,     0.9302,     0.9491,     2.3214,    15h03m
 [ 10200,  0.0001204]     0.8469,     0.9236,     0.9434,     2.5032,    14h59m
@@ -378,17 +272,9 @@ Iter 0, Valid (final) EPE: 1.951120, 1px: 0.870132, 3px: 0.933596, 5px: 0.951970
 results/sintel/craft-f2full/20000_craft-sintel.pth saved
 sintel-training-clean: 1041 image pairs.
 Dataset length 1041
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 Iter 0, Valid (clean) EPE: 0.902039, 1px: 0.914787, 3px: 0.965235, 5px: 0.976685, 0-1 0.11, 1-10 0.26, 10-20 0.72, 20-30 1.31, 30-inf 4.60
 sintel-training-final: 1041 image pairs.
 Dataset length 1041
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 Iter 0, Valid (final) EPE: 1.621217, 1px: 0.874320, 3px: 0.937946, 5px: 0.956421, 0-1 0.14, 1-10 0.35, 10-20 1.02, 20-30 2.08, 30-inf 9.19
 [ 20100,  0.0001096]     0.8415,     0.9230,     0.9449,     2.2245,    13h45m
 [ 20200,  0.0001094]     0.8333,     0.9152,     0.9371,     3.7780,    13h41m
@@ -493,17 +379,9 @@ Iter 0, Valid (final) EPE: 1.621217, 1px: 0.874320, 3px: 0.937946, 5px: 0.956421
 results/sintel/craft-f2full/30000_craft-sintel.pth saved
 sintel-training-clean: 1041 image pairs.
 Dataset length 1041
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 Iter 0, Valid (clean) EPE: 0.861453, 1px: 0.918101, 3px: 0.966573, 5px: 0.977464, 0-1 0.11, 1-10 0.25, 10-20 0.67, 20-30 1.24, 30-inf 4.41
 sintel-training-final: 1041 image pairs.
 Dataset length 1041
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 Iter 0, Valid (final) EPE: 1.504720, 1px: 0.879507, 3px: 0.941055, 5px: 0.958590, 0-1 0.14, 1-10 0.33, 10-20 0.92, 20-30 1.94, 30-inf 8.50
 [ 30100,  0.0000986]     0.8531,     0.9256,     0.9445,     2.7529,    12h20m
 [ 30200,  0.0000985]     0.8470,     0.9259,     0.9468,     2.6122,    12h17m
@@ -608,17 +486,9 @@ Iter 0, Valid (final) EPE: 1.504720, 1px: 0.879507, 3px: 0.941055, 5px: 0.958590
 results/sintel/craft-f2full/40000_craft-sintel.pth saved
 sintel-training-clean: 1041 image pairs.
 Dataset length 1041
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 Iter 0, Valid (clean) EPE: 0.826715, 1px: 0.919648, 3px: 0.967311, 5px: 0.978194, 0-1 0.10, 1-10 0.25, 10-20 0.65, 20-30 1.22, 30-inf 4.19
 sintel-training-final: 1041 image pairs.
 Dataset length 1041
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 Iter 0, Valid (final) EPE: 1.480690, 1px: 0.880554, 3px: 0.941790, 5px: 0.959250, 0-1 0.14, 1-10 0.37, 10-20 0.96, 20-30 2.04, 30-inf 8.13
 [ 40100,  0.0000876]     0.8591,     0.9287,     0.9475,     2.3251,    10h55m
 [ 40200,  0.0000875]     0.8482,     0.9262,     0.9451,     2.8681,    10h52m
@@ -709,10 +579,6 @@ Iter 0, Valid (final) EPE: 1.480690, 1px: 0.880554, 3px: 0.941790, 5px: 0.959250
 [ 48700,  0.0000782]     0.8638,     0.9352,     0.9536,     1.8331,    09h45m
 [ 48800,  0.0000781]     0.8528,     0.9241,     0.9433,     2.6696,    09h42m
 [ 48900,  0.0000780]     0.8523,     0.9277,     0.9471,     2.4153,    09h41m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 49000,  0.0000779]     0.8703,     0.9386,     0.9557,     1.7536,    09h40m
 [ 49100,  0.0000778]     0.8483,     0.9252,     0.9448,     2.1103,    09h39m
 [ 49200,  0.0000777]     0.8499,     0.9231,     0.9425,     3.1137,    09h38m
@@ -727,17 +593,9 @@ Iter 0, Valid (final) EPE: 1.480690, 1px: 0.880554, 3px: 0.941790, 5px: 0.959250
 results/sintel/craft-f2full/50000_craft-sintel.pth saved
 sintel-training-clean: 1041 image pairs.
 Dataset length 1041
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 Iter 0, Valid (clean) EPE: 0.755487, 1px: 0.922135, 3px: 0.968454, 5px: 0.978945, 0-1 0.10, 1-10 0.24, 10-20 0.64, 20-30 1.15, 30-inf 3.71
 sintel-training-final: 1041 image pairs.
 Dataset length 1041
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 Iter 0, Valid (final) EPE: 1.317910, 1px: 0.883349, 3px: 0.944258, 5px: 0.961203, 0-1 0.13, 1-10 0.35, 10-20 0.91, 20-30 1.83, 30-inf 7.07
 [ 50100,  0.0000767]     0.8461,     0.9187,     0.9399,     2.4047,    09h32m
 [ 50200,  0.0000766]     0.8628,     0.9315,     0.9489,     2.1346,    09h29m
@@ -842,17 +700,9 @@ Iter 0, Valid (final) EPE: 1.317910, 1px: 0.883349, 3px: 0.944258, 5px: 0.961203
 results/sintel/craft-f2full/60000_craft-sintel.pth saved
 sintel-training-clean: 1041 image pairs.
 Dataset length 1041
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 Iter 0, Valid (clean) EPE: 0.731565, 1px: 0.923547, 3px: 0.968804, 5px: 0.979196, 0-1 0.09, 1-10 0.24, 10-20 0.64, 20-30 1.17, 30-inf 3.54
 sintel-training-final: 1041 image pairs.
 Dataset length 1041
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 Iter 0, Valid (final) EPE: 1.242555, 1px: 0.885641, 3px: 0.946383, 5px: 0.963773, 0-1 0.12, 1-10 0.32, 10-20 0.86, 20-30 1.71, 30-inf 6.69
 [ 60100,  0.0000657]     0.8642,     0.9355,     0.9541,     1.7685,    08h10m
 [ 60200,  0.0000656]     0.8447,     0.9245,     0.9460,     2.0730,    08h08m
@@ -957,17 +807,9 @@ Iter 0, Valid (final) EPE: 1.242555, 1px: 0.885641, 3px: 0.946383, 5px: 0.963773
 results/sintel/craft-f2full/70000_craft-sintel.pth saved
 sintel-training-clean: 1041 image pairs.
 Dataset length 1041
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 Iter 0, Valid (clean) EPE: 0.737006, 1px: 0.925040, 3px: 0.970281, 5px: 0.980441, 0-1 0.09, 1-10 0.23, 10-20 0.59, 20-30 1.11, 30-inf 3.69
 sintel-training-final: 1041 image pairs.
 Dataset length 1041
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 Iter 0, Valid (final) EPE: 1.218214, 1px: 0.886835, 3px: 0.946093, 5px: 0.963110, 0-1 0.11, 1-10 0.31, 10-20 0.84, 20-30 1.76, 30-inf 6.55
 [ 70100,  0.0000548]     0.8522,     0.9255,     0.9454,     2.1729,    06h48m
 [ 70200,  0.0000547]     0.8618,     0.9359,     0.9540,     1.9673,    06h46m
@@ -1072,17 +914,9 @@ Iter 0, Valid (final) EPE: 1.218214, 1px: 0.886835, 3px: 0.946093, 5px: 0.963110
 results/sintel/craft-f2full/80000_craft-sintel.pth saved
 sintel-training-clean: 1041 image pairs.
 Dataset length 1041
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 Iter 0, Valid (clean) EPE: 0.684883, 1px: 0.926130, 3px: 0.970241, 5px: 0.980508, 0-1 0.09, 1-10 0.22, 10-20 0.60, 20-30 1.08, 30-inf 3.30
 sintel-training-final: 1041 image pairs.
 Dataset length 1041
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 Iter 0, Valid (final) EPE: 1.208115, 1px: 0.888155, 3px: 0.947409, 5px: 0.964011, 0-1 0.12, 1-10 0.32, 10-20 0.86, 20-30 1.74, 30-inf 6.42
 [ 80100,  0.0000438]     0.8764,     0.9404,     0.9588,     1.6308,    05h29m
 [ 80200,  0.0000437]     0.8599,     0.9336,     0.9520,     2.3306,    05h27m
@@ -1187,17 +1021,9 @@ Iter 0, Valid (final) EPE: 1.208115, 1px: 0.888155, 3px: 0.947409, 5px: 0.964011
 results/sintel/craft-f2full/90000_craft-sintel.pth saved
 sintel-training-clean: 1041 image pairs.
 Dataset length 1041
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 Iter 0, Valid (clean) EPE: 0.671961, 1px: 0.927498, 3px: 0.971437, 5px: 0.981349, 0-1 0.09, 1-10 0.22, 10-20 0.58, 20-30 1.01, 30-inf 3.28
 sintel-training-final: 1041 image pairs.
 Dataset length 1041
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 Iter 0, Valid (final) EPE: 1.152184, 1px: 0.890136, 3px: 0.948748, 5px: 0.965448, 0-1 0.11, 1-10 0.31, 10-20 0.80, 20-30 1.63, 30-inf 6.15
 [ 90100,  0.0000329]     0.8538,     0.9259,     0.9451,     2.2760,    04h06m
 [ 90200,  0.0000328]     0.8621,     0.9360,     0.9559,     1.5112,    04h04m
@@ -1278,10 +1104,6 @@ Iter 0, Valid (final) EPE: 1.152184, 1px: 0.890136, 3px: 0.948748, 5px: 0.965448
 [ 97700,  0.0000245]     0.8739,     0.9384,     0.9555,     1.6394,    03h02m
 [ 97800,  0.0000244]     0.8654,     0.9354,     0.9529,     1.9061,    03h01m
 [ 97900,  0.0000243]     0.8576,     0.9297,     0.9503,     2.1839,    03h00m
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 [ 98000,  0.0000242]     0.8658,     0.9354,     0.9539,     1.8472,    03h00m
 [ 98100,  0.0000241]     0.8507,     0.9242,     0.9433,     2.4441,    02h59m
 [ 98200,  0.0000240]     0.8593,     0.9303,     0.9487,     2.5006,    02h58m
@@ -1306,17 +1128,9 @@ Iter 0, Valid (final) EPE: 1.152184, 1px: 0.890136, 3px: 0.948748, 5px: 0.965448
 results/sintel/craft-f2full/100000_craft-sintel.pth saved
 sintel-training-clean: 1041 image pairs.
 Dataset length 1041
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 Iter 0, Valid (clean) EPE: 0.637449, 1px: 0.928733, 3px: 0.971803, 5px: 0.981598, 0-1 0.09, 1-10 0.22, 10-20 0.56, 20-30 1.01, 30-inf 3.03
 sintel-training-final: 1041 image pairs.
 Dataset length 1041
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 Iter 0, Valid (final) EPE: 1.117583, 1px: 0.891685, 3px: 0.950062, 5px: 0.966347, 0-1 0.11, 1-10 0.30, 10-20 0.79, 20-30 1.62, 30-inf 5.93
 [100100,  0.0000219]     0.8683,     0.9386,     0.9566,     1.5108,    02h43m
 [100200,  0.0000218]     0.8823,     0.9455,     0.9617,     1.2820,    02h41m
@@ -1421,17 +1235,9 @@ Iter 0, Valid (final) EPE: 1.117583, 1px: 0.891685, 3px: 0.950062, 5px: 0.966347
 results/sintel/craft-f2full/110000_craft-sintel.pth saved
 sintel-training-clean: 1041 image pairs.
 Dataset length 1041
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 Iter 0, Valid (clean) EPE: 0.625411, 1px: 0.929378, 3px: 0.972341, 5px: 0.982019, 0-1 0.08, 1-10 0.21, 10-20 0.56, 20-30 0.98, 30-inf 2.97
 sintel-training-final: 1041 image pairs.
 Dataset length 1041
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 Iter 0, Valid (final) EPE: 1.103904, 1px: 0.893043, 3px: 0.950816, 5px: 0.966722, 0-1 0.11, 1-10 0.30, 10-20 0.77, 20-30 1.55, 30-inf 5.88
 [110100,  0.0000110]     0.8655,     0.9352,     0.9542,     1.9239,    01h21m
 [110200,  0.0000108]     0.8808,     0.9446,     0.9610,     1.2532,    01h20m
@@ -1536,18 +1342,8 @@ Iter 0, Valid (final) EPE: 1.103904, 1px: 0.893043, 3px: 0.950816, 5px: 0.966722
 results/sintel/craft-f2full/120000_craft-sintel.pth saved
 sintel-training-clean: 1041 image pairs.
 Dataset length 1041
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 Iter 0, Valid (clean) EPE: 0.623508, 1px: 0.929879, 3px: 0.972575, 5px: 0.982372, 0-1 0.08, 1-10 0.21, 10-20 0.55, 20-30 0.98, 30-inf 2.97
 sintel-training-final: 1041 image pairs.
 Dataset length 1041
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
-[W pthreadpool-cpp.cc:90] Warning: Leaking Caffe2 thread-pool after fork. (function pthreadpool)
 Iter 0, Valid (final) EPE: 1.072002, 1px: 0.893673, 3px: 0.951572, 5px: 0.967526, 0-1 0.10, 1-10 0.30, 10-20 0.78, 20-30 1.56, 30-inf 5.64
 results/sintel/craft-f2full/craft-sintel.pth saved
-[2m⏎[m                                                                               ⏎ [K[?2004h]0;fish /home/li_shaohua/craft[30m[m(venv) [m[32mli_shaohua[m@[33mDGXA100[m [32m~/craft[m (main)[m> [K[42C
-[30m[m[30m[m[?2004l

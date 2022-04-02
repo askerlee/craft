@@ -159,6 +159,8 @@ class TransCorrBlock(CorrBlock, nn.Module):
         vispos2             = self.vispos_encoder(fmap2, coords2, return_pos_biases=False)
         batch, dim, ht, wd = fmap1.shape
 
+        # If both f1_trans and f2_trans are used, then compute the two-way correlation.
+        # Otherwise, only fmap2o is not None, and compute the single-way correlation.  
         if fmap1o is not None and fmap2o is not None:
             vispos1o = self.vispos_encoder(fmap1o, coords1, return_pos_biases=False)
             vispos2o = self.vispos_encoder(fmap2o, coords2, return_pos_biases=False)
