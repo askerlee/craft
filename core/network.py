@@ -92,6 +92,7 @@ class CRAFT(nn.Module):
             self.args.f2_trans_config = self.f2_trans_config
             
             if args.f1trans != 'none':
+                args.corr_multiplier = 2
                 if args.f1trans == 'shared':
                     # f1_trans and f2_trans are shared.
                     self.f1_trans = self.f2_trans
@@ -102,7 +103,8 @@ class CRAFT(nn.Module):
                     breakpoint()
             else:
                 self.f1_trans = None
-
+                args.corr_multiplier = 1
+                
         if args.use_setrans:
             self.intra_trans_config = SETransConfig()
             self.intra_trans_config.update_config(args)

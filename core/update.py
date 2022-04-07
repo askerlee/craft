@@ -67,7 +67,9 @@ class SepConvGRU(nn.Module):
 class BasicMotionEncoder(nn.Module):
     def __init__(self, args):
         super(BasicMotionEncoder, self).__init__()
-        cor_planes = args.corr_levels * (2*args.corr_radius + 1)**2
+        # When both f1 and f2 are applied SS-Trans, corr_multiplier = 2. 
+        # Otherwise corr_multiplier = 1.
+        cor_planes = args.corr_levels * args.corr_multiplier * (2*args.corr_radius + 1)**2
         self.convc1 = nn.Conv2d(cor_planes, 256, 1, padding=0)
         self.convc2 = nn.Conv2d(256, 192, 3, padding=1)
         self.convf1 = nn.Conv2d(2, 128, 7, padding=3)

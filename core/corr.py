@@ -13,7 +13,6 @@ except:
     # alt_cuda_corr is not compiled
     pass
 
-
 class CorrBlock:
     def __init__(self, fmap1, fmap2, num_levels=4, radius=4, do_corr_global_norm=False):
         self.num_levels = num_levels
@@ -35,7 +34,8 @@ class CorrBlock:
         # Save corr for visualization
         if 'SAVECORR' in os.environ:
             corr_savepath = os.environ['SAVECORR']
-            corr2 = corr.detach().cpu().reshape(batch, h1, w1, h2, w2)
+            # corr2: batch, dim, h1, w1, h2, w2.
+            corr2 = corr.reshape(batch, h1, w1, dim, h2, w2).permute(0, 3, 1, 2, 4, 5).detach().cpu()
             torch.save(corr2, corr_savepath)
             print(f"Corr tensor saved to {corr_savepath}")
 
@@ -167,7 +167,8 @@ class TransCorrBlock(CorrBlock, nn.Module):
             # Two-way correlation.
             corr_1t2o = self.corr(ht, wd, vispos1,  vispos2o, pos_biases)
             corr_1o2t = self.corr(ht, wd, vispos1o, vispos2,  pos_biases)
-            corr = (corr_1t2o + corr_1o2t) / 2
+            # Try concatenation instead of averaging, as averaging may lose info.
+            corr = torch.cat([corr_1t2o, corr_1o2t], dim=3)
         else:
             # single-way correlation. 
             corr = self.corr(ht, wd, vispos1, vispos2, pos_biases)
