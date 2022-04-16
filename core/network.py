@@ -263,5 +263,5 @@ class CRAFT(nn.Module):
             return coords1 - coords0, flow_up
         if test_mode == 2:
             return coords1 - coords0, flow_predictions
-            
+        # test_mode == 0.    
         return flow_predictions

@@ -1,5 +1,5 @@
 import sys
-sys.path.append('core')
+sys.path.append("core")
 
 from PIL import Image
 import argparse
@@ -267,7 +267,7 @@ def validate_chairs(model, iters=6, test_mode=1, xy_shift=None, batch_size=1):
         val_mask = val_mask.unsqueeze(0).expand(image1.shape[0], -1, -1)
 
         _, flow_pr = model(image1, image2, iters=iters, test_mode=test_mode)
-        flow = flow_pr[0].cpu()
+        flow = flow_pr.cpu()
         epe = torch.sum((flow - flow_gt)**2, dim=1)[val_mask].sqrt()
         epe_list.append(epe.view(-1).numpy())
 
@@ -1427,6 +1427,8 @@ if __name__ == '__main__':
                         help='use raft')
     parser.add_argument('--nogma', action='store_true', help='(ablation) Do not use GMA')
 
+    parser.add_argument('--sofi', action='store_true', help='use sofi')
+    
     parser.add_argument('--iters', type=int, default=12)
     parser.add_argument('--num_heads', default=1, type=int,
                         help='number of heads in attention and aggregation')
@@ -1506,6 +1508,10 @@ if __name__ == '__main__':
         model = nn.DataParallel(RAFT(args))
     elif args.nogma:
         model = nn.DataParallel(CRAFT_nogma(args))
+    elif args.sofi:
+        sys.path.append("../rift")
+        from model.RIFT import SOFI_Wrapper
+        model = nn.DataParallel(SOFI_Wrapper())
     else:    
         model = nn.DataParallel(CRAFT(args))
     
@@ -1524,7 +1530,7 @@ if __name__ == '__main__':
     else:
         # Load old checkpoint.
         msg = model.load_state_dict(checkpoint, strict=False)
-    
+
     print(f"Model checkpoint loaded from {args.model}: {msg}.")
         
     model.cuda()
