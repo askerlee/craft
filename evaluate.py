@@ -1540,6 +1540,8 @@ if __name__ == '__main__':
         # model is the flownet, and model2 is its wrapper.
         # Use the wrapper object model2 to do flow estimation.
         model = model2
+        # validate_*() refers to model.module.
+        model.module = model
 
     model.cuda()
     model.eval()
