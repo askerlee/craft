@@ -1512,8 +1512,8 @@ if __name__ == '__main__':
         sys.path.append("../rift")
         from model.IFNet import IFNet
         from model.RIFT import SOFI_Wrapper
-        model = nn.DataParallel(IFNet(esti_sofi=True))
-        model2 = SOFI_Wrapper()
+        model  = nn.DataParallel(IFNet(esti_sofi=True))
+        model2 = nn.DataParallel(SOFI_Wrapper())
         model2.pass_flownet(model)
     else:    
         model = nn.DataParallel(CRAFT(args))
@@ -1536,15 +1536,13 @@ if __name__ == '__main__':
 
     print(f"Model checkpoint loaded from {args.model}: {msg}.")
 
-    model.cuda()
-    model.eval()
-
     if args.sofi:
         # model is the flownet, and model2 is its wrapper.
         # Use the wrapper object model2 to do flow estimation.
         model = model2
-        # validate_*() refers to model.module.
-        model.module = model
+
+    model.cuda()
+    model.eval()
 
     model_name = os.path.split(args.model)[-1].split(".")[0]
     if 'craft' in model_name:
