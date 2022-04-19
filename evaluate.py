@@ -1530,8 +1530,11 @@ if __name__ == '__main__':
             #checkpoint['model']['module.f2_trans.vispos_encoder.pos_coder.biases'].zero_()
         msg = model.load_state_dict(checkpoint['model'], strict=False)
     else:
-        # Load old checkpoint.
-        msg = model.load_state_dict(checkpoint, strict=False)
+        if args.sofi:
+            msg = model.flownet.load_state_dict(checkpoint, strict=False)
+        else:
+            # Load old checkpoint.
+            msg = model.load_state_dict(checkpoint, strict=False)
 
     print(f"Model checkpoint loaded from {args.model}: {msg}.")
 
