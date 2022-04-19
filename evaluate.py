@@ -1512,9 +1512,9 @@ if __name__ == '__main__':
         sys.path.append("../rift")
         from model.IFNet import IFNet
         from model.RIFT import SOFI_Wrapper
-        model  = nn.DataParallel(IFNet(esti_sofi=True))
+        model  = IFNet(esti_sofi=True)
         model2 = nn.DataParallel(SOFI_Wrapper())
-        model2.pass_flownet(model)
+        model2.module.pass_flownet(model)
     else:    
         model = nn.DataParallel(CRAFT(args))
     
