@@ -1428,7 +1428,9 @@ if __name__ == '__main__':
     parser.add_argument('--nogma', action='store_true', help='(ablation) Do not use GMA')
 
     parser.add_argument('--sofi', action='store_true', help='use sofi')
-    
+    parser.add_argument('--sofimode', dest='sofi_mode', type=str, 
+                        choices=['LR', 'RL', 'dual'], default='dual')
+
     parser.add_argument('--iters', type=int, default=12)
     parser.add_argument('--num_heads', default=1, type=int,
                         help='number of heads in attention and aggregation')
@@ -1513,7 +1515,7 @@ if __name__ == '__main__':
         from model.IFNet import IFNet
         from model.RIFT import SOFI_Wrapper
         flownet = IFNet(esti_sofi=True)
-        model = nn.DataParallel(SOFI_Wrapper(flownet))
+        model = nn.DataParallel(SOFI_Wrapper(flownet), sofi_mode=args.sofi_mode)
     else:    
         model = nn.DataParallel(CRAFT(args))
     
