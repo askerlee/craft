@@ -1515,7 +1515,7 @@ if __name__ == '__main__':
         from model.IFNet import IFNet
         from model.RIFT import SOFI_Wrapper
         flownet = IFNet(esti_sofi=True)
-        model = nn.DataParallel(SOFI_Wrapper(flownet), sofi_mode=args.sofi_mode)
+        model = nn.DataParallel(SOFI_Wrapper(flownet, sofi_mode=args.sofi_mode))
     else:    
         model = nn.DataParallel(CRAFT(args))
     
