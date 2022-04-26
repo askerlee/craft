@@ -439,7 +439,7 @@ def validate_things(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, ma
 
 @torch.no_grad()
 def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, max_val_count=-1, 
-                    verbose=False, seg_interval=-1, dstype='both'):
+                    verbose=False, seg_interval=-1, dstype='both', use_sofi=False):
     """ Peform validation using the Sintel (train) split """
     model.eval()
     results = {}
@@ -506,7 +506,11 @@ def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, ma
             image1, flow_gt, val_mask = shift_pixels(image1, flow_gt, xy_shift)
             val_mask = val_mask.unsqueeze(0).expand(image1.shape[0], -1, -1)
             
-            padder = InputPadder(image1.shape)
+            if use_sofi:
+                padder = InputPadder(image1.shape, mod=16)
+            else:
+                padder = InputPadder(image1.shape, mod=8)
+            
             image1, image2 = padder.pad(image1, image2)
 
             _, flow_prs = model(image1, image2, iters=iters, test_mode=test_mode)
@@ -1605,7 +1609,7 @@ if __name__ == '__main__':
                                 xy_shift=xy_shift, batch_size=args.batch_size,
                                 max_val_count=args.max_val_count, 
                                 verbose=args.verbose, seg_interval=args.seg_interval,
-                                dstype=args.dstype)
+                                dstype=args.dstype, use_sofi=args.sofi)
 
             elif args.dataset == 'sintel_occ':
                 validate_sintel_occ(model.module, iters=args.iters, test_mode=args.test_mode)

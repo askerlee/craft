@@ -55,13 +55,7 @@ def random_shift(img1, img2, flow, shift_sigmas=(16,10)):
         # img2 is cropped at the bottom-right corner.       img2[:dy,  :dx]
         img2_bound = (0,   img1.shape[0] + dy, 0,   img1.shape[1] + dx)
 
-    reversed_12 = random.random() > 0.5
-
-    if reversed_12:
-        img1_bound, img2_bound = img2_bound, img1_bound
-        flow_delta = (-dx, -dy)
-    else:
-        flow_delta = (dx,  dy)
+    flow_delta = (dx,  dy)
 
     # T, B, L, R: top, bottom, left, right.
     T1, B1, L1, R1 = img1_bound

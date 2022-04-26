@@ -13,10 +13,10 @@ def print0(*print_args, **kwargs):
 
 class InputPadder:
     """ Pads images such that dimensions are divisible by 8 """
-    def __init__(self, dims, mode='sintel'):
+    def __init__(self, dims, mode='sintel', mod=8):
         self.ht, self.wd = dims[-2:]
-        pad_ht = (((self.ht // 8) + 1) * 8 - self.ht) % 8
-        pad_wd = (((self.wd // 8) + 1) * 8 - self.wd) % 8
+        pad_ht = (((self.ht // mod) + 1) * mod - self.ht) % mod
+        pad_wd = (((self.wd // mod) + 1) * mod - self.wd) % mod
         if mode == 'sintel':
             self._pad = [pad_wd//2, pad_wd - pad_wd//2, pad_ht//2, pad_ht - pad_ht//2]
         else:
