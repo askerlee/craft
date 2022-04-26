@@ -750,7 +750,7 @@ def validate_hd1k(model, iters=6, test_mode=1, seg_interval=-1):
 
 @torch.no_grad()
 def validate_kitti(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, max_val_count=-1, use_kitti_train=False,
-                   verbose=False, seg_interval=100):
+                   verbose=False, seg_interval=100, use_sofi=False):
     """ Peform validation using the KITTI-2015 (train) split """
     model.eval()
     # use_kitti_train: use the test split within the official training split. 
@@ -809,7 +809,11 @@ def validate_kitti(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, max
         valid_gt[~val_mask] = 0
 
         # (540, 960) => (544, 960), to be divided by 8.
-        padder = InputPadder(image1.shape, mode='kitti')
+        if use_sofi:
+            padder = InputPadder(image1.shape, mode='kitti', mod=16)
+        else:
+            padder = InputPadder(image1.shape, mode='kitti', mod=8)
+
         image1, image2 = padder.pad(image1, image2)
 
         _, flow_prs = model(image1, image2, iters=iters, test_mode=test_mode)
@@ -1617,12 +1621,12 @@ if __name__ == '__main__':
             elif args.dataset == 'kitti':
                 validate_kitti(model.module, iters=args.iters, test_mode=args.test_mode,
                                xy_shift=xy_shift, max_val_count=args.max_val_count, batch_size=args.batch_size,
-                               verbose=args.verbose, seg_interval=args.seg_interval)
+                               verbose=args.verbose, seg_interval=args.seg_interval, use_sofi=args.sofi)
             elif args.dataset == 'kittitrain':
                 validate_kitti(model.module, iters=args.iters, test_mode=args.test_mode, 
                                xy_shift=xy_shift, max_val_count=args.max_val_count, batch_size=args.batch_size,
                                verbose=args.verbose, seg_interval=args.seg_interval, 
-                               use_kitti_train=True)
+                               use_kitti_train=True, use_sofi=args.sofi)
 
             elif args.dataset == 'viper':
                 validate_viper(model.module, iters=args.iters, test_mode=args.test_mode, 
