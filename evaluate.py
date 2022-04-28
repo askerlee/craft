@@ -1438,6 +1438,7 @@ if __name__ == '__main__':
     parser.add_argument('--sofi', action='store_true', help='use sofi')
     parser.add_argument('--sofimode', dest='sofi_mode', type=str, 
                         choices=['LR', 'RL', 'dual'], default='dual')
+    parser.add_argument('--sofiloops', dest='sofi_loops', default=2, type=int)
 
     parser.add_argument('--iters', type=int, default=12)
     parser.add_argument('--num_heads', default=1, type=int,
@@ -1522,7 +1523,7 @@ if __name__ == '__main__':
         sys.path.append("../rift")
         from model.IFNet import IFNet
         from model.RIFT import SOFI_Wrapper
-        flownet = IFNet(esti_sofi=True)
+        flownet = IFNet(esti_sofi=True, sofi_loops=args.sofi_loops)
         model = nn.DataParallel(SOFI_Wrapper(flownet, sofi_mode=args.sofi_mode))
     else:    
         model = nn.DataParallel(CRAFT(args))
