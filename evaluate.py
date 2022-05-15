@@ -125,9 +125,9 @@ def create_sintel_submission_vis(model_name, model, warm_start=False, output_pat
                 padder = InputPadder(image1.shape, mod=8)
 
             image1, image2 = padder.pad(image1[None].to(f'cuda:{model.device_ids[0]}'), image2[None].to(f'cuda:{model.device_ids[0]}'))
-
-            flow_low, flow_pr = model.module(image1, image2, iters=32, flow_init=flow_prev, test_mode=test_mode)
-            flow = padder.unpad(flow_pr[0]).permute(1, 2, 0).cpu().numpy()
+            # flow_small: [1, 2, 55, 128], flow_prs: [1, 2, 440, 1024]
+            flow_small, flow_prs = model(image1, image2, iters=32, test_mode=test_mode)
+            flow = padder.unpad(flow_prs[0]).permute(1, 2, 0).cpu().numpy()
 
             # Visualizations
             if do_vis:
@@ -144,7 +144,7 @@ def create_sintel_submission_vis(model_name, model, warm_start=False, output_pat
                 #imageio.imwrite(f'vis_test/gt/{dstype}/{scene}/{frame_id+1}.png', image1[0].cpu().permute(1, 2, 0).numpy())
 
             if warm_start:
-                flow_prev = forward_interpolate(flow_low[0])[None].cuda()
+                flow_prev = forward_interpolate(flow_small[0])[None].cuda()
 
             output_dir = os.path.join(output_path, dstype, scene)
             output_file = os.path.join(output_dir, 'frame%04d.flo' % (frame_id+1))
@@ -517,7 +517,8 @@ def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, ma
             
             image1, image2 = padder.pad(image1, image2)
 
-            _, flow_prs = model(image1, image2, iters=iters, test_mode=test_mode)
+            # flow_small: [1, 2, 55, 128], flow_prs: [1, 2, 440, 1024]
+            flow_small, flow_prs = model(image1, image2, iters=iters, test_mode=test_mode)
             # if test_mode == 2: list of 12 tensors, each is [1, 2, H, W].
             # if test_mode == 1: a tensor of [1, 2, H, W].
             if test_mode == 1:
