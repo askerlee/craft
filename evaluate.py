@@ -105,7 +105,7 @@ def shift_flow(flow, xy_shift):
 
 @torch.no_grad()
 def create_sintel_submission_vis(model_name, model, warm_start=False, output_path='sintel_submission',
-                                 test_mode=1, do_vis=False, split='test'):
+                                 test_mode=1, do_vis=False, split='test', use_sofi=False):
     """ Create submission for the Sintel leaderboard """
     model.eval()
     for dstype in ['clean', 'final']:
@@ -119,7 +119,11 @@ def create_sintel_submission_vis(model_name, model, warm_start=False, output_pat
             if scene != scene_prev:
                 flow_prev = None
 
-            padder = InputPadder(image1.shape)
+            if use_sofi:
+                padder = InputPadder(image1.shape, mod=16)
+            else:
+                padder = InputPadder(image1.shape, mod=8)
+
             image1, image2 = padder.pad(image1[None].to(f'cuda:{model.device_ids[0]}'), image2[None].to(f'cuda:{model.device_ids[0]}'))
 
             flow_low, flow_pr = model.module(image1, image2, iters=32, flow_init=flow_prev, test_mode=test_mode)
@@ -1579,7 +1583,7 @@ if __name__ == '__main__':
 
     if args.dataset == 'sintel' and (args.submit or args.vis):
         create_sintel_submission_vis(model_name, model, warm_start=True,
-                                     do_vis=args.vis, split=args.split)
+                                     do_vis=args.vis, split=args.split, use_sofi=args.sofi)
         exit(0)
 
     if args.dataset == 'kitti' and (args.submit or args.vis):
