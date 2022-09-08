@@ -110,7 +110,7 @@ def create_sintel_submission_vis(model_name, model, warm_start=False, output_pat
     model.eval()
     for dstype in ['clean', 'final']:
         test_dataset = datasets.MpiSintel(split=split, aug_params=None, dstype=dstype, debug=True)
-        # If split==training, we manually set test_dataset to test mode.
+        # If split==training, we manually set test_dataset to test mode. Then flow_gt won't be returned.
         test_dataset.is_test = True
 
         flow_prev, scene_prev = None, None
