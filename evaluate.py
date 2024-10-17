@@ -16,7 +16,7 @@ import core.datasets as datasets
 from core.utils import flow_viz
 from core.utils import frame_utils
 
-from core.utils.utils import InputPadder, forward_interpolate
+from core.utils.utils import InputPadder, forward_interpolate, load_checkpoint
 from fvcore.nn import FlopCountAnalysis
 import torch.multiprocessing as mp
 from tqdm import tqdm
@@ -1368,22 +1368,6 @@ def gen_flow(model, model_name, iters, image1_path, image2_path, flow_path=None,
 
         print(f"Generated flow {flow_savepath}.")
 
-def load_checkpoint(args, model):
-    checkpoint = torch.load(args.model, map_location='cuda')
-    if 'model' in checkpoint:
-        state_dict = checkpoint['model']
-    else:
-        state_dict = checkpoint
-
-    # Remove 'module.' from the keys of the state_dict.
-    for key in list(state_dict.keys()):
-        if key.startswith('module.'):
-            state_dict[key[7:]] = state_dict.pop(key)
-
-    msg = model.load_state_dict(state_dict, strict=False)
-
-    print(f"Model checkpoint loaded from {args.model}: {msg}.")
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', help="restore checkpoint")
@@ -1444,7 +1428,8 @@ if __name__ == '__main__':
     """
 
     # Ablations
-    parser.add_argument('--radius', dest='corr_radius', type=int, default=4)    
+    parser.add_argument('--corr_radius', dest='corr_radius', type=int, default=4)    
+    parser.add_argument('--corr_levels', dest='corr_levels', type=int, default=4)
     parser.add_argument('--posr', dest='pos_bias_radius', type=int, default=7, 
                         help='The radius of positional biases')
 
@@ -1495,7 +1480,7 @@ if __name__ == '__main__':
     else:    
         model = CRAFT(args)
     
-    load_checkpoint(args, model)
+    load_checkpoint(model, args.model)
 
     model.cuda()
     model.eval()

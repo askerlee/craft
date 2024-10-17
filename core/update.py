@@ -64,9 +64,9 @@ class SepConvGRU(nn.Module):
 
 
 class BasicMotionEncoder(nn.Module):
-    def __init__(self, args):
+    def __init__(self, config):
         super(BasicMotionEncoder, self).__init__()
-        cor_planes = args.corr_levels * (2*args.corr_radius + 1)**2
+        cor_planes = config.corr_levels * (2*config.corr_radius + 1)**2
         self.convc1 = nn.Conv2d(cor_planes, 256, 1, padding=0)
         self.convc2 = nn.Conv2d(256, 192, 3, padding=1)
         self.convf1 = nn.Conv2d(2, 128, 7, padding=3)
@@ -85,10 +85,10 @@ class BasicMotionEncoder(nn.Module):
 
 
 class BasicUpdateBlock(nn.Module):
-    def __init__(self, args, hidden_dim=128, input_dim=128):
+    def __init__(self, config, hidden_dim=128, input_dim=128):
         super(BasicUpdateBlock, self).__init__()
-        self.args = args
-        self.encoder = BasicMotionEncoder(args)
+        self.config = config
+        self.encoder = BasicMotionEncoder(config)
         self.gru = SepConvGRU(hidden_dim=hidden_dim, input_dim=128+hidden_dim)
         self.flow_head = FlowHead(input_dim=hidden_dim, hidden_dim=256)
 
@@ -111,10 +111,10 @@ class BasicUpdateBlock(nn.Module):
 
 
 class GMAUpdateBlock(nn.Module):
-    def __init__(self, args, hidden_dim=128):
+    def __init__(self, config, hidden_dim=128):
         super().__init__()
-        self.args = args
-        self.encoder = BasicMotionEncoder(args)
+        self.config = config
+        self.encoder = BasicMotionEncoder(config)
         self.gru = SepConvGRU(hidden_dim=hidden_dim, input_dim=128+hidden_dim+hidden_dim)
         self.flow_head = FlowHead(hidden_dim, hidden_dim=256)
 
@@ -123,13 +123,13 @@ class GMAUpdateBlock(nn.Module):
             nn.ReLU(inplace=True),
             nn.Conv2d(256, 64*9, 1, padding=0))
 
-        self.setrans = args.setrans
+        self.setrans = config.setrans
         if self.setrans:
-            self.intra_trans_config = args.intra_trans_config
+            self.intra_trans_config = config.intra_trans_config
             self.aggregator = ExpandedFeatTrans(self.intra_trans_config, 'Motion Aggregator')
         else:
             # Aggregate is attention with a (learnable-weighted) skip connection, without FFN.
-            self.aggregator = Aggregate(args=self.args, dim=128, dim_head=128, heads=self.args.num_heads)
+            self.aggregator = Aggregate(config=self.config, dim=128, dim_head=128, heads=self.config.num_heads)
 
     # net_feat, inp_feat: [1, 128, 55, 128]. split from cnet_feat.
     def forward(self, net_feat, inp_feat, corr, flow, attention):

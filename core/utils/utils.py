@@ -11,6 +11,22 @@ def print0(*print_args, **kwargs):
     if local_rank == 0:
         print(*print_args, **kwargs)
 
+def load_checkpoint(model, ckpt_path):
+    checkpoint = torch.load(ckpt_path, map_location='cuda')
+    if 'model' in checkpoint:
+        state_dict = checkpoint['model']
+    else:
+        state_dict = checkpoint
+
+    # Remove 'module.' from the keys of the state_dict.
+    for key in list(state_dict.keys()):
+        if key.startswith('module.'):
+            state_dict[key[7:]] = state_dict.pop(key)
+
+    msg = model.load_state_dict(state_dict, strict=False)
+
+    print(f"Model checkpoint loaded from {ckpt_path}: {msg}.")
+
 class InputPadder:
     """ Pads images such that dimensions are divisible by 8 """
     def __init__(self, dims, mode='sintel'):

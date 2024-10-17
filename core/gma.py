@@ -54,14 +54,14 @@ class Attention(nn.Module):
     def __init__(
         self,
         *,
-        args,
+        config,
         dim,
         max_pos_size = 100,
         heads = 4,
         dim_head = 128,
     ):
         super().__init__()
-        self.args = args
+        self.config = config
         self.heads = heads
         self.scale = dim_head ** -0.5
         inner_dim = heads * dim_head
@@ -69,7 +69,7 @@ class Attention(nn.Module):
         self.to_qk = nn.Conv2d(dim, inner_dim * 2, 1, bias=False)
 
         self.pos_emb = RelPosEmb(max_pos_size, dim_head)
-        self.pos_embed_weight               = 1.0
+        self.pos_embed_weight = 1.0
         
     def forward(self, fmap):
         heads, b, c, h, w = self.heads, *fmap.shape
@@ -82,10 +82,10 @@ class Attention(nn.Module):
         # Why not scale k?
         q = self.scale * q
         
-        if self.args.position_only:
+        if self.config.position_only:
             sim = self.pos_emb(q)
 
-        elif self.args.position_and_content:
+        elif self.config.position_and_content:
             # [..., 46, 62, ...] . [..., 46, 62, ...] => [..., 46, 62, 46, 62]
             sim_content = einsum('b h x y d, b h u v d -> b h x y u v', q, k)
             sim_pos = self.pos_emb(q)
@@ -105,13 +105,13 @@ class Attention(nn.Module):
 class Aggregate(nn.Module):
     def __init__(
         self,
-        args,
+        config,
         dim,
         heads = 4,
         dim_head = 128,
     ):
         super().__init__()
-        self.args = args
+        self.config = config
         self.heads = heads
         self.scale = dim_head ** -0.5
         inner_dim = heads * dim_head

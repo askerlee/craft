@@ -113,28 +113,28 @@ class SETransConfig(object):
         self.out_attn_scores_only   = False
         self.attn_mask_radius = -1
         
-    def set_backbone_type(self, args):
-        if self.try_assign(args, 'backbone_type'):
+    def set_backbone_type(self, config):
+        if self.try_assign(config, 'backbone_type'):
             self.bb_stage_dims  = bb2_stage_dims[self.backbone_type]
             self.in_feat_dim    = self.bb_stage_dims[-1]
     
     # return True if any parameter is successfully set, and False if none is set.
-    def try_assign(self, args, *keys):
+    def try_assign(self, config, *keys):
         is_successful = False
         
         for key in keys:
-            if key in args:
-                if isinstance(args, dict):
-                    self.__dict__[key] = args[key]
+            if key in config:
+                if isinstance(config, dict):
+                    self.__dict__[key] = config[key]
                 else:
-                    self.__dict__[key] = args.__dict__[key]
+                    self.__dict__[key] = config.__dict__[key]
                 is_successful = True
                 
         return is_successful
 
-    def update_config(self, args):
-        self.set_backbone_type(args)
-        self.try_assign(args, 'use_pretrained', 'apply_attn_stage', 'num_modes', 
+    def update_config(self, config):
+        self.set_backbone_type(config)
+        self.try_assign(config, 'use_pretrained', 'apply_attn_stage', 'num_modes', 
                               'trans_output_type', 'base_initializer_range', 
                               'pos_code_type', 'ablate_multihead', 'attn_clip', 'attn_diag_cycles', 
                               'tie_qk_scheme', 'feattrans_lin1_idbias_scale', 'qk_have_bias', 'v_has_bias',
@@ -142,15 +142,15 @@ class SETransConfig(object):
                               'out_attn_probs_only', 'out_attn_scores_only', 
                               'in_feat_dim', 'pos_bias_radius')
         
-        if self.try_assign(args, 'out_feat_dim'):
+        if self.try_assign(config, 'out_feat_dim'):
             self.feat_dim   = self.out_feat_dim
         else:
             self.feat_dim   = self.in_feat_dim
             
-        if 'dropout_prob' in args and args.dropout_prob >= 0:
-            self.hidden_dropout_prob          = args.dropout_prob
-            self.attention_probs_dropout_prob = args.dropout_prob
-            print0("Dropout prob: %.2f" %(args.dropout_prob))
+        if 'dropout_prob' in config and config.dropout_prob >= 0:
+            self.hidden_dropout_prob          = config.dropout_prob
+            self.attention_probs_dropout_prob = config.dropout_prob
+            print0("Dropout prob: %.2f" %(config.dropout_prob))
             
 CONFIG = SETransConfig()
 
@@ -158,7 +158,7 @@ CONFIG = SETransConfig()
 # =================================== SETrans Initialization ====================================#
 class SETransInitWeights(nn.Module):
     """ An abstract class to handle weights initialization """
-    def __init__(self, config, *inputs, **kwargs):
+    def __init__(self, config, *inputs, **kwconfig):
         super(SETransInitWeights, self).__init__()
         self.config = config
 

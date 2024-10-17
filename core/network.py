@@ -10,49 +10,57 @@ from .gma import Attention
 from .setrans import SETransConfig, SelfAttVisPosTrans
 
 class CRAFT(nn.Module):
-    def __init__(self, args):
+    def __init__(self, config):
         super().__init__()
-        self.args = args
+        self.config = config
 
-        self.hidden_dim = hdim = 128
-        self.context_dim = cdim = 128
-        args.corr_levels = 4
+        self.hidden_dim = hdim = self.context_dim = cdim = 128
 
-        if 'dropout' not in self.args:
-            self.args.dropout = 0
+        # corr_levels determines the shape of the model params. 
+        # So it cannot be changed arbitrarily.
+        if not hasattr(self.config, 'corr_levels'):
+            self.config.corr_levels = 4
+        if not hasattr(self.config, 'corr_radius'):
+            self.config.corr_radius = 4
+        if not hasattr(self.config, 'dropout'):
+            self.config.dropout = 0
+        if not hasattr(self.config, 'mixed_precision'):
+            self.config.mixed_precision = True
+        if not hasattr(self.config, 'num_heads'):
+            self.config.num_heads = 1
 
-        # default CRAFT corr_radius: 4
-        if args.corr_radius == -1:
-            args.corr_radius = 4
-        print0("Lookup radius: %d" %args.corr_radius)
+        if 'dropout' not in self.config:
+            self.config.dropout = 0
+
+        print0(f"corr_levels: {self.config.corr_levels}, corr_radius: {self.config.corr_radius}")
                 
-        if args.craft:
+        if config.craft:
             self.inter_trans_config = SETransConfig()
-            self.inter_trans_config.update_config(args)
+            self.inter_trans_config.update_config(config)
             self.inter_trans_config.in_feat_dim = 256
             self.inter_trans_config.feat_dim    = 256
             self.inter_trans_config.max_pos_size     = 160
             self.inter_trans_config.out_attn_scores_only    = True                  # implies no FFN and no skip.
             self.inter_trans_config.attn_diag_cycles = 1000
-            self.inter_trans_config.num_modes       = args.inter_num_modes          # default: 4
-            self.inter_trans_config.qk_have_bias    = args.inter_qk_have_bias       # default: True
-            self.inter_trans_config.pos_code_type   = args.inter_pos_code_type      # default: bias
-            self.inter_trans_config.pos_code_weight = args.inter_pos_code_weight    # default: 0.5
-            self.args.inter_trans_config = self.inter_trans_config
+            self.inter_trans_config.num_modes       = config.inter_num_modes          # default: 4
+            self.inter_trans_config.qk_have_bias    = config.inter_qk_have_bias       # default: True
+            self.inter_trans_config.pos_code_type   = config.inter_pos_code_type      # default: bias
+            self.inter_trans_config.pos_code_weight = config.inter_pos_code_weight    # default: 0.5
+            self.config.inter_trans_config = self.inter_trans_config
             print0("Inter-frame trans config:\n{}".format(self.inter_trans_config.__dict__))
             
-            self.corr_fn = TransCorrBlock(self.inter_trans_config, radius=self.args.corr_radius,
+            self.corr_fn = TransCorrBlock(self.inter_trans_config, radius=self.config.corr_radius,
                                           do_corr_global_norm=True)
         
         # feature network, context network, and update block
-        self.fnet = BasicEncoder(output_dim=256,         norm_fn='instance', dropout=args.dropout)
-        self.cnet = BasicEncoder(output_dim=hdim + cdim, norm_fn='batch',    dropout=args.dropout)
+        self.fnet = BasicEncoder(output_dim=256,         norm_fn='instance', dropout=config.dropout)
+        self.cnet = BasicEncoder(output_dim=hdim + cdim, norm_fn='batch',    dropout=config.dropout)
 
-        if args.f2trans != 'none':
+        if config.f2trans != 'none':
             # f2_trans has the same configuration as GMA att, 
             # except that the feature dimension is doubled, and not out_attn_probs_only.
             self.f2_trans_config = SETransConfig()
-            self.f2_trans_config.update_config(args)
+            self.f2_trans_config.update_config(config)
             self.f2_trans_config.in_feat_dim = 256
             self.f2_trans_config.feat_dim  = 256
             # f2trans(x) = attn_aggregate(v(x)) + x. Here attn_aggregate and v (first_linear) both have 4 modes.
@@ -61,22 +69,22 @@ class CRAFT(nn.Module):
             self.f2_trans_config.has_FFN = False
             # When doing feature aggregation, set attn_mask_radius > 0 to exclude points that are too far apart, to reduce noises.
             # E.g., 64 corresponds to 64*8=512 pixels in the image space.
-            self.f2_trans_config.attn_mask_radius = args.f2_attn_mask_radius
+            self.f2_trans_config.attn_mask_radius = config.f2_attn_mask_radius
             # Not tying QK performs slightly better.
             self.f2_trans_config.tie_qk_scheme = None
             self.f2_trans_config.qk_have_bias  = False
             self.f2_trans_config.out_attn_probs_only    = False
             self.f2_trans_config.attn_diag_cycles   = 1000
-            self.f2_trans_config.num_modes          = args.f2_num_modes             # default: 4
-            self.f2_trans_config.pos_code_type      = args.intra_pos_code_type      # default: bias
-            self.f2_trans_config.pos_code_weight    = args.f2_pos_code_weight       # default: 0.5
+            self.f2_trans_config.num_modes          = config.f2_num_modes             # default: 4
+            self.f2_trans_config.pos_code_type      = config.intra_pos_code_type      # default: bias
+            self.f2_trans_config.pos_code_weight    = config.f2_pos_code_weight       # default: 0.5
             self.f2_trans = SelfAttVisPosTrans(self.f2_trans_config, "F2 transformer")
             print0("F2-trans config:\n{}".format(self.f2_trans_config.__dict__))
-            self.args.f2_trans_config = self.f2_trans_config
+            self.config.f2_trans_config = self.f2_trans_config
                    
-        if args.setrans:
+        if config.setrans:
             self.intra_trans_config = SETransConfig()
-            self.intra_trans_config.update_config(args)
+            self.intra_trans_config.update_config(config)
             self.intra_trans_config.in_feat_dim = 128
             self.intra_trans_config.feat_dim  = 128
             # has_FFN & has_input_skip are for GMAUpdateBlock.aggregator.
@@ -89,18 +97,18 @@ class CRAFT(nn.Module):
             self.intra_trans_config.qk_have_bias  = False
             self.intra_trans_config.out_attn_probs_only    = True
             self.intra_trans_config.attn_diag_cycles = 1000
-            self.intra_trans_config.num_modes           = args.intra_num_modes          # default: 4
-            self.intra_trans_config.pos_code_type       = args.intra_pos_code_type      # default: bias
-            self.intra_trans_config.pos_code_weight     = args.intra_pos_code_weight    # default: 1
+            self.intra_trans_config.num_modes           = config.intra_num_modes          # default: 4
+            self.intra_trans_config.pos_code_type       = config.intra_pos_code_type      # default: bias
+            self.intra_trans_config.pos_code_weight     = config.intra_pos_code_weight    # default: 1
             self.att = SelfAttVisPosTrans(self.intra_trans_config, "Intra-frame attention")
-            self.args.intra_trans_config = self.intra_trans_config
+            self.config.intra_trans_config = self.intra_trans_config
             print0("Intra-frame trans config:\n{}".format(self.intra_trans_config.__dict__))
         else:
-            self.att = Attention(args=self.args, dim=cdim, heads=self.args.num_heads, max_pos_size=160, dim_head=cdim)
+            self.att = Attention(config=self.config, dim=cdim, heads=self.config.num_heads, max_pos_size=160, dim_head=cdim)
 
-        # if args.setrans, initialization of GMAUpdateBlock.aggregator needs to access self.args.intra_trans_config.
+        # if config.setrans, initialization of GMAUpdateBlock.aggregator needs to access self.config.intra_trans_config.
         # So GMAUpdateBlock() construction has to be done after initializing intra_trans_config.
-        self.update_block = GMAUpdateBlock(self.args, hidden_dim=hdim)
+        self.update_block = GMAUpdateBlock(self.config, hidden_dim=hdim)
  
         test_rand_proj = False
         test_zero_proj = True
@@ -153,14 +161,14 @@ class CRAFT(nn.Module):
         cdim = self.context_dim
 
         # run the feature network
-        with torch.amp.autocast('cuda', enabled=self.args.mixed_precision):
+        with torch.amp.autocast('cuda', enabled=self.config.mixed_precision):
             fmap1, fmap2 = self.fnet([image1, image2])
             # f1trans is for ablation. Not recommended.
-            if self.args.f1trans != 'none':
+            if self.config.f1trans != 'none':
                 fmap12 = torch.cat([fmap1, fmap2], dim=0)
-                fmap12  = self.f2_trans(fmap12)
+                fmap12 = self.f2_trans(fmap12)
                 fmap1, fmap2 = torch.split(fmap12, [fmap1.shape[0], fmap2.shape[0]])
-            elif self.args.f2trans != 'none':
+            elif self.config.f2trans != 'none':
                 fmap2  = self.f2_trans(fmap2)
 
         # fmap1, fmap2: [1, 256, 55, 128]. 1/8 size of the original image.
@@ -168,10 +176,10 @@ class CRAFT(nn.Module):
         fmap1 = fmap1.float()
         fmap2 = fmap2.float()
             
-        if not self.args.craft:
-            self.corr_fn = CorrBlock(fmap1, fmap2, radius=self.args.corr_radius)
+        if not self.config.craft:
+            self.corr_fn = CorrBlock(fmap1, fmap2, num_levels=self.config.corr_levels, radius=self.config.corr_radius)
 
-        with torch.amp.autocast('cuda', enabled=self.args.mixed_precision):
+        with torch.amp.autocast('cuda', enabled=self.config.mixed_precision):
             # run the context network
             # cnet: context network to extract features from image1 only.
             # cnet arch is the same as fnet. 
@@ -200,8 +208,8 @@ class CRAFT(nn.Module):
         if flow_init is not None:
             coords1 = coords1 + flow_init
 
-        if self.args.craft:
-            with torch.amp.autocast('cuda', enabled=self.args.mixed_precision):
+        if self.config.craft:
+            with torch.amp.autocast('cuda', enabled=self.config.mixed_precision):
                 # self.corr_fn.update() computes a 4-level correlation pyramid.
                 # The final correlation volume is a concatenation of the 4-level pyramid.
                 # only update() once, instead of dynamically updating coords1.
@@ -215,7 +223,7 @@ class CRAFT(nn.Module):
             corr = self.corr_fn(coords1)  # index correlation volume
             flow = coords1 - coords0
             
-            with torch.amp.autocast('cuda', enabled=self.args.mixed_precision):
+            with torch.amp.autocast('cuda', enabled=self.config.mixed_precision):
                 # net_feat: hidden features of SepConvGRU. 
                 # inp_feat: input  features to SepConvGRU.
                 # up_mask is scaled to 0.25 of original values.

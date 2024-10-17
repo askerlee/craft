@@ -9,21 +9,21 @@ from .utils.utils import coords_grid, upflow8
 
 
 class RAFT(nn.Module):
-    def __init__(self, args):
+    def __init__(self, config):
         super(RAFT, self).__init__()
-        self.args = args
+        self.config = config
         self.hidden_dim = hdim = 128
         self.context_dim = cdim = 128
-        args.corr_levels = 4
+        config.corr_levels = 4
 
-        print("RAFT lookup radius: %d" %args.corr_radius)
-        if 'dropout' not in self.args:
-            self.args.dropout = 0
+        print("RAFT lookup radius: %d" %config.corr_radius)
+        if 'dropout' not in self.config:
+            self.config.dropout = 0
 
         # feature network, context network, and update block
-        self.fnet = BasicEncoder(output_dim=256, norm_fn='instance', dropout=args.dropout)        
-        self.cnet = BasicEncoder(output_dim=hdim+cdim, norm_fn='batch', dropout=args.dropout)
-        self.update_block = BasicUpdateBlock(self.args, hidden_dim=hdim)
+        self.fnet = BasicEncoder(output_dim=256, norm_fn='instance', dropout=config.dropout)        
+        self.cnet = BasicEncoder(output_dim=hdim+cdim, norm_fn='batch', dropout=config.dropout)
+        self.update_block = BasicUpdateBlock(self.config, hidden_dim=hdim)
 
         test_rand_proj = False
         test_zero_proj = True
@@ -77,16 +77,16 @@ class RAFT(nn.Module):
         cdim = self.context_dim
 
         # run the feature network
-        with torch.amp.autocast('cuda', enabled=self.args.mixed_precision):
+        with torch.amp.autocast('cuda', enabled=self.config.mixed_precision):
             fmap1, fmap2 = self.fnet([image1, image2])        
         
         # fmap1, fmap2: [1, 256, 55, 128]. 1/8 size of the original image.
         fmap1 = fmap1.float()
         fmap2 = fmap2.float()
-        self.corr_fn = CorrBlock(fmap1, fmap2, radius=self.args.corr_radius)
+        self.corr_fn = CorrBlock(fmap1, fmap2, radius=self.config.corr_radius)
 
         # run the context network
-        with torch.amp.autocast('cuda', enabled=self.args.mixed_precision):
+        with torch.amp.autocast('cuda', enabled=self.config.mixed_precision):
             # cnet: context network to extract features from image1 only.
             # cnet arch is the same as fnet. 
             # fnet extracts features specifically for correlation computation.
@@ -113,7 +113,7 @@ class RAFT(nn.Module):
 
             flow = coords1 - coords0
                 
-            with torch.amp.autocast('cuda', enabled=self.args.mixed_precision):
+            with torch.amp.autocast('cuda', enabled=self.config.mixed_precision):
                 # net_feat: hidden features of ConvGRU. 
                 # inp_feat: input  features to ConvGRU.
                 # up_mask is scaled to 0.25 of original values.
