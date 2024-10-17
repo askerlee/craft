@@ -1,17 +1,13 @@
 import os
 import math
-import numpy as np
 import copy
-import random
 
 import torch
 import torch.nn as nn
 from torch.nn import Parameter
 import torch.nn.functional as F
-from torch import einsum
-from einops import rearrange
-from setrans_ablation import RandPosEmbedder, SinuPosEmbedder, ZeroEmbedder, MultiHeadFeatTrans
-from utils.utils import print0
+from .setrans_ablation import RandPosEmbedder, SinuPosEmbedder, ZeroEmbedder, MultiHeadFeatTrans
+from .utils.utils import print0
 torch.set_printoptions(sci_mode=False)
 
 bb2_stage_dims = {  'raft-small':   [32, 32,  64,  96,   128],   

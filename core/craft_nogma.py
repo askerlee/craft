@@ -1,14 +1,13 @@
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from update import BasicUpdateBlock
-from extractor import BasicEncoder
-from corr import TransCorrBlock
-from utils.utils import coords_grid, upflow8
-from setrans import SETransConfig, SelfAttVisPosTrans
-from utils.utils import print0
+from .update import BasicUpdateBlock
+from .extractor import BasicEncoder
+from .corr import TransCorrBlock
+from .utils.utils import coords_grid, upflow8
+from .setrans import SETransConfig, SelfAttVisPosTrans
+from .utils.utils import print0
 
 try:
     autocast = torch.cuda.amp.autocast

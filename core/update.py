@@ -1,9 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from gma import Aggregate
-from setrans import ExpandedFeatTrans
-import copy
+from .gma import Aggregate
+from .setrans import ExpandedFeatTrans
 
 class FlowHead(nn.Module):
     def __init__(self, input_dim=128, hidden_dim=256):
@@ -132,7 +131,8 @@ class GMAUpdateBlock(nn.Module):
             # Aggregate is attention with a (learnable-weighted) skip connection, without FFN.
             self.aggregator = Aggregate(args=self.args, dim=128, dim_head=128, heads=self.args.num_heads)
 
-    def forward(self, net, inp, corr, flow, attention):
+    # net_feat, inp_feat: [1, 128, 55, 128]. split from cnet_feat.
+    def forward(self, net_feat, inp_feat, corr, flow, attention):
         # encoder: BasicMotionEncoder
         # corr: [3, 676, 50, 90]
         motion_features = self.encoder(flow, corr)
@@ -147,17 +147,17 @@ class GMAUpdateBlock(nn.Module):
         else:
             # attention: [8, 1, 2852, 2852]. motion_features: [8, 128, 46, 62].
             motion_features_global = self.aggregator(attention, motion_features)
-            
-        inp_cat = torch.cat([inp, motion_features, motion_features_global], dim=1)
+        
+        inp_cat = torch.cat([inp_feat, motion_features, motion_features_global], dim=1)
 
         # Attentional update
-        net = self.gru(net, inp_cat)
+        net_feat = self.gru(net_feat, inp_cat)
 
-        delta_flow = self.flow_head(net)
+        delta_flow = self.flow_head(net_feat)
 
         # scale mask to balence gradients
-        mask = .25 * self.mask(net)
-        return net, mask, delta_flow
+        mask = .25 * self.mask(net_feat)
+        return net_feat, mask, delta_flow
 
 
 

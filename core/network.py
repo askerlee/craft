@@ -2,26 +2,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from update import GMAUpdateBlock
-from extractor import BasicEncoder
-from corr import CorrBlock, TransCorrBlock
-from utils.utils import coords_grid, upflow8, print0
-from gma import Attention
-from setrans import SETransConfig, SelfAttVisPosTrans
-
-try:
-    autocast = torch.cuda.amp.autocast
-except:
-    # dummy autocast for PyTorch < 1.6
-    class autocast:
-        def __init__(self, enabled):
-            pass
-
-        def __enter__(self):
-            pass
-
-        def __exit__(self, *args):
-            pass
+from .update import GMAUpdateBlock
+from .extractor import BasicEncoder
+from .corr import CorrBlock, TransCorrBlock
+from .utils.utils import coords_grid, upflow8, print0
+from .gma import Attention
+from .setrans import SETransConfig, SelfAttVisPosTrans
 
 class CRAFT(nn.Module):
     def __init__(self, args):
@@ -116,6 +102,15 @@ class CRAFT(nn.Module):
         # So GMAUpdateBlock() construction has to be done after initializing intra_trans_config.
         self.update_block = GMAUpdateBlock(self.args, hidden_dim=hdim)
  
+        test_rand_proj = False
+        test_zero_proj = True
+        if test_rand_proj:
+            self.rand_proj = nn.Conv2d(128, 128, 1, padding=0)
+        elif test_zero_proj:
+            self.rand_proj = torch.zeros_like
+        else:
+            self.rand_proj = lambda x: x
+
     def freeze_bn(self):
         for m in self.modules():
             if isinstance(m, nn.BatchNorm2d):
@@ -158,7 +153,7 @@ class CRAFT(nn.Module):
         cdim = self.context_dim
 
         # run the feature network
-        with autocast(enabled=self.args.mixed_precision):
+        with torch.amp.autocast('cuda', enabled=self.args.mixed_precision):
             fmap1, fmap2 = self.fnet([image1, image2])
             # f1trans is for ablation. Not recommended.
             if self.args.f1trans != 'none':
@@ -176,7 +171,7 @@ class CRAFT(nn.Module):
         if not self.args.craft:
             self.corr_fn = CorrBlock(fmap1, fmap2, radius=self.args.corr_radius)
 
-        with autocast(enabled=self.args.mixed_precision):
+        with torch.amp.autocast('cuda', enabled=self.args.mixed_precision):
             # run the context network
             # cnet: context network to extract features from image1 only.
             # cnet arch is the same as fnet. 
@@ -184,13 +179,17 @@ class CRAFT(nn.Module):
             # cnet_feat: extracted features focus on semantics of image1? 
             # (semantics of each pixel, used to guess its motion?)
             cnet_feat = self.cnet(image1)
-            
+
             # Both fnet and cnet are BasicEncoder. output is from conv (no activation function yet).
             # net_feat, inp_feat: [1, 128, 55, 128]
             net_feat, inp_feat = torch.split(cnet_feat, [hdim, cdim], dim=1)
             net_feat = torch.tanh(net_feat)
             inp_feat = torch.relu(inp_feat)
+            net_feat = self.rand_proj(net_feat)
+            inp_feat = self.rand_proj(inp_feat)
+
             # attention, att_c, att_p = self.att(inp_feat)
+            # self.att: Intra-frame attention prob matrix. We've set out_attn_probs_only=True.
             attention = self.att(inp_feat)
                 
         # coords0 is always fixed as original coords.
@@ -202,7 +201,9 @@ class CRAFT(nn.Module):
             coords1 = coords1 + flow_init
 
         if self.args.craft:
-            with autocast(enabled=self.args.mixed_precision):
+            with torch.amp.autocast('cuda', enabled=self.args.mixed_precision):
+                # self.corr_fn.update() computes a 4-level correlation pyramid.
+                # The final correlation volume is a concatenation of the 4-level pyramid.
                 # only update() once, instead of dynamically updating coords1.
                 self.corr_fn.update(fmap1, fmap2, coords1, coords2=None)
             
@@ -214,12 +215,14 @@ class CRAFT(nn.Module):
             corr = self.corr_fn(coords1)  # index correlation volume
             flow = coords1 - coords0
             
-            with autocast(enabled=self.args.mixed_precision):
-                # net_feat: hidden features of ConvGRU. 
-                # inp_feat: input  features to ConvGRU.
+            with torch.amp.autocast('cuda', enabled=self.args.mixed_precision):
+                # net_feat: hidden features of SepConvGRU. 
+                # inp_feat: input  features to SepConvGRU.
                 # up_mask is scaled to 0.25 of original values.
                 # update_block: GMAUpdateBlock
                 # In the first few iterations, delta_flow.abs().max() could be 1.3 or 0.8. Later it becomes 0.2~0.3.
+                # attention is the intra-frame attention matrix of inp_feat. 
+                # It's only used to aggregate motion_features and form motion_features_global.
                 net_feat, up_mask, delta_flow = self.update_block(net_feat, inp_feat, corr, flow, attention)
 
             # F(t+1) = F(t) + \Delta(t)

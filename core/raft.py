@@ -1,24 +1,11 @@
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from update import BasicUpdateBlock
-from extractor import BasicEncoder
-from corr import CorrBlock
-from utils.utils import coords_grid, upflow8
-
-try:
-    autocast = torch.cuda.amp.autocast
-except:
-    # dummy autocast for PyTorch < 1.6
-    class autocast:
-        def __init__(self, enabled):
-            pass
-        def __enter__(self):
-            pass
-        def __exit__(self, *args):
-            pass
+from .update import BasicUpdateBlock
+from .extractor import BasicEncoder
+from .corr import CorrBlock
+from .utils.utils import coords_grid, upflow8
 
 
 class RAFT(nn.Module):
@@ -37,6 +24,15 @@ class RAFT(nn.Module):
         self.fnet = BasicEncoder(output_dim=256, norm_fn='instance', dropout=args.dropout)        
         self.cnet = BasicEncoder(output_dim=hdim+cdim, norm_fn='batch', dropout=args.dropout)
         self.update_block = BasicUpdateBlock(self.args, hidden_dim=hdim)
+
+        test_rand_proj = False
+        test_zero_proj = True
+        if test_rand_proj:
+            self.rand_proj = nn.Conv2d(128, 128, 1, padding=0)
+        elif test_zero_proj:
+            self.rand_proj = torch.zeros_like
+        else:
+            self.rand_proj = lambda x: x
 
     def freeze_bn(self):
         for m in self.modules():
@@ -81,7 +77,7 @@ class RAFT(nn.Module):
         cdim = self.context_dim
 
         # run the feature network
-        with autocast(enabled=self.args.mixed_precision):
+        with torch.amp.autocast('cuda', enabled=self.args.mixed_precision):
             fmap1, fmap2 = self.fnet([image1, image2])        
         
         # fmap1, fmap2: [1, 256, 55, 128]. 1/8 size of the original image.
@@ -90,7 +86,7 @@ class RAFT(nn.Module):
         self.corr_fn = CorrBlock(fmap1, fmap2, radius=self.args.corr_radius)
 
         # run the context network
-        with autocast(enabled=self.args.mixed_precision):
+        with torch.amp.autocast('cuda', enabled=self.args.mixed_precision):
             # cnet: context network to extract features from image1 only.
             # cnet arch is the same as fnet. 
             # fnet extracts features specifically for correlation computation.
@@ -101,6 +97,9 @@ class RAFT(nn.Module):
             net_feat, inp_feat = torch.split(cnet_feat, [hdim, cdim], dim=1)
             net_feat = torch.tanh(net_feat)
             inp_feat = torch.relu(inp_feat)
+
+            net_feat = self.rand_proj(net_feat)
+            inp_feat = self.rand_proj(inp_feat)
 
         coords0, coords1 = self.initialize_flow(image1)
 
@@ -114,7 +113,7 @@ class RAFT(nn.Module):
 
             flow = coords1 - coords0
                 
-            with autocast(enabled=self.args.mixed_precision):
+            with torch.amp.autocast('cuda', enabled=self.args.mixed_precision):
                 # net_feat: hidden features of ConvGRU. 
                 # inp_feat: input  features to ConvGRU.
                 # up_mask is scaled to 0.25 of original values.

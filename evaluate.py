@@ -1,31 +1,26 @@
-import sys
-sys.path.append('core')
-
 from PIL import Image
 import argparse
 import os
 import numpy as np
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-import imageio
 import cv2
 
-from network import CRAFT
-from raft import RAFT
-from craft_nogma import CRAFT_nogma
-import network
-# back-compatible with older checkpoints.
-network.RAFTER = CRAFT
+from core.network import CRAFT
+from core.raft import RAFT
+from core.craft_nogma import CRAFT_nogma
 from torchvision import transforms
 import torch.utils.data as data
 
-import datasets
-from utils import flow_viz
-from utils import frame_utils
+import core.datasets as datasets
+from core.utils import flow_viz
+from core.utils import frame_utils
 
-from utils.utils import InputPadder, forward_interpolate
+from core.utils.utils import InputPadder, forward_interpolate
 from fvcore.nn import FlopCountAnalysis
+import torch.multiprocessing as mp
+from tqdm import tqdm
+
 # np.seterr(all='raise')
 
 # Just an empty Logger definition to satisfy torch.load().
@@ -41,18 +36,18 @@ class Logger:
 # img and flow are 3D or 4D tensors.
 # mask: a 2D tensor of H*W. 
 # The flow values at mask==True are valid and will be used to compute EPE.
-def shift_pixels(img, flow, xy_shift):
+def shift_pixels(img, flow, xy_shift, device='cuda'):
     if xy_shift is not None:
         x_shift, y_shift = xy_shift
         # the format of flow is u, v, i.e., x, y, not y, x.
-        offset_tensor = torch.tensor([x_shift, y_shift], dtype=torch.float32, device=flow.device)
+        offset_tensor = torch.tensor([x_shift, y_shift], dtype=torch.float32, device=device)
         if flow.ndim == 4:
             offset_tensor = offset_tensor.reshape([1, 2, 1, 1])
         else:
             offset_tensor = offset_tensor.reshape([2, 1, 1])
 
     if xy_shift is None or (x_shift == 0 and y_shift == 0):
-        mask = torch.ones(img.shape[-2:], dtype=bool, device=img.device)
+        mask = torch.ones(img.shape[-2:], dtype=bool, device=device)
         return img, flow, mask
 
     img2 = torch.zeros_like(img)
@@ -61,7 +56,7 @@ def shift_pixels(img, flow, xy_shift):
     else:
         flow2 = None
 
-    mask = torch.zeros(img.shape[-2:], dtype=bool, device=img.device)
+    mask = torch.zeros(img.shape[-2:], dtype=bool, device=device)
 
     if x_shift > 0 and y_shift > 0:
         img2[..., y_shift:, x_shift:] = img[..., :-y_shift, :-x_shift]
@@ -122,7 +117,7 @@ def create_sintel_submission_vis(model_name, model, warm_start=False, output_pat
             padder = InputPadder(image1.shape)
             image1, image2 = padder.pad(image1[None].to(f'cuda:{model.device_ids[0]}'), image2[None].to(f'cuda:{model.device_ids[0]}'))
 
-            flow_low, flow_pr = model.module(image1, image2, iters=32, flow_init=flow_prev, test_mode=test_mode)
+            flow_low, flow_pr = model(image1, image2, iters=32, flow_init=flow_prev, test_mode=test_mode)
             flow = padder.unpad(flow_pr[0]).permute(1, 2, 0).cpu().numpy()
 
             # Visualizations
@@ -137,7 +132,7 @@ def create_sintel_submission_vis(model_name, model, warm_start=False, output_pat
 
                 # image.save(f'vis_test/ours/{dstype}/flow/{test_id}.png')
                 flow_image.save(f'vis_sintel/{split}/{model_name}/{dstype}/{scene}/frame_{frame_id+1:04d}.png')
-                #imageio.imwrite(f'vis_test/gt/{dstype}/{scene}/{frame_id+1}.png', image1[0].cpu().permute(1, 2, 0).numpy())
+                #imageio.imwrite(f'vis_test/gt/{dstype}/{scene}/{frame_id+1}.png', image1[0].permute(1, 2, 0).cpu().numpy())
 
             if warm_start:
                 flow_prev = forward_interpolate(flow_low[0])[None].cuda()
@@ -173,7 +168,7 @@ def create_kitti_submission_vis(model_name, model, output_path='kitti_submission
         padder = InputPadder(image1.shape, mode='kitti')
         image1, image2 = padder.pad(image1[None].to(f'cuda:{model.device_ids[0]}'), image2[None].to(f'cuda:{model.device_ids[0]}'))
 
-        _, flow_pr = model.module(image1, image2, iters=24, test_mode=test_mode)
+        _, flow_pr = model(image1, image2, iters=24, test_mode=test_mode)
         flow = padder.unpad(flow_pr[0]).permute(1, 2, 0).cpu().numpy()
 
         output_filename = os.path.join(output_path, frame_id)
@@ -185,7 +180,7 @@ def create_kitti_submission_vis(model_name, model, output_path='kitti_submission
             flow_image = Image.fromarray(flow_img)
             # frame_id: '000100_10.png'
             flow_image.save(f'vis_kitti/{model_name}/{frame_id}')
-            # imageio.imwrite(f'vis_kitti/{model_name}/{frame_id}.png', image1[0].cpu().permute(1, 2, 0).numpy())
+            # imageio.imwrite(f'vis_kitti/{model_name}/{frame_id}.png', image1[0].permute(1, 2, 0).cpu().numpy())
 
     if do_vis:
         print("Created KITTI visualization.")
@@ -218,7 +213,7 @@ def create_viper_submission_vis(model_name, model, output_path='viper_submission
         padder = InputPadder(image1.shape, mode='kitti')
         image1, image2 = padder.pad(image1, image2)
 
-        _, flow_pr = model.module(image1, image2, iters=24, test_mode=test_mode)
+        _, flow_pr = model(image1, image2, iters=24, test_mode=test_mode)
         flow = padder.unpad(flow_pr[0]).permute(1, 2, 0).cpu().numpy()
         # Scale flow back to original size.
         flow = cv2.resize(flow, None, fx=inv_scale, fy=inv_scale, interpolation=cv2.INTER_LINEAR)
@@ -230,7 +225,7 @@ def create_viper_submission_vis(model_name, model, output_path='viper_submission
             flow_image = Image.fromarray(flow_img)
             # frame_id: "{scene}_{img0_idx}", without suffix.
             flow_image.save(f'vis_viper/{model_name}/{frame_id}.png')
-            # imageio.imwrite(f'vis_viper/{model_name}/{frame_id}.png', image1[0].cpu().permute(1, 2, 0).numpy())
+            # imageio.imwrite(f'vis_viper/{model_name}/{frame_id}.png', image1[0].permute(1, 2, 0).cpu().numpy())
 
         output_filename = os.path.join(output_path, frame_id + ".flo")
         frame_utils.writeFlow(output_filename, flow)
@@ -263,13 +258,13 @@ def validate_chairs(model, iters=6, test_mode=1, xy_shift=None, batch_size=1):
         image1 = image1.cuda()
         image2 = image2.cuda()
 
-        image1, flow_gt, val_mask = shift_pixels(image1, flow_gt, xy_shift)
+        image1, flow_gt, val_mask = shift_pixels(image1, flow_gt, xy_shift, 'cuda')
         val_mask = val_mask.unsqueeze(0).expand(image1.shape[0], -1, -1)
 
         _, flow_pr = model(image1, image2, iters=iters, test_mode=test_mode)
-        flow = flow_pr[0].cpu()
+        flow = flow_pr[0]
         epe = torch.sum((flow - flow_gt)**2, dim=1)[val_mask].sqrt()
-        epe_list.append(epe.view(-1).numpy())
+        epe_list.append(epe.view(-1).cpu().numpy())
 
     epe = np.mean(np.concatenate(epe_list))
     print("Validation Chairs EPE: %f" % epe)
@@ -288,9 +283,9 @@ def validate_things(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, ma
     if xy_shift is not None:
         x_shift, y_shift = xy_shift
         print(f"Apply x,y shift {x_shift},{y_shift}")
-        offset_tensor = torch.tensor([x_shift, y_shift], dtype=torch.float32)
+        offset_tensor = torch.tensor([x_shift, y_shift], device='cuda', dtype=torch.float32)
     else:
-        offset_tensor = torch.tensor([0, 0], dtype=torch.float32)
+        offset_tensor = torch.tensor([0, 0], device='cuda', dtype=torch.float32)
     offset_tensor = offset_tensor.reshape([1, 2, 1, 1])
 
     if dstype == 'both':
@@ -334,12 +329,13 @@ def validate_things(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, ma
         # else:
         #     GaussianBlur = None
 
-        for data_blob in iter(val_loader):  
+        for data_blob in tqdm(val_loader):
             image1, image2, flow_gt, _, _ = data_blob
             image1 = image1.cuda()
             image2 = image2.cuda()
+            flow_gt = flow_gt.cuda()
 
-            image1, flow_gt, val_mask = shift_pixels(image1, flow_gt, xy_shift)
+            image1, flow_gt, val_mask = shift_pixels(image1, flow_gt, xy_shift, 'cuda')
             val_mask = val_mask.unsqueeze(0).expand(image1.shape[0], -1, -1)
 
             # if GaussianBlur is not None:
@@ -356,20 +352,20 @@ def validate_things(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, ma
                 flow_prs = [ flow_prs ]
             
             for it, flow_pr in enumerate(flow_prs):
-                flow = padder.unpad(flow_pr).cpu()
+                flow = padder.unpad(flow_pr)
                 epe = torch.sum((flow - flow_gt)**2, dim=1)[val_mask].sqrt()
                 epe_list.setdefault(it, [])
-                epe_list[it].append(epe.view(-1).numpy())
+                epe_list[it].append(epe.view(-1).cpu().numpy())
 
-            epe_seg.append(epe.view(-1).numpy())
-            orig_flow_gt = flow_gt.cpu() + offset_tensor
+            epe_seg.append(epe.view(-1).cpu().numpy())
+            orig_flow_gt = flow_gt + offset_tensor
             mag = torch.sum(orig_flow_gt**2, dim=1)[val_mask].sqrt()
 
             prev_mag_endpoint = 0
             for mag_endpoint in mag_endpoints:
                 mags_seg.setdefault(mag_endpoint, [])
                 mag_in_range = (mag >= prev_mag_endpoint) & (mag < mag_endpoint)
-                mags_seg[mag_endpoint].append(mag_in_range.view(-1).numpy())
+                mags_seg[mag_endpoint].append(mag_in_range.view(-1).cpu().numpy())
                 prev_mag_endpoint = mag_endpoint
 
             val_count += len(image1)
@@ -378,6 +374,7 @@ def validate_things(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, ma
             if (seg_interval > 0 and val_count % seg_interval == 0) or val_count >= max_val_count:
                 epe_seg     = np.concatenate(epe_seg)
                 mean_epe    = np.mean(epe_seg)
+                # Percentage of pixels with EPE < 1, 3, 5.
                 px1 = np.mean(epe_seg < 1)
                 px3 = np.mean(epe_seg < 3)
                 px5 = np.mean(epe_seg < 5)
@@ -449,9 +446,9 @@ def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, ma
     if xy_shift is not None:
         x_shift, y_shift = xy_shift
         print(f"Apply x,y shift {x_shift},{y_shift}")
-        offset_tensor = torch.tensor([x_shift, y_shift], dtype=torch.float32)
+        offset_tensor = torch.tensor([x_shift, y_shift], device='cuda', dtype=torch.float32)
     else:
-        offset_tensor = torch.tensor([0, 0], dtype=torch.float32)
+        offset_tensor = torch.tensor([0, 0], device='cuda', dtype=torch.float32)
     offset_tensor = offset_tensor.reshape([1, 2, 1, 1])
 
     if dstype == 'both':
@@ -503,7 +500,7 @@ def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, ma
             #     image2 = GaussianBlur(image2)
 
             # Shift image1 pixels along x and y axes.
-            image1, flow_gt, val_mask = shift_pixels(image1, flow_gt, xy_shift)
+            image1, flow_gt, val_mask = shift_pixels(image1, flow_gt, xy_shift, 'cuda')
             val_mask = val_mask.unsqueeze(0).expand(image1.shape[0], -1, -1)
             
             padder = InputPadder(image1.shape)
@@ -516,20 +513,20 @@ def validate_sintel(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, ma
                 flow_prs = [ flow_prs ]
 
             for it, flow_pr in enumerate(flow_prs):
-                flow = padder.unpad(flow_pr).cpu()
+                flow = padder.unpad(flow_pr)
                 epe = torch.sum((flow - flow_gt)**2, dim=1)[val_mask].sqrt()
                 epe_list.setdefault(it, [])
-                epe_list[it].append(epe.view(-1).numpy())
+                epe_list[it].append(epe.view(-1).cpu().numpy())
 
-            epe_seg.append(epe.view(-1).numpy())
-            orig_flow_gt = flow_gt.cpu() + offset_tensor
+            epe_seg.append(epe.view(-1).cpu().numpy())
+            orig_flow_gt = flow_gt + offset_tensor
             mag = torch.sum(orig_flow_gt**2, dim=1)[val_mask].sqrt()
 
             prev_mag_endpoint = 0
             for mag_endpoint in mag_endpoints:
                 mags_seg.setdefault(mag_endpoint, [])
                 mag_in_range = (mag >= prev_mag_endpoint) & (mag < mag_endpoint)
-                mags_seg[mag_endpoint].append(mag_in_range.view(-1).numpy())
+                mags_seg[mag_endpoint].append(mag_in_range.view(-1).cpu().numpy())
                 prev_mag_endpoint = mag_endpoint
 
             val_count += len(image1)
@@ -613,13 +610,13 @@ def validate_sintel_occ(model, iters=6, test_mode=1):
             image1, image2 = padder.pad(image1, image2)
 
             _, flow_pr = model(image1, image2, iters=iters, test_mode=test_mode)
-            flow = padder.unpad(flow_pr[0]).cpu()
+            flow = padder.unpad(flow_pr[0])
 
             epe = torch.sum((flow - flow_gt)**2, dim=0).sqrt()
-            epe_list.append(epe.view(-1).numpy())
+            epe_list.append(epe.view(-1).cpu().numpy())
 
-            epe_noc_list.append(epe[~occ].numpy())
-            epe_occ_list.append(epe[occ].numpy())
+            epe_noc_list.append(epe[~occ].cpu().numpy())
+            epe_occ_list.append(epe[occ].cpu().numpy())
 
         epe_all = np.concatenate(epe_list)
 
@@ -669,7 +666,7 @@ def separate_inout_sintel_occ():
         # if not os.path.exists(dir_path):
         #     os.makedirs(dir_path)
         #
-        # imageio.imwrite(img_path, occ_union.int().numpy() * 255)
+        # imageio.imwrite(img_path, occ_union.int().cpu().numpy() * 255)
 
         # Generate out-of-frame
         # path_list = occ_path.split('/')
@@ -679,7 +676,7 @@ def separate_inout_sintel_occ():
         # if not os.path.exists(dir_path):
         #     os.makedirs(dir_path)
         #
-        # imageio.imwrite(img_path, out_of_frame.int().numpy() * 255)
+        # imageio.imwrite(img_path, out_of_frame.int().cpu().numpy() * 255)
 
         # # Generate in-frame occlusions
         # path_list = occ_path.split('/')
@@ -689,7 +686,7 @@ def separate_inout_sintel_occ():
         # if not os.path.exists(dir_path):
         #     os.makedirs(dir_path)
         #
-        # imageio.imwrite(img_path, in_frame.int().numpy() * 255)
+        # imageio.imwrite(img_path, in_frame.int().cpu().numpy() * 255)
 
 @torch.no_grad()
 def validate_hd1k(model, iters=6, test_mode=1, seg_interval=-1):
@@ -717,10 +714,10 @@ def validate_hd1k(model, iters=6, test_mode=1, seg_interval=-1):
         image1, image2 = padder.pad(image1, image2)
 
         _, flow_pr = model(image1, image2, iters=iters, test_mode=test_mode)
-        flow = padder.unpad(flow_pr[0]).cpu()
+        flow = padder.unpad(flow_pr[0])
 
         epe = torch.sum((flow - flow_gt)**2, dim=0).sqrt()
-        epe_list.append(epe.view(-1).numpy())
+        epe_list.append(epe.view(-1).cpu().numpy())
         val_count += len(image1)
 
         if seg_interval > 0 and val_count % seg_interval == 0:
@@ -759,9 +756,9 @@ def validate_kitti(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, max
     if xy_shift is not None:
         x_shift, y_shift = xy_shift
         print(f"Apply x,y shift {x_shift},{y_shift}")
-        offset_tensor = torch.tensor([x_shift, y_shift], dtype=torch.float32)
+        offset_tensor = torch.tensor([x_shift, y_shift], device='cuda', dtype=torch.float32)
     else:
-        offset_tensor = torch.tensor([0, 0], dtype=torch.float32)
+        offset_tensor = torch.tensor([0, 0], device='cuda', dtype=torch.float32)
     offset_tensor = offset_tensor.reshape([1, 2, 1, 1])
 
     val_loader  = data.DataLoader(val_dataset, batch_size=batch_size,
@@ -799,7 +796,7 @@ def validate_kitti(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, max
         image2 = image2.cuda()
 
         # Shift image1 pixels along x and y axes.
-        image1, flow_gt, val_mask = shift_pixels(image1, flow_gt, xy_shift)
+        image1, flow_gt, val_mask = shift_pixels(image1, flow_gt, xy_shift, 'cuda')
         val_mask = val_mask.unsqueeze(0).expand(image1.shape[0], -1, -1)
         valid_gt[~val_mask] = 0
 
@@ -816,32 +813,32 @@ def validate_kitti(model, iters=6, test_mode=1, xy_shift=None, batch_size=1, max
 
             
         for it, flow_pr in enumerate(flow_prs):
-            flow = padder.unpad(flow_pr).cpu()
+            flow = padder.unpad(flow_pr)
             epe = torch.sum((flow - flow_gt)**2, dim=1).sqrt()
             epe = epe.view(-1)
             val = valid_gt.view(-1) >= 0.5
 
-            orig_flow_gt = flow_gt.cpu() + offset_tensor
+            orig_flow_gt = flow_gt + offset_tensor
             mag = torch.sum(orig_flow_gt**2, dim=1).sqrt()
             mag = mag.view(-1)
             out = ((epe > 3.0) & ((epe/mag) > 0.05)).float()
                         
             epe_list.setdefault(it, [])
             out_list.setdefault(it, [])
-            epe_list[it].append(epe[val].view(-1).numpy())
+            epe_list[it].append(epe[val].view(-1).cpu().numpy())
             # epe_list[it].append(epe[val].mean().item())
-            out_list[it].append(out[val].view(-1).numpy())
+            out_list[it].append(out[val].view(-1).cpu().numpy())
 
         # epe, out of the last iteration.
-        epe_seg.append(epe[val].view(-1).numpy())
-        out_seg.append(out[val].view(-1).numpy())
+        epe_seg.append(epe[val].view(-1).cpu().numpy())
+        out_seg.append(out[val].view(-1).cpu().numpy())
 
         prev_mag_endpoint = 0
         for mag_endpoint in mag_endpoints:
             mags_seg.setdefault(mag_endpoint, [])
             # prev_mag_endpoint: mag of the last iteration.
             mag_in_range = (mag >= prev_mag_endpoint) & (mag < mag_endpoint)
-            mags_seg[mag_endpoint].append(mag_in_range.view(-1)[val].numpy())
+            mags_seg[mag_endpoint].append(mag_in_range.view(-1)[val].cpu().numpy())
             prev_mag_endpoint = mag_endpoint
 
         val_count += len(image1)
@@ -972,7 +969,7 @@ def validate_viper(model, iters=6, test_mode=1, batch_size=2, max_val_count=500,
             flow_prs = [ flow_prs ]
 
         for it, flow_pr in enumerate(flow_prs):
-            flow = padder.unpad(flow_pr).cpu()
+            flow = padder.unpad(flow_pr)
             epe = torch.sum((flow - flow_gt)**2, dim=1).sqrt()
             epe = epe.view(-1)
             val = valid_gt.view(-1) >= 0.5
@@ -983,18 +980,18 @@ def validate_viper(model, iters=6, test_mode=1, batch_size=2, max_val_count=500,
                         
             epe_list.setdefault(it, [])
             out_list.setdefault(it, [])
-            epe_list[it].append(epe[val].view(-1).numpy())
-            out_list[it].append(out[val].view(-1).numpy())
+            epe_list[it].append(epe[val].view(-1).cpu().numpy())
+            out_list[it].append(out[val].view(-1).cpu().numpy())
 
-        epe_seg.append(epe[val].view(-1).numpy())
-        out_seg.append(out[val].view(-1).numpy())
+        epe_seg.append(epe[val].view(-1).cpu().numpy())
+        out_seg.append(out[val].view(-1).cpu().numpy())
 
         prev_mag_endpoint = 0
         for mag_endpoint in mag_endpoints:
             mags_seg.setdefault(mag_endpoint, [])
             # Use mag of the last it.
             mag_in_range = (mag >= prev_mag_endpoint) & (mag < mag_endpoint)
-            mags_seg[mag_endpoint].append(mag_in_range.view(-1)[val].numpy())
+            mags_seg[mag_endpoint].append(mag_in_range.view(-1)[val].cpu().numpy())
             prev_mag_endpoint = mag_endpoint
 
         val_count += len(image1)
@@ -1100,9 +1097,11 @@ def validate_slowflow(model, iters=6, test_mode=1, xy_shift=None,
     if xy_shift is not None:
         x_shift, y_shift = xy_shift
         print(f"Apply x,y shift {x_shift},{y_shift}")
-        offset_tensor = torch.tensor([x_shift, y_shift], dtype=torch.float32)
+        offset_tensor = torch.tensor([x_shift, y_shift], device='cuda', dtype=torch.float32)
     else:
-        offset_tensor = torch.tensor([0, 0], dtype=torch.float32)
+        offset_tensor = torch.tensor([0, 0], device='cuda', dtype=torch.float32)
+
+    offset_tensor = offset_tensor.reshape([2, 1, 1])
 
     for val_id in range(len(val_dataset)):
         image1, image2, flow_gt, _, (scene, img1_trunk) = val_dataset[val_id]
@@ -1116,7 +1115,7 @@ def validate_slowflow(model, iters=6, test_mode=1, xy_shift=None,
         flow_gt = flow_gt.squeeze(0) * scale_tensor
 
         # Shift image1 and the groundtruth flow along x and y axes.
-        image1, flow_gt, val_mask = shift_pixels(image1, flow_gt, xy_shift)
+        image1, flow_gt, val_mask = shift_pixels(image1, flow_gt, xy_shift, 'cuda')
 
         # Make images divideable by 8.
         padder = InputPadder(image1.shape, mode='kitti')
@@ -1130,29 +1129,29 @@ def validate_slowflow(model, iters=6, test_mode=1, xy_shift=None,
             flow_prs = [ flow_prs ]
 
         for it, flow_pr in enumerate(flow_prs):
-            flow = padder.unpad(flow_pr[0]).cpu()
+            flow = padder.unpad(flow_pr[0])
             epe = torch.sum((flow - flow_gt)**2, dim=0)[val_mask].sqrt()
             epe = epe.view(-1)
 
-            orig_flow_gt = flow_gt.cpu() + offset_tensor
+            orig_flow_gt = flow_gt + offset_tensor
             mag = torch.sum(orig_flow_gt**2, dim=0)[val_mask].sqrt()
             mag = mag.view(-1)
             out = ((epe > 3.0) & ((epe/mag) > 0.05)).float()
                         
             epe_list.setdefault(it, [])
             out_list.setdefault(it, [])
-            epe_list[it].append(epe.view(-1).numpy())
-            out_list[it].append(out.view(-1).numpy())
+            epe_list[it].append(epe.view(-1).cpu().numpy())
+            out_list[it].append(out.view(-1).cpu().numpy())
 
-        epe_seg.append(epe.view(-1).numpy())
-        out_seg.append(out.view(-1).numpy())
+        epe_seg.append(epe.view(-1).cpu().numpy())
+        out_seg.append(out.view(-1).cpu().numpy())
 
         prev_mag_endpoint = 0
         for mag_endpoint in mag_endpoints:
             mags_seg.setdefault(mag_endpoint, [])
             # Use mag of the last it.
             mag_in_range = (mag >= prev_mag_endpoint) & (mag < mag_endpoint)
-            mags_seg[mag_endpoint].append(mag_in_range.view(-1).numpy())
+            mags_seg[mag_endpoint].append(mag_in_range.view(-1).cpu().numpy())
             prev_mag_endpoint = mag_endpoint
 
         val_count += len(image1)
@@ -1249,7 +1248,7 @@ def gen_flow(model, model_name, iters, image1_path, image2_path, flow_path=None,
     else:
         x_shift, y_shift = (0, 0)
     # the format of flow is u, v, i.e., x, y, not y, x.
-    offset_tensor = torch.tensor([x_shift, y_shift], dtype=torch.float32).reshape(2, 1, 1)
+    offset_tensor = torch.tensor([x_shift, y_shift], device='cuda', dtype=torch.float32).reshape(2, 1, 1)
 
     # split image1_path into path and file name
     _, image1_name = os.path.split(image1_path)
@@ -1283,10 +1282,10 @@ def gen_flow(model, model_name, iters, image1_path, image2_path, flow_path=None,
         image1 = image1[0]
         image2 = image2[0]
         scale_image1_path = os.path.join(output_path, image1_name_noext + f'-{scale}.png')
-        Image.fromarray(image1.permute(1, 2, 0).numpy().astype(np.uint8)).save(scale_image1_path)
+        Image.fromarray(image1.permute(1, 2, 0).cpu().numpy().astype(np.uint8)).save(scale_image1_path)
         print(f"Save scaled image1 to {scale_image1_path}")
         scale_image2_path = os.path.join(output_path, image2_name_noext + f'-{scale}.png')
-        Image.fromarray(image2.permute(1, 2, 0).numpy().astype(np.uint8)).save(scale_image2_path)
+        Image.fromarray(image2.permute(1, 2, 0).cpu().numpy().astype(np.uint8)).save(scale_image2_path)
         print(f"Save scaled image2 to {scale_image2_path}")
         
         if flow_gt is not None:
@@ -1299,10 +1298,10 @@ def gen_flow(model, model_name, iters, image1_path, image2_path, flow_path=None,
             print(f"Save scaled flow gt to {scale_flow_path}")
 
     # Shift image1 pixels along x and y axes.
-    image1, _, val_mask = shift_pixels(image1, None, xy_shift)
+    image1, _, val_mask = shift_pixels(image1, None, xy_shift, 'cuda')
 
     if xy_shift is not None:
-        image1_np = image1.permute(1, 2, 0).numpy()
+        image1_np = image1.permute(1, 2, 0).cpu().numpy()
         shift_image1_path = os.path.join(output_path, image1_name_noext + f'-{x_shift},{y_shift}.png')
         Image.fromarray(image1_np.astype(np.uint8)).save(shift_image1_path)
         print(f"Save shifted image1 to {shift_image1_path}")
@@ -1324,15 +1323,15 @@ def gen_flow(model, model_name, iters, image1_path, image2_path, flow_path=None,
         print(flops.by_module())
         exit()
 
-    _, flow_prs = model.module(image1, image2, iters=iters, test_mode=test_mode)
+    _, flow_prs = model(image1, image2, iters=iters, test_mode=test_mode)
     # if test_mode = 1, flow_pr: [1, 2, 512, 640]
     # if test_mode = 2, flow_pr is a list of flow fields, each field is [1, 2, 512, 640].
     if test_mode == 1:
         flow_prs = [ flow_prs ]
 
     for it, flow_pr in enumerate(flow_prs):
-        flow = flow_pr[0].cpu() + offset_tensor
-        flow = padder.unpad(flow).permute(1, 2, 0).numpy()
+        flow = flow_pr[0] + offset_tensor
+        flow = padder.unpad(flow).permute(1, 2, 0).cpu().numpy()
         flow[~val_mask] = 0
 
         if flow_gt is not None:
@@ -1369,42 +1368,27 @@ def gen_flow(model, model_name, iters, image1_path, image2_path, flow_path=None,
 
         print(f"Generated flow {flow_savepath}.")
 
-def fix_checkpoint(args, model):
+def load_checkpoint(args, model):
     checkpoint = torch.load(args.model, map_location='cuda')
-
     if 'model' in checkpoint:
-        msg = model.load_state_dict(checkpoint['model'], strict=False)
+        state_dict = checkpoint['model']
     else:
-        # Load old checkpoint.
-        msg = model.load_state_dict(checkpoint, strict=False)
+        state_dict = checkpoint
+
+    # Remove 'module.' from the keys of the state_dict.
+    for key in list(state_dict.keys()):
+        if key.startswith('module.'):
+            state_dict[key[7:]] = state_dict.pop(key)
+
+    msg = model.load_state_dict(state_dict, strict=False)
 
     print(f"Model checkpoint loaded from {args.model}: {msg}.")
 
-    logger = Logger()
-    if 'logger' in checkpoint:
-        if type(checkpoint['logger']) == dict:
-            logger_dict = checkpoint['logger']
-        else:
-            logger_dict = checkpoint['logger'].__dict__
-        
-        # The scheduler will be updated by checkpoint['lr_scheduler'], no need to update here.
-        for key in ('args', 'scheduler', 'model'):
-            if key in logger_dict:
-                del logger_dict[key]
-        logger.__dict__.update(logger_dict)
-        print("Logger loaded.")
-    else:
-        print("Logger NOT loaded.")
-    
-    optimizer_state     = checkpoint['optimizer']    if 'optimizer'    in checkpoint else None
-    lr_scheduler_state  = checkpoint['lr_scheduler'] if 'lr_scheduler' in checkpoint else None
-    
-    save_checkpoint(args.model + "2", model, optimizer_state, lr_scheduler_state, logger)
-    
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', help="restore checkpoint")
     parser.add_argument('--dataset', help="dataset for evaluation")
+    parser.add_argument('--gpu', type=int, default=0, help="gpu id")
     parser.add_argument('--split', type=str, default="test", help="split of dataset for evaluation")
     parser.add_argument('--dstype', type=str, default="both", help="dstype (clean, final, or both) of dataset for evaluation")
     parser.add_argument('--slowset', type=str, help="slowflow set for evaluation, e.g. 300,3")
@@ -1418,6 +1402,7 @@ if __name__ == '__main__':
     parser.add_argument('--seginterval', dest='seg_interval', 
                         type=int, default=-1, help="print stats every N iterations")
 
+    # Without --craft and --raft and --setrans and --nogma: use the GMA model.
     parser.add_argument('--craft', dest='craft', action='store_true', 
                         help='use craft (Cross-Attentional Flow Transformer)')
     parser.add_argument('--setrans', dest='setrans', action='store_true', 
@@ -1436,7 +1421,6 @@ if __name__ == '__main__':
     parser.add_argument('--fullprec', dest='mixed_precision',
                         action='store_false', help='use full precision (default: mixed precision)')
     parser.add_argument('--model_name')
-    parser.add_argument('--fix', action='store_true', help='Fix loaded checkpoint')
     parser.add_argument('--submit', action='store_true', help='Make a sintel/kitti submission')
     parser.add_argument('--vis', action='store_true', help='Make a sintel/kitti visualizaton')
     parser.add_argument('--test_mode', default=1, type=int, 
@@ -1492,40 +1476,27 @@ if __name__ == '__main__':
     parser.add_argument('--intrapos', dest='intra_pos_code_type', type=str, 
                         choices=['lsinu', 'bias'], default='bias')
     parser.add_argument('--intraposw', dest='intra_pos_code_weight', type=float, default=1.0)
-    
+
     args = parser.parse_args()
 
     print("Args:\n{}".format(args))
-    
+    torch.cuda.set_device(args.gpu)
+
     if args.dataset == 'separate':
         separate_inout_sintel_occ()
-        sys.exit()
-
-    if args.raft:
-        model = nn.DataParallel(RAFT(args))
-    elif args.nogma:
-        model = nn.DataParallel(CRAFT_nogma(args))
-    else:    
-        model = nn.DataParallel(CRAFT(args))
-    
-    if args.fix:
-        fix_checkpoint(args, model)
         exit()
-        
-    checkpoint = torch.load(args.model)
-    if 'model' in checkpoint:
-        # Ablation study of the impact of positional biases.
-        if args.craft and args.f2trans == 'full':
-            pass
-            #checkpoint['model']['module.corr_fn.vispos_encoder.pos_coder.biases'].zero_()
-            #checkpoint['model']['module.f2_trans.vispos_encoder.pos_coder.biases'].zero_()
-        msg = model.load_state_dict(checkpoint['model'], strict=False)
-    else:
-        # Load old checkpoint.
-        msg = model.load_state_dict(checkpoint, strict=False)
+
+    mp.set_start_method('spawn')
     
-    print(f"Model checkpoint loaded from {args.model}: {msg}.")
-        
+    if args.raft:
+        model = RAFT(args)
+    elif args.nogma:
+        model = CRAFT_nogma(args)
+    else:    
+        model = CRAFT(args)
+    
+    load_checkpoint(args, model)
+
     model.cuda()
     model.eval()
 
@@ -1574,38 +1545,38 @@ if __name__ == '__main__':
     for xy_shift in args.xy_shifts:
         with torch.no_grad():
             if args.dataset == 'chairs':
-                validate_chairs(model.module, iters=args.iters, test_mode=args.test_mode, 
+                validate_chairs(model, iters=args.iters, test_mode=args.test_mode, 
                                 xy_shift=xy_shift, batch_size=args.batch_size)
 
             elif args.dataset == 'things':
-                validate_things(model.module, iters=args.iters, test_mode=args.test_mode, 
+                validate_things(model, iters=args.iters, test_mode=args.test_mode, 
                                 xy_shift=xy_shift, batch_size=args.batch_size,
                                 max_val_count=args.max_val_count, 
                                 verbose=args.verbose, seg_interval=args.seg_interval,
                                 dstype=args.dstype)
 
             elif args.dataset == 'sintel':
-                validate_sintel(model.module, iters=args.iters, test_mode=args.test_mode, 
+                validate_sintel(model, iters=args.iters, test_mode=args.test_mode, 
                                 xy_shift=xy_shift, batch_size=args.batch_size,
                                 max_val_count=args.max_val_count, 
                                 verbose=args.verbose, seg_interval=args.seg_interval,
                                 dstype=args.dstype)
 
             elif args.dataset == 'sintel_occ':
-                validate_sintel_occ(model.module, iters=args.iters, test_mode=args.test_mode)
+                validate_sintel_occ(model, iters=args.iters, test_mode=args.test_mode)
 
             elif args.dataset == 'kitti':
-                validate_kitti(model.module, iters=args.iters, test_mode=args.test_mode,
+                validate_kitti(model, iters=args.iters, test_mode=args.test_mode,
                                xy_shift=xy_shift, max_val_count=args.max_val_count, batch_size=args.batch_size,
                                verbose=args.verbose, seg_interval=args.seg_interval)
             elif args.dataset == 'kittitrain':
-                validate_kitti(model.module, iters=args.iters, test_mode=args.test_mode, 
+                validate_kitti(model, iters=args.iters, test_mode=args.test_mode, 
                                xy_shift=xy_shift, max_val_count=args.max_val_count, batch_size=args.batch_size,
                                verbose=args.verbose, seg_interval=args.seg_interval, 
                                use_kitti_train=True)
 
             elif args.dataset == 'viper':
-                validate_viper(model.module, iters=args.iters, test_mode=args.test_mode, 
+                validate_viper(model, iters=args.iters, test_mode=args.test_mode, 
                             max_val_count=args.max_val_count, batch_size=args.batch_size,
                             verbose=args.verbose, seg_interval=args.seg_interval)
 
@@ -1613,12 +1584,12 @@ if __name__ == '__main__':
                 sf_blur_mag, sf_blur_num_frames = args.slowset.split(",")
                 sf_blur_mag = int(sf_blur_mag)
                 sf_blur_num_frames = int(sf_blur_num_frames)
-                validate_slowflow(model.module, iters=args.iters, test_mode=args.test_mode,
+                validate_slowflow(model, iters=args.iters, test_mode=args.test_mode,
                                   xy_shift=xy_shift,
                                   blur_set=(sf_blur_mag, sf_blur_num_frames),
                                   verbose=args.verbose, seg_interval=args.seg_interval)
 
             elif args.dataset == 'hd1k':
-                validate_hd1k(model.module, iters=args.iters, test_mode=args.test_mode, 
+                validate_hd1k(model, iters=args.iters, test_mode=args.test_mode, 
                               seg_interval=args.seg_interval)
 

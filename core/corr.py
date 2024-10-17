@@ -1,34 +1,22 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import math
-from utils.utils import bilinear_sampler, coords_grid
+from .utils.utils import bilinear_sampler
 # from compute_sparse_correlation import compute_sparse_corr, compute_sparse_corr_torch, compute_sparse_corr_mink
-from setrans import CrossAttFeatTrans, gen_all_indices, SETransInputFeatEncoder
+from .setrans import CrossAttFeatTrans, gen_all_indices, SETransInputFeatEncoder
 import os
 
-try:
-    import alt_cuda_corr
-except:
-    # alt_cuda_corr is not compiled
-    pass
-
-
+# There's no learnable parameters in CorrBlock.
 class CorrBlock:
-    def __init__(self, fmap1, fmap2, num_levels=4, radius=4, do_corr_global_norm=False):
+    def __init__(self, fmap1, fmap2, num_levels=4, radius=4):
         self.num_levels = num_levels
         self.radius = radius
         self.corr_pyramid = []
-        self.do_corr_global_norm = do_corr_global_norm
-        
+
         # all pairs correlation
         corr = CorrBlock.corr(fmap1, fmap2)
 
         batch, h1, w1, dim, h2, w2 = corr.shape
-        if self.do_corr_global_norm:
-            corr_3d = corr.permute(0, 3, 1, 2, 4, 5).view(batch, dim, -1)
-            corr_normed = F.layer_norm( corr_3d, (corr_3d.shape[2],), eps=1e-12 )
-            corr = corr_normed.view(batch, dim, h1, w1, h2, w2).permute(0, 2, 3, 1, 4, 5)
 
         corr = corr.reshape(batch * h1 * w1, dim, h2, w2)
 
@@ -173,6 +161,8 @@ class TransCorrBlock(CorrBlock, nn.Module):
             corr = F.avg_pool2d(corr, 2, stride=2)
             self.corr_pyramid.append(corr)
 
+    # Compute correlation [1, 1, 7040, 7040] between two sets of visual features.
+    # self.setrans is like a learnable similarity function.
     def corr(self, ht, wd, vispos1, vispos2, pos_biases):
         batch, ht_wd, dim = vispos1.shape
         assert ht_wd == ht * wd

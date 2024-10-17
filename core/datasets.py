@@ -1,22 +1,19 @@
 # Data loading based on https://github.com/NVIDIA/flownet2-pytorch
 
-from ast import NotEq
 import numpy as np
 import torch
 import torch.utils.data as data
 from torch.utils.data import DistributedSampler
-import torch.nn.functional as F
 
 import os
-import math
 import random
 from glob import glob
 import os.path as osp
 import re
 
-from utils import frame_utils
-from utils.augmentor import FlowAugmentor, SparseFlowAugmentor
-from utils.utils import print0
+from .utils import frame_utils
+from .utils.augmentor import FlowAugmentor, SparseFlowAugmentor
+from .utils.utils import print0
 from sklearn.model_selection import train_test_split
 
 shift_info_printed = False
