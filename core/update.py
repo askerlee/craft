@@ -97,7 +97,7 @@ class BasicUpdateBlock(nn.Module):
             nn.ReLU(inplace=True),
             nn.Conv2d(256, 64*9, 1, padding=0))
 
-    def forward(self, net_feat, inp_feat, corr, flow, upsample=True):
+    def forward(self, net_feat, inp_feat, corr, flow):
         # motion_features: (256+2)-dimensional.
         motion_features = self.encoder(flow, corr)
         inp_feat = torch.cat([inp_feat, motion_features], dim=1)

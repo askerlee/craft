@@ -111,7 +111,7 @@ class CRAFT_nogma(nn.Module):
         return up_flow.reshape(N, 2, 8*H, 8*W)
 
 
-    def forward(self, image1, image2, num_iters=12, flow_init=None, upsample=True, test_mode=0):
+    def forward(self, image1, image2, num_iters=12, flow_init=None, test_mode=0):
         """ Estimate optical flow between pair of frames """
 
         # image1, image2: [1, 3, 440, 1024]
