@@ -2,3 +2,4 @@
 .idea
 results
 visualization/*.pth
+examples/xxr*png

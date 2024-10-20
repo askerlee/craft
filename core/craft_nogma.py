@@ -8,24 +8,34 @@ from .corr import TransCorrBlock
 from .utils.utils import coords_grid, upflow8
 from .setrans import SETransConfig, SelfAttVisPosTrans
 from .utils.utils import print0
+from easydict import EasyDict as edict
 
 class CRAFT_nogma(nn.Module):
     def __init__(self, config):
         super(CRAFT_nogma, self).__init__()
-        self.config = config
+        if config is None:
+            self.config = edict()
+        else:
+            self.config = edict(config)
 
         self.hidden_dim = hdim = 128
         self.context_dim = cdim = 128
-        config.corr_levels = 4
 
-        # default CRAFT corr_radius: 4
-        if config.corr_radius == -1:
-            config.corr_radius = 4
-        print0("CRAFT_nogma Lookup radius: %d" %config.corr_radius)
-
-        if 'dropout' not in self.config:
+        # corr_levels determines the shape of the model params. 
+        # So it cannot be changed arbitrarily.
+        if not hasattr(self.config, 'corr_levels'):
+            self.config.corr_levels = 4
+        if not hasattr(self.config, 'corr_radius'):
+            self.config.corr_radius = 4
+        if not hasattr(self.config, 'dropout'):
             self.config.dropout = 0
-        
+        if not hasattr(self.config, 'mixed_precision'):
+            self.config.mixed_precision = True
+        if not hasattr(self.config, 'num_heads'):
+            self.config.num_heads = 1
+
+        print0(f"corr_levels: {self.config.corr_levels}, corr_radius: {self.config.corr_radius}")
+
         self.inter_trans_config = SETransConfig()
         self.inter_trans_config.update_config(config)
         self.inter_trans_config.in_feat_dim = 256
@@ -33,22 +43,22 @@ class CRAFT_nogma(nn.Module):
         self.inter_trans_config.max_pos_size     = 160
         self.inter_trans_config.out_attn_scores_only    = True
         self.inter_trans_config.attn_diag_cycles = 1000
-        self.inter_trans_config.num_modes       = config.inter_num_modes
-        self.inter_trans_config.qk_have_bias    = config.inter_qk_have_bias
-        self.inter_trans_config.pos_code_type   = config.inter_pos_code_type
-        self.inter_trans_config.pos_code_weight = config.inter_pos_code_weight
+        self.inter_trans_config.num_modes       = config.get('inter_num_modes', 4)          # default: 4
+        self.inter_trans_config.qk_have_bias    = config.get('inter_qk_have_bias', True)    # default: True
+        self.inter_trans_config.pos_code_type   = config.get('inter_pos_code_type', 'bias') # default: bias
+        self.inter_trans_config.pos_code_weight = config.get('inter_pos_code_weight', 0.5)  # default: 0.5
         self.config.inter_trans_config = self.inter_trans_config
         print0("Inter-frame trans config:\n{}".format(self.inter_trans_config.__dict__))
             
         self.corr_fn = TransCorrBlock(self.inter_trans_config, radius=self.config.corr_radius,
                                       do_corr_global_norm=True)
 
-        if config.f2trans != 'none':
+        if self.config.f2trans != 'none':
             # f2_trans has the same configuration as GMA att, 
             # except that the feature dimension is doubled, and not out_attn_probs_only.
             self.f2_trans_config = SETransConfig()
             self.f2_trans_config.update_config(config)
-            self.f2_trans_config.do_half_attn = (config.f2trans == 'half')
+            self.f2_trans_config.do_half_attn = (self.config.f2trans == 'half')
             self.f2_trans_config.in_feat_dim = 256
             self.f2_trans_config.feat_dim  = 256
             # if do_half_attn, has_input_skip will be changed to False within SelfAttVisPosTrans.__init__().
@@ -61,16 +71,16 @@ class CRAFT_nogma(nn.Module):
             self.f2_trans_config.qk_have_bias  = False
             self.f2_trans_config.out_attn_probs_only    = False
             self.f2_trans_config.attn_diag_cycles   = 1000
-            self.f2_trans_config.num_modes          = config.intra_num_modes
-            self.f2_trans_config.pos_code_type      = config.intra_pos_code_type
-            self.f2_trans_config.pos_code_weight    = config.f2_pos_code_weight
+            self.f2_trans_config.num_modes          = config.get('f2_num_modes', 4)             # default: 4
+            self.f2_trans_config.pos_code_type      = config.get('intra_pos_code_type', 'bias') # default: bias
+            self.f2_trans_config.pos_code_weight    = config.get('f2_pos_code_weight', 0.5)     # default: 0.5
             self.f2_trans = SelfAttVisPosTrans(self.f2_trans_config, "F2 transformer")
             print0("F2-trans config:\n{}".format(self.f2_trans_config.__dict__))
             self.config.f2_trans_config = self.f2_trans_config
                     
         # feature network, context network, and update block
-        self.fnet = BasicEncoder(output_dim=256, norm_fn='instance', dropout=config.dropout)        
-        self.cnet = BasicEncoder(output_dim=hdim+cdim, norm_fn='batch', dropout=config.dropout)
+        self.fnet = BasicEncoder(output_dim=256, norm_fn='instance',    dropout=self.config.dropout)        
+        self.cnet = BasicEncoder(output_dim=hdim+cdim, norm_fn='batch', dropout=self.config.dropout)
         self.update_block = BasicUpdateBlock(self.config, hidden_dim=hdim)
 
     def freeze_bn(self):
@@ -101,7 +111,7 @@ class CRAFT_nogma(nn.Module):
         return up_flow.reshape(N, 2, 8*H, 8*W)
 
 
-    def forward(self, image1, image2, iters=12, flow_init=None, upsample=True, test_mode=0):
+    def forward(self, image1, image2, num_iters=12, flow_init=None, upsample=True, test_mode=0):
         """ Estimate optical flow between pair of frames """
 
         # image1, image2: [1, 3, 440, 1024]
@@ -116,7 +126,7 @@ class CRAFT_nogma(nn.Module):
         cdim = self.context_dim
 
         # run the feature network
-        with autocast(enabled=self.config.mixed_precision):
+        with torch.amp.autocast('cuda', enabled=self.config.mixed_precision):
             fmap1, fmap2 = self.fnet([image1, image2])  
             if self.config.f1trans != 'none':
                 fmap12 = torch.cat([fmap1, fmap2], dim=0)
@@ -131,7 +141,7 @@ class CRAFT_nogma(nn.Module):
         fmap2 = fmap2.float()
 
         # run the context network
-        with autocast(enabled=self.config.mixed_precision):
+        with torch.amp.autocast('cuda', enabled=self.config.mixed_precision):
             # cnet: context network to extract features from image1 only.
             # cnet arch is the same as fnet. 
             # fnet extracts features specifically for correlation computation.
@@ -148,18 +158,18 @@ class CRAFT_nogma(nn.Module):
         if flow_init is not None:
             coords1 = coords1 + flow_init
 
-        with autocast(enabled=self.config.mixed_precision):
+        with torch.amp.autocast('cuda', enabled=self.config.mixed_precision):
             self.corr_fn.update(fmap1, fmap2, coords1)
 
         flow_predictions = []
-        for itr in range(iters):
+        for itr in range(num_iters):
             coords1 = coords1.detach()
             # corr: [6, 324, 50, 90]. 324: neighbors. 
             # radius = 4 -> neighbor points = (4*2+1)^2 = 81. Upsize x4 -> 324.            
             corr = self.corr_fn(coords1) # index correlation volume
             flow = coords1 - coords0
                 
-            with autocast(enabled=self.config.mixed_precision):
+            with torch.amp.autocast('cuda', enabled=self.config.mixed_precision):
                 # net_feat: hidden features of ConvGRU. 
                 # inp_feat: input  features to ConvGRU.
                 # up_mask is scaled to 0.25 of original values.

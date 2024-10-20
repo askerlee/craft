@@ -6,23 +6,41 @@ from .update import BasicUpdateBlock
 from .extractor import BasicEncoder
 from .corr import CorrBlock
 from .utils.utils import coords_grid, upflow8
-
+from easydict import EasyDict as edict
 
 class RAFT(nn.Module):
     def __init__(self, config):
         super(RAFT, self).__init__()
-        self.config = config
         self.hidden_dim = hdim = 128
         self.context_dim = cdim = 128
-        config.corr_levels = 4
 
-        print("RAFT lookup radius: %d" %config.corr_radius)
+        if config is None:
+            self.config = edict()
+        else:
+            self.config = edict(config)
+
+        self.hidden_dim = hdim = self.context_dim = cdim = 128
+
+        # corr_levels determines the shape of the model params. 
+        # So it cannot be changed arbitrarily.
+        if not hasattr(self.config, 'corr_levels'):
+            self.config.corr_levels = 4
+        if not hasattr(self.config, 'corr_radius'):
+            self.config.corr_radius = 4
+        if not hasattr(self.config, 'dropout'):
+            self.config.dropout = 0
+        if not hasattr(self.config, 'mixed_precision'):
+            self.config.mixed_precision = True
+        if not hasattr(self.config, 'num_heads'):
+            self.config.num_heads = 1
+
+        print("RAFT lookup radius: %d" %self.config.corr_radius)
         if 'dropout' not in self.config:
             self.config.dropout = 0
 
         # feature network, context network, and update block
-        self.fnet = BasicEncoder(output_dim=256, norm_fn='instance', dropout=config.dropout)        
-        self.cnet = BasicEncoder(output_dim=hdim+cdim, norm_fn='batch', dropout=config.dropout)
+        self.fnet = BasicEncoder(output_dim=256, norm_fn='instance', dropout=self.config.dropout)        
+        self.cnet = BasicEncoder(output_dim=hdim+cdim, norm_fn='batch', dropout=self.config.dropout)
         self.update_block = BasicUpdateBlock(self.config, hidden_dim=hdim)
 
         test_rand_proj = False
@@ -62,7 +80,7 @@ class RAFT(nn.Module):
         return up_flow.reshape(N, 2, 8*H, 8*W)
 
 
-    def forward(self, image1, image2, iters=12, flow_init=None, upsample=True, test_mode=0):
+    def forward(self, image1, image2, num_iters=12, flow_init=None, upsample=True, test_mode=0):
         """ Estimate optical flow between pair of frames """
 
         # image1, image2: [1, 3, 440, 1024]
@@ -107,7 +125,7 @@ class RAFT(nn.Module):
             coords1 = coords1 + flow_init
 
         flow_predictions = []
-        for itr in range(iters):
+        for itr in range(num_iters):
             coords1 = coords1.detach()
             corr = self.corr_fn(coords1) # index correlation volume
 

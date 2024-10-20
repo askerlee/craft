@@ -48,6 +48,8 @@ class CorrBlock:
             delta_lvl = delta.view(1, 2 * r + 1, 2 * r + 1, 2)
             coords_lvl = centroid_lvl + delta_lvl
 
+            # Sample the correlation map corr at the coordinates coords_lvl.
+            # This is do warping on the correlation map.
             corr = bilinear_sampler(corr, coords_lvl)
             corr = corr.view(batch, h1, w1, -1)
             out_pyramid.append(corr)

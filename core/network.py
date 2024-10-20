@@ -8,11 +8,15 @@ from .corr import CorrBlock, TransCorrBlock
 from .utils.utils import coords_grid, upflow8, print0
 from .gma import Attention
 from .setrans import SETransConfig, SelfAttVisPosTrans
+from easydict import EasyDict as edict
 
 class CRAFT(nn.Module):
     def __init__(self, config):
         super().__init__()
-        self.config = config
+        if config is None:
+            self.config = edict()
+        else:
+            self.config = edict(config)
 
         self.hidden_dim = hdim = self.context_dim = cdim = 128
 
@@ -29,12 +33,8 @@ class CRAFT(nn.Module):
         if not hasattr(self.config, 'num_heads'):
             self.config.num_heads = 1
 
-        if 'dropout' not in self.config:
-            self.config.dropout = 0
 
-        print0(f"corr_levels: {self.config.corr_levels}, corr_radius: {self.config.corr_radius}")
-                
-        if config.craft:
+        if self.config.craft:
             self.inter_trans_config = SETransConfig()
             self.inter_trans_config.update_config(config)
             self.inter_trans_config.in_feat_dim = 256
@@ -42,10 +42,10 @@ class CRAFT(nn.Module):
             self.inter_trans_config.max_pos_size     = 160
             self.inter_trans_config.out_attn_scores_only    = True                  # implies no FFN and no skip.
             self.inter_trans_config.attn_diag_cycles = 1000
-            self.inter_trans_config.num_modes       = config.inter_num_modes          # default: 4
-            self.inter_trans_config.qk_have_bias    = config.inter_qk_have_bias       # default: True
-            self.inter_trans_config.pos_code_type   = config.inter_pos_code_type      # default: bias
-            self.inter_trans_config.pos_code_weight = config.inter_pos_code_weight    # default: 0.5
+            self.inter_trans_config.num_modes       = config.get('inter_num_modes', 4)          # default: 4
+            self.inter_trans_config.qk_have_bias    = config.get('inter_qk_have_bias', True)    # default: True
+            self.inter_trans_config.pos_code_type   = config.get('inter_pos_code_type', 'bias') # default: bias
+            self.inter_trans_config.pos_code_weight = config.get('inter_pos_code_weight', 0.5)  # default: 0.5
             self.config.inter_trans_config = self.inter_trans_config
             print0("Inter-frame trans config:\n{}".format(self.inter_trans_config.__dict__))
             
@@ -53,10 +53,10 @@ class CRAFT(nn.Module):
                                           do_corr_global_norm=True)
         
         # feature network, context network, and update block
-        self.fnet = BasicEncoder(output_dim=256,         norm_fn='instance', dropout=config.dropout)
-        self.cnet = BasicEncoder(output_dim=hdim + cdim, norm_fn='batch',    dropout=config.dropout)
+        self.fnet = BasicEncoder(output_dim=256,         norm_fn='instance', dropout=self.config.dropout)
+        self.cnet = BasicEncoder(output_dim=hdim + cdim, norm_fn='batch',    dropout=self.config.dropout)
 
-        if config.f2trans != 'none':
+        if self.config.f2trans != 'none':
             # f2_trans has the same configuration as GMA att, 
             # except that the feature dimension is doubled, and not out_attn_probs_only.
             self.f2_trans_config = SETransConfig()
@@ -69,20 +69,20 @@ class CRAFT(nn.Module):
             self.f2_trans_config.has_FFN = False
             # When doing feature aggregation, set attn_mask_radius > 0 to exclude points that are too far apart, to reduce noises.
             # E.g., 64 corresponds to 64*8=512 pixels in the image space.
-            self.f2_trans_config.attn_mask_radius = config.f2_attn_mask_radius
+            self.f2_trans_config.attn_mask_radius = config.get('f2_attn_mask_radius', -1)
             # Not tying QK performs slightly better.
             self.f2_trans_config.tie_qk_scheme = None
             self.f2_trans_config.qk_have_bias  = False
             self.f2_trans_config.out_attn_probs_only    = False
             self.f2_trans_config.attn_diag_cycles   = 1000
-            self.f2_trans_config.num_modes          = config.f2_num_modes             # default: 4
-            self.f2_trans_config.pos_code_type      = config.intra_pos_code_type      # default: bias
-            self.f2_trans_config.pos_code_weight    = config.f2_pos_code_weight       # default: 0.5
+            self.f2_trans_config.num_modes          = config.get('f2_num_modes', 4)             # default: 4
+            self.f2_trans_config.pos_code_type      = config.get('intra_pos_code_type', 'bias') # default: bias
+            self.f2_trans_config.pos_code_weight    = config.get('f2_pos_code_weight', 0.5)     # default: 0.5
             self.f2_trans = SelfAttVisPosTrans(self.f2_trans_config, "F2 transformer")
             print0("F2-trans config:\n{}".format(self.f2_trans_config.__dict__))
             self.config.f2_trans_config = self.f2_trans_config
                    
-        if config.setrans:
+        if self.config.setrans:
             self.intra_trans_config = SETransConfig()
             self.intra_trans_config.update_config(config)
             self.intra_trans_config.in_feat_dim = 128
@@ -97,9 +97,9 @@ class CRAFT(nn.Module):
             self.intra_trans_config.qk_have_bias  = False
             self.intra_trans_config.out_attn_probs_only    = True
             self.intra_trans_config.attn_diag_cycles = 1000
-            self.intra_trans_config.num_modes           = config.intra_num_modes          # default: 4
-            self.intra_trans_config.pos_code_type       = config.intra_pos_code_type      # default: bias
-            self.intra_trans_config.pos_code_weight     = config.intra_pos_code_weight    # default: 1
+            self.intra_trans_config.num_modes           = config.get('intra_num_modes', 4)          # default: 4
+            self.intra_trans_config.pos_code_type       = config.get('intra_pos_code_type', 'bias') # default: bias
+            self.intra_trans_config.pos_code_weight     = config.get('intra_pos_code_weight', 1.)    # default: 1
             self.att = SelfAttVisPosTrans(self.intra_trans_config, "Intra-frame attention")
             self.config.intra_trans_config = self.intra_trans_config
             print0("Intra-frame trans config:\n{}".format(self.intra_trans_config.__dict__))
@@ -146,7 +146,7 @@ class CRAFT(nn.Module):
         up_flow = up_flow.permute(0, 1, 4, 2, 5, 3)
         return up_flow.reshape(N, 2, 8 * H, 8 * W)
 
-    def forward(self, image1, image2, iters=12, flow_init=None, upsample=True, test_mode=0):
+    def forward(self, image1, image2, num_iters=12, flow_init=None, upsample=True, test_mode=0):
         """ Estimate optical flow between pair of frames """
 
         # image1, image2: [1, 3, 440, 1024]
@@ -216,11 +216,12 @@ class CRAFT(nn.Module):
                 self.corr_fn.update(fmap1, fmap2, coords1, coords2=None)
             
         flow_predictions = []
-        for itr in range(iters):
+        for itr in range(num_iters):
             coords1 = coords1.detach()
             # corr: [6, 324, 50, 90]. 324: number of points in the neighborhood. 
             # radius = 4 -> neighbor points = (4*2+1)^2 = 81. 4 levels: x4 -> 324.
-            corr = self.corr_fn(coords1)  # index correlation volume
+            # Warp the correlation volume by the currently estimated flow.
+            corr = self.corr_fn(coords1)  
             flow = coords1 - coords0
             
             with torch.amp.autocast('cuda', enabled=self.config.mixed_precision):
