@@ -32,7 +32,7 @@ def get_boundary(h, w, H, W, radius):
 
 def vis_attention(model_name, img1_path, img2_path, points, attention5d_path, 
                   radius=16, box_radius=8, img_scale=1, alpha=1, savedir='attvis',
-                  proj_img2=False):
+                  proj_img2=False, arrows=False):
     img2_name = os.path.basename(img2_path)
     img2_trunk = os.path.splitext(img2_name)[0]
     if img1_path is not None:
@@ -91,10 +91,25 @@ def vis_attention(model_name, img1_path, img2_path, points, attention5d_path,
         attention -= median
         attention[attention < 0] = 0
         attention = (255 * attention / attention.max()).astype(np.uint8)
-        # heatmap: [368, 768, 3]
-        heatmap = cv2.applyColorMap(attention, cv2.COLORMAP_JET)[:, :, ::-1]
-        overlaid_img2 = img2_np * 0.6 + heatmap * 0.3
-        overlaid_img2 = overlaid_img2.astype(np.uint8)
+
+        if not arrows:
+            # heatmap: [368, 768, 3]
+            heatmap = cv2.applyColorMap(attention, cv2.COLORMAP_JET)[:, :, ::-1]
+            overlaid_img2 = (img2_np * 0.6 + heatmap * 0.3).astype(np.uint8)
+        else:
+            # Draw arrows from query point to target points based on attention weights
+            overlay = img2_np.copy()
+            H_attn, W_attn = attention.shape
+            # Subsample to avoid clutter and improve performance
+            for y in range(0, H_attn, 8):
+                for x in range(0, W_attn, 8):
+                    att_val = attention[y, x]
+                    if att_val > 0:
+                        norm_att = att_val / 255.0
+                        color = (0, 0, int(255 * norm_att))
+                        cv2.arrowedLine(overlay, (w0, h0), (x, y), color, 1)
+            overlaid_img2 = cv2.addWeighted(img2_np, 0.5, overlay, 0.5, 0)
+            overlaid_img2 = overlaid_img2.astype(np.uint8)
 
         blank_rect = overlaid_img2.copy()
         # self attention on Frame-2, draw a red rectangle.
@@ -129,10 +144,11 @@ if __name__ == '__main__':
     parser.add_argument('--box_radius', dest='box_radius', type=int, default=8)
     parser.add_argument('--alpha', type=float, default=1)
     parser.add_argument('--proj_img2', action='store_true')
+    parser.add_argument('--arrows', action='store_true', help='Visualize attention as arrows instead of heatmap')
 
     args = parser.parse_args()
 
     points = args.points.split(".")
     points = [[int(x) for x in p.split(",")] for p in points]
-    vis_attention(args.model_name, args.img1_path, args.img2_path, points, args.attention5d_path, 
-                  args.radius, args.box_radius, args.img_scale, args.alpha, args.savedir, args.proj_img2)
+    vis_attention(args.model_name, args.img1_path, args.img2_path, points, args.attention5d_path,
+                  args.radius, args.box_radius, args.img_scale, args.alpha, args.savedir, args.proj_img2, args.arrows)
